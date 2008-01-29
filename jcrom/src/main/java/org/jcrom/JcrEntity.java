@@ -25,9 +25,36 @@ import java.io.Serializable;
  */
 public interface JcrEntity extends Serializable {
 	
+	/**
+	 * Get the JCR node name for this entity. Note that JCROM will
+	 * automatically transform the name to a valid path name
+	 * (replacing non-alphanumerical chars with an underscore).
+	 * 
+	 * @return the JCR node name for this entity
+	 */
 	public String getName();
+	
+	/**
+	 * This method is called from JCROM when mapping this entity
+	 * from a JCR node.
+	 * 
+	 * @param name
+	 */
 	public void setName( String name );
 	
+	/**
+	 * Get the full JCR path for this entity. This will be empty until
+	 * the entity has been mapped from JCR.
+	 * 
+	 * @return the full JCR path for the entity
+	 */
 	public String getPath();
+	
+	/**
+	 * This method is called from JCROM when mapping this entity
+	 * from a JCR node.
+	 * 
+	 * @param path
+	 */
 	public void setPath( String path );
 }
