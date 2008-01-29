@@ -26,7 +26,8 @@ import org.jcrom.annotations.JcrNode;
  * 
  * Note that this class has an @JcrNode annotation that sets the node type
  * to "nt:file". Extending classes may override this with a custom node type
- * as required.
+ * as required. This is useful if you want to have custom metadata fields
+ * stored on the file node.
  *
  * @author Olafur Gauti Gudmundsson
  */
