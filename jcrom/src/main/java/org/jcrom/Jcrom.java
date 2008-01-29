@@ -34,7 +34,7 @@ public class Jcrom {
 	private final Map<Class<? extends JcrEntity>, Mapper> mappedClasses;
 	
 	public Jcrom() {
-		mappedClasses = new HashMap<Class<? extends JcrEntity>, Mapper>();
+		mappedClasses = Collections.synchronizedMap(new HashMap<Class<? extends JcrEntity>, Mapper>());
 	}
 	
 	/**
