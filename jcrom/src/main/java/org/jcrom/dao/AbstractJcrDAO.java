@@ -28,16 +28,29 @@ import org.jcrom.Jcrom;
 import org.jcrom.util.PathUtils;
 
 /**
- * An abstract implementation of the JcrDAO interface.
+ * An abstract implementation of the JcrDAO interface. This should be extended
+ * for specific JcrEntity implementations.
+ * This class implements all the methods defined in the JcrDAO interface, and
+ * provides a few protected methods that are useful for implementing custom
+ * finder methods.
+ * <br/><br/>
+ * 
+ * The constructor takes a JCR session, so an instance should be created per
+ * session. The constructor also takes a Jcrom instance that can be shared
+ * across multiple DAOs.
+ * <br/><br/>
+ * 
+ * Note that this implementation never calls save() methods on nodes or the
+ * session. This must be managed outside the DAO.
  *
  * @author Olafur Gauti Gudmundsson
  */
 public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 
-	protected String rootPath; // annotation instead?
-	protected Jcrom jcrom;
-	protected Session session;
-	protected Class<T> entityClass;
+	protected final String rootPath;
+	protected final Jcrom jcrom;
+	protected final Session session;
+	protected final Class<T> entityClass;
 	
 	
 	public AbstractJcrDAO( Class<T> entityClass, String rootPath, Session session, Jcrom jcrom ) {
@@ -111,6 +124,22 @@ public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 		return toList(nodeIterator, childNameFilter, maxDepth, resultSize);
 	}
 	
+	
+	/**
+	 * Find JCR nodes that match the xpath supplied, and map to objects.
+	 * 
+	 * @param xpath the XPath for finding the nodes
+	 * @param childNodeFilter comma separated list of names of child nodes to 
+	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
+	 * makes it an exclusion filter)
+	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
+	 * child nodes are loaded, while a negative value means that no 
+	 * restrictions are set on the depth).
+	 * @param startIndex the zero based index of the first item to return
+	 * @param resultSize the number of items to return
+	 * @return a list of all objects found
+	 * @throws java.lang.Exception
+	 */
 	protected List<T> findByXPath( String xpath, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception {
 		QueryManager queryManager = session.getWorkspace().getQueryManager();
 		Query query = queryManager.createQuery(xpath, Query.XPATH);
@@ -120,6 +149,19 @@ public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 		return toList(nodeIterator, childNameFilter, maxDepth, resultSize);
 	}
 	
+	/**
+	 * Find JCR nodes that match the xpath supplied, and map to objects.
+	 * 
+	 * @param xpath the XPath for finding the nodes
+	 * @param childNodeFilter comma separated list of names of child nodes to 
+	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
+	 * makes it an exclusion filter)
+	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
+	 * child nodes are loaded, while a negative value means that no 
+	 * restrictions are set on the depth).
+	 * @return a list of all objects found
+	 * @throws java.lang.Exception
+	 */
 	protected List<T> findByXPath( String xpath, String childNameFilter, int maxDepth ) throws Exception {
 		QueryManager queryManager = session.getWorkspace().getQueryManager();
 		Query query = queryManager.createQuery(xpath, Query.XPATH);
@@ -127,6 +169,19 @@ public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 		return toList(result.getNodes(), childNameFilter, maxDepth);
 	}
 	
+	/**
+	 * Maps JCR nodes to a List of JcrEntity implementations.
+	 * 
+	 * @param nodeIterator the iterator pointing to the nodes
+	 * @param childNodeFilter comma separated list of names of child nodes to 
+	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
+	 * makes it an exclusion filter)
+	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
+	 * child nodes are loaded, while a negative value means that no 
+	 * restrictions are set on the depth).
+	 * @return a list of objects mapped from the nodes
+	 * @throws java.lang.Exception
+	 */
 	protected List<T> toList( NodeIterator nodeIterator, String childNameFilter, int maxDepth ) throws Exception {
 		List<T> objects = new ArrayList<T>();
 		while ( nodeIterator.hasNext() ) {
@@ -135,6 +190,20 @@ public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 		return objects;
 	}
 	
+	/**
+	 * Maps JCR nodes to a List of JcrEntity implementations.
+	 * 
+	 * @param nodeIterator the iterator pointing to the nodes
+	 * @param childNodeFilter comma separated list of names of child nodes to 
+	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
+	 * makes it an exclusion filter)
+	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
+	 * child nodes are loaded, while a negative value means that no 
+	 * restrictions are set on the depth).
+	 * @param resultSize the number of items to retrieve from the iterator
+	 * @return a list of objects mapped from the nodes
+	 * @throws java.lang.Exception
+	 */
 	protected List<T> toList( NodeIterator nodeIterator, String childNameFilter, int maxDepth, long resultSize ) throws Exception {
 		List<T> objects = new ArrayList<T>();
 		long counter = 0;

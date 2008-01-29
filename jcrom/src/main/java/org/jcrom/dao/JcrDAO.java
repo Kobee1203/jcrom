@@ -119,6 +119,17 @@ public interface JcrDAO<T extends JcrEntity> {
 	
 	/**
 	 * Find all entities represented by this DAO.
+	 * Takes parameters that control the size and offset of the result.
+	 * 
+	 * @param startIndex the zero based index of the first item to return
+	 * @param resultSize the number of items to return
+	 * @return all entities represented by this DAO
+	 * @throws java.lang.Exception
+	 */
+	public List<T> findAll( long startIndex, long resultSize ) throws Exception;
+	
+	/**
+	 * Find all entities represented by this DAO.
 	 * 
 	 * @param childNodeFilter comma separated list of names of child nodes to 
 	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
@@ -130,5 +141,23 @@ public interface JcrDAO<T extends JcrEntity> {
 	 * @throws java.lang.Exception
 	 */
 	public List<T> findAll( String childNameFilter, int maxDepth ) throws Exception;
+	
+	/**
+	 * Find all entities represented by this DAO.
+	 * Takes parameters that control the size and offset of the result, and
+	 * filter which child nodes to load.
+	 * 
+	 * @param childNodeFilter comma separated list of names of child nodes to 
+	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
+	 * makes it an exclusion filter)
+	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
+	 * child nodes are loaded, while a negative value means that no 
+	 * restrictions are set on the depth).
+	 * @param startIndex the zero based index of the first item to return
+	 * @param resultSize the number of items to return
+	 * @return all entities represented by this DAO
+	 * @throws java.lang.Exception
+	 */
+	public List<T> findAll( String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception;
 
 }

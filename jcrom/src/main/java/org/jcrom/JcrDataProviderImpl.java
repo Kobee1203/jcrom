@@ -19,49 +19,53 @@ import java.io.File;
 import java.io.InputStream;
 
 /**
- *
+ * A simple implementation of the JcrDataProvider interface.
+ * Developers can implement their own data provider if advanced or custom
+ * functionality is needed.
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 public class JcrDataProviderImpl implements JcrDataProvider {
 
-	protected int type;
-	protected byte[] bytes;
-	protected File file;
-	protected InputStream inputStream;
+	protected final TYPE type;
+	protected final byte[] bytes;
+	protected final File file;
+	protected final InputStream inputStream;
 	
-	public JcrDataProviderImpl( int type ) {
+	public JcrDataProviderImpl( TYPE type, byte[] bytes ) {
 		this.type = type;
+		this.bytes = bytes;
+		this.file = null;
+		this.inputStream = null;
 	}
 	
-	public void setBytes( byte[] bytes ) {
-		this.bytes = bytes;
+	public JcrDataProviderImpl( TYPE type, File file ) {
+		this.type = type;
+		this.file = file;
+		this.bytes = null;
+		this.inputStream = null;
+	}
+	
+	public JcrDataProviderImpl( TYPE type, InputStream inputStream ) {
+		this.type = type;
+		this.inputStream = inputStream;
+		this.bytes = null;
+		this.file = null;
 	}
 	
 	public byte[] getBytes() {
 		return bytes;
 	}
-	
-	public void setFile( File file ) {
-		this.file = file;
-	}
 
 	public File getFile() {
 		return file;
-	}
-	
-	public void setInputStream( InputStream inputStream ) {
-		this.inputStream = inputStream;
 	}
 
 	public InputStream getInputStream() {
 		return inputStream;
 	}
-	
-	public void setType( int type ) {
-		this.type = type;
-	}
 
-	public int getType() {
+	public TYPE getType() {
 		return type;
 	}
 

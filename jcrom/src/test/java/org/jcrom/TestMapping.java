@@ -125,8 +125,7 @@ public class TestMapping {
 		lastModified.setTimeInMillis(imageFile.lastModified());
 		jcrFile.setLastModified(lastModified);
 		
-		JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.FILE);
-		dataProvider.setFile(imageFile);
+		JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.FILE, imageFile);
 		jcrFile.setDataProvider(dataProvider);
 		
 		return jcrFile;
@@ -148,8 +147,7 @@ public class TestMapping {
 		jcrFile.setPhotographer("Testino");
 		jcrFile.setChild(createChild("Kate"));
 		
-		JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.FILE);
-		dataProvider.setFile(imageFile);
+		JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.FILE, imageFile);
 		jcrFile.setDataProvider(dataProvider);
 		
 		return jcrFile;

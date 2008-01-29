@@ -19,6 +19,14 @@ import java.util.Calendar;
 import org.jcrom.annotations.JcrNode;
 
 /**
+ * This class represents a JCR file node. It has the properties specified
+ * in the "nt:file" > "jcr:content" node. The JcrDataProvider then provides
+ * access to the actual file content.
+ * <br/><br/>
+ * 
+ * Note that this class has an @JcrNode annotation that sets the node type
+ * to "nt:file". Extending classes may override this with a custom node type
+ * as required.
  *
  * @author Olafur Gauti Gudmundsson
  */

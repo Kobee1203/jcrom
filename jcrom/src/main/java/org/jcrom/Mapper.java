@@ -50,7 +50,7 @@ import org.jcrom.util.ReflectionUtils;
 class Mapper {
 	
 	/** The Class that this instance maps to/from */
-	private Class<? extends JcrEntity> entityClass;
+	private final Class<? extends JcrEntity> entityClass;
 	
 	/**
 	 * Create a Mapper for a specific JcrEntity implementation.
@@ -436,11 +436,11 @@ class Mapper {
 		// add the file data
 		JcrDataProvider dataProvider = file.getDataProvider();
 		if ( dataProvider != null ) {
-			if ( dataProvider.getType() == JcrDataProvider.FILE && dataProvider.getFile() != null ) {
+			if ( dataProvider.getType() == JcrDataProvider.TYPE.FILE && dataProvider.getFile() != null ) {
 				contentNode.setProperty("jcr:data", new FileInputStream(dataProvider.getFile()));
-			} else if ( dataProvider.getType() == JcrDataProvider.BYTES && dataProvider.getBytes() != null ) {
+			} else if ( dataProvider.getType() == JcrDataProvider.TYPE.BYTES && dataProvider.getBytes() != null ) {
 				contentNode.setProperty("jcr:data", new ByteArrayInputStream(dataProvider.getBytes()));
-			} else if ( dataProvider.getType() == JcrDataProvider.STREAM && dataProvider.getInputStream() != null ) {
+			} else if ( dataProvider.getType() == JcrDataProvider.TYPE.STREAM && dataProvider.getInputStream() != null ) {
 				contentNode.setProperty("jcr:data", dataProvider.getInputStream());
 			}
 		}
@@ -590,12 +590,10 @@ class Mapper {
 		
 		// file data
 		if ( jcrFileNode.loadType() == JcrFileNode.LoadType.BYTES ) {
-			JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.BYTES);
-			dataProvider.setBytes( readBytes(contentNode.getProperty("jcr:data").getStream()) );
+			JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.BYTES, readBytes(contentNode.getProperty("jcr:data").getStream()));
 			fileObj.setDataProvider(dataProvider);
 		} else if ( jcrFileNode.loadType() == JcrFileNode.LoadType.STREAM ) {
-			JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.STREAM);
-			dataProvider.setInputStream(contentNode.getProperty("jcr:data").getStream());
+			JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.STREAM, contentNode.getProperty("jcr:data").getStream());
 			fileObj.setDataProvider(dataProvider);
 		}
 		

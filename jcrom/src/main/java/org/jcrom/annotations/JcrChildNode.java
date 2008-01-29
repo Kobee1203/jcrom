@@ -21,12 +21,27 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ * This annotation is used to mark fields that are to be mapped as
+ * JCR child nodes.
+ * It can be applied to fields whos type is a JcrEntity implementation, or
+ * to a java.util.List that is parameterized with a JcrEntity implementation.
+ * <br/><br/>
+ * Note that JCROM creates a container node for all child nodes. The child
+ * node is then created with the name retrieved via calling JcrEntity.getName()
+ * on the child object.
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface JcrChildNode {
 	
+	/**
+	 * The name of the JCR container node for the child/children. 
+	 * Defaults to the name of the field being annotated.
+	 * 
+	 * @return the name of the JCR node storing the child that the field
+	 * represents
+	 */
 	String name() default "fieldName";
 }

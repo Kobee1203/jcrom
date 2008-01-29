@@ -21,7 +21,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ * This annotation is used to mark a field that should store a JCR UUID
+ * read from a node. If the node does not have such a UUID, then the field
+ * will be left empty.
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 @Retention(RetentionPolicy.RUNTIME)

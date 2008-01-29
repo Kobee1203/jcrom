@@ -21,7 +21,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ * This annotation is used to mark fields that are to be mapped as
+ * JCR file nodes.
+ * It can be applied to fields whos type is a JcrFile (or extension of that), or
+ * to a java.util.List that is parameterized with a JcrFile (or extension).
+ * <br/><br/>
+ * Note that JCROM creates a container node for all file nodes. The file
+ * node is then created with the name retrieved via calling JcrEntity.getName()
+ * on the child object.
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -29,6 +37,21 @@ import java.lang.annotation.Target;
 public @interface JcrFileNode {
 	public enum LoadType { STREAM, BYTES }
 
+	/**
+	 * The name of the JCR container node for the file node(s). 
+	 * Defaults to the name of the field being annotated.
+	 * 
+	 * @return the name of the JCR node storing the child that the field
+	 * represents
+	 */
 	String name() default "fieldName";
+	
+	/**
+	 * Determines how to read the file when JCROM maps a JCR node to an object.
+	 * Defaults to LoadType.STREAM, but can also be set to LoadType.BYTES (in
+	 * which case the content will be read into a byte array).
+	 * 
+	 * @return a value determining how to load the File from JCR
+	 */
 	LoadType loadType() default LoadType.STREAM;
 }

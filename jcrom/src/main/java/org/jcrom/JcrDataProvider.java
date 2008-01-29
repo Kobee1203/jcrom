@@ -19,20 +19,39 @@ import java.io.File;
 import java.io.InputStream;
 
 /**
- *
+ * An interface for providing access to file content within a JcrFile instance.
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 public interface JcrDataProvider {
 
-	public static final int FILE = 1;
-	public static final int BYTES = 2;
-	public static final int STREAM = 3;
+	public enum TYPE {FILE, BYTES, STREAM}
 	
-	public int getType();
+	/**
+	 * Get the type of content this provider offers.
+	 * 
+	 * @return the type of content this provider offers
+	 */
+	public TYPE getType();
 	
+	/**
+	 * Return a file.
+	 * 
+	 * @return file, or null if type is not JcrDataProvider.TYPE.FILE
+	 */
 	public File getFile();
-	
+
+	/**
+	 * Return a byte array.
+	 * 
+	 * @return byte array, or null if type is not JcrDataProvider.TYPE.BYTES
+	 */
 	public byte[] getBytes();
 	
+	/**
+	 * Return an input stream.
+	 * 
+	 * @return input stream, or null if type is not JcrDataProvider.TYPE.STREAM
+	 */
 	public InputStream getInputStream();
 }

@@ -21,12 +21,21 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ * This annotation is applied to types (classes or interfaces) that implement
+ * JcrEntity, and provides the ability to specify what JCR node type to use
+ * when creating a JCR node from the object being mapped.
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface JcrNode {
 
+	/**
+	 * The node type to be applied for this JCR object.
+	 * Defaults to "nt:unstructured".
+	 * 
+	 * @return the node type to use when creating a JCR node for this object
+	 */
 	String nodeType() default "nt:unstructured";
 }

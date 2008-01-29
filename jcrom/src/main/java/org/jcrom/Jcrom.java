@@ -31,7 +31,7 @@ import javax.jcr.Node;
  */
 public class Jcrom {
 
-	private Map<Class<? extends JcrEntity>, Mapper> mappedClasses;
+	private final Map<Class<? extends JcrEntity>, Mapper> mappedClasses;
 	
 	public Jcrom() {
 		mappedClasses = new HashMap<Class<? extends JcrEntity>, Mapper>();

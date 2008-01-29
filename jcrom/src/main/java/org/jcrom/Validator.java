@@ -29,13 +29,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * This class is used by Jcrom to validate that the classes being mapped
+ * are valid JcrEntity implementations, and are correctly annotated.
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 class Validator {
 	
 	private static final Logger logger = LoggerFactory.getLogger(Validator.class);
 
+	/**
+	 * Takes a class that extends JcrEntity, validates it, and adds it to a Set
+	 * which is then returned. All JcrEntity implementations referenced from
+	 * this class (e.g. child nodes) are also validated and added to the set.
+	 * Throws a JcrMappingException if invalid mapping is found.
+	 * 
+	 * @param c the Class to be validated
+	 * @return a Set of the input class and referenced classes, validated
+	 * and ready for mapping
+	 */
 	static Set<Class<? extends JcrEntity>> validate( Class<? extends JcrEntity> c ) {
 		Set<Class<? extends JcrEntity>> validClasses = new HashSet<Class<? extends JcrEntity>>();
 		validateInternal(c, validClasses);

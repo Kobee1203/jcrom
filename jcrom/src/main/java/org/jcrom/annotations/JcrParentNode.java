@@ -21,6 +21,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * This annotation is added to fields that implement JcrEntity, and are
+ * a reference to a parent object. Such fields are ignored when mapping to
+ * a JCR node, but when loading an object from a node, then field annotated
+ * with @JcrParentNode will be populated with the mapped parent object (if
+ * it was mapped).
  *
  * @author Olafur Gauti Gudmundsson
  */
