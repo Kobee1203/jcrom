@@ -13,35 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jcrom;
+package org.jcrom.annotations;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Abstract implementation of the JcrEntity. Has protected variables
- * for name and path, and implements the getters and setters.
+ * This annotation is used to mark a field that should store a JCR creation date
+ * read from a node. If the node does not have a creation date, then the field
+ * will be left empty. The jcr:created property is inherited from the
+ * nt:hierarchyNode, so unless your node type extends that type there is little
+ * use of using this annotation.
  * 
  * @author Olafur Gauti Gudmundsson
  */
-public abstract class AbstractJcrEntity implements JcrEntity {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface JcrCreated {
 
-	protected String name;
-	protected String path;
-	
-	public AbstractJcrEntity() {
-	}
-	
-	public void setName( String name ) {
-		this.name = name;
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public void setPath( String path ) {
-		this.path = path;
-	}
-	
-	public String getPath() {
-		return path;
-	}
 }

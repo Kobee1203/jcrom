@@ -32,6 +32,7 @@ import javax.jcr.Property;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import org.jcrom.annotations.JcrChildNode;
+import org.jcrom.annotations.JcrCreated;
 import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrParentNode;
@@ -498,6 +499,11 @@ class Mapper {
 			} else if ( field.isAnnotationPresent(JcrUUID.class) ) {
 				if ( node.hasProperty("jcr:uuid") ) {
 					field.set(obj, node.getUUID());
+				}
+				
+			} else if ( field.isAnnotationPresent(JcrCreated.class) ) {
+				if ( node.hasProperty("jcr:created") ) {
+					field.set(obj, getValue(field.getType(), node.getProperty("jcr:created").getValue()));
 				}
 			
 			} else if ( field.isAnnotationPresent(JcrParentNode.class) ) {
