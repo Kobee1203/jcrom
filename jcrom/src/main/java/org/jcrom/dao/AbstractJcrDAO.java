@@ -24,6 +24,7 @@ import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import org.jcrom.JcrEntity;
+import org.jcrom.JcrMappingException;
 import org.jcrom.Jcrom;
 import org.jcrom.util.PathUtils;
 
@@ -47,17 +48,24 @@ import org.jcrom.util.PathUtils;
  */
 public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 
+	protected final boolean saveAfterMod;
 	protected final String rootPath;
 	protected final Jcrom jcrom;
 	protected final Session session;
 	protected final Class<T> entityClass;
-	
+	protected final String[] mixinTypes;
 	
 	public AbstractJcrDAO( Class<T> entityClass, String rootPath, Session session, Jcrom jcrom ) {
+		this(entityClass, rootPath, session, jcrom, true, new String[0]);
+	}
+	
+	public AbstractJcrDAO( Class<T> entityClass, String rootPath, Session session, Jcrom jcrom, boolean saveAfterMod, String[] mixinTypes ) {
 		this.entityClass = entityClass;
 		this.rootPath = rootPath;
 		this.session = session;
 		this.jcrom = jcrom;
+		this.saveAfterMod = saveAfterMod;
+		this.mixinTypes = mixinTypes;
 	}
 
 	private String fullPath( String name ) {
@@ -72,8 +80,15 @@ public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 	}
 	
 	public Node create( T entity ) throws Exception {
+		if ( entity.getName() == null || entity.getName().equals("") ) {
+			throw new JcrMappingException("The name of the entity being created is empty!");
+		}
 		Node parentNode = session.getRootNode().getNode(rootPath);
-		return jcrom.addNode(parentNode, entity);
+		Node newNode = jcrom.addNode(parentNode, entity, mixinTypes);
+		if ( saveAfterMod ) {
+			session.save();
+		}
+		return newNode;
 	}
 	
 	public String update( T entity ) throws Exception {
@@ -82,11 +97,25 @@ public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 	
 	public String update( T entity, String childNodeFilter, int maxDepth ) throws Exception {
 		Node node = session.getRootNode().getNode(fullPath(entity.getName()));
-		return jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
+		String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
+		if ( saveAfterMod ) {
+			session.save();
+		}
+		return name;
 	}
 	
 	public void delete( String name ) throws Exception {
 		session.getRootNode().getNode(fullPath(name)).remove();
+		if ( saveAfterMod ) {
+			session.save();
+		}
+	}
+	
+	public void deleteByUUID( String uuid ) throws Exception {
+		session.getNodeByUUID(uuid).remove();
+		if ( saveAfterMod ) {
+			session.save();
+		}
 	}
 	
 	public boolean exists( String name ) throws Exception {
@@ -104,6 +133,15 @@ public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 		} else {
 			return null;
 		}
+	}
+	
+	public T loadByUUID( String uuid ) throws Exception {
+		return loadByUUID(uuid, "*", -1);
+	}
+	
+	public T loadByUUID( String uuid, String childNodeFilter, int maxDepth ) throws Exception {
+		Node node = session.getNodeByUUID(uuid);
+		return (T)jcrom.fromNode(entityClass, node, childNodeFilter, maxDepth);
 	}
 	
 	public List<T> findAll() throws Exception {
