@@ -52,6 +52,19 @@ public interface JcrDAO<T extends JcrEntity> {
 	
 	/**
 	 * Updates an existing JCR Node with the values extracted
+	 * from the object supplied. Use this method if the entity name
+	 * has changed.
+	 * 
+	 * @param entity the object to be mapped to a JCR node
+	 * @param oldName the old name of the entity (this will be used to load the
+	 * node and move it to the new name)
+	 * @return
+	 * @throws java.lang.Exception
+	 */
+	public String update( T entity, String oldName ) throws Exception;
+	
+	/**
+	 * Updates an existing JCR Node with the values extracted
 	 * from the object supplied.
 	 * 
 	 * @param entity the object to be mapped to a JCR node
@@ -65,6 +78,56 @@ public interface JcrDAO<T extends JcrEntity> {
 	 * @throws java.lang.Exception
 	 */
 	public String update( T entity, String childNodeFilter, int maxDepth ) throws Exception;
+	
+	/**
+	 * Updates an existing JCR Node with the values extracted
+	 * from the object supplied. Use this method if the entity name
+	 * has changed.
+	 * 
+	 * @param entity the object to be mapped to a JCR node
+	 * @param oldName the old name of the entity (this will be used to load the
+	 * node and move it to the new name)
+	 * @param childNodeFilter comma separated list of names of child nodes to 
+	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
+	 * makes it an exclusion filter)
+	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
+	 * child nodes are loaded, while a negative value means that no 
+	 * restrictions are set on the depth).
+	 * @return the name of the JCR Node that was updated
+	 * @throws java.lang.Exception
+	 */
+	public String update( T entity, String oldName, String childNodeFilter, int maxDepth ) throws Exception;
+	
+	/**
+	 * Updates an existing JCR Node with the values extracted
+	 * from the object supplied. The node to update is loaded using the 
+	 * UUID supplied.
+	 * 
+	 * @param entity the object to be mapped to a JCR node
+	 * @param uuid the UUID of the node to update
+	 * node and move it to the new name)
+	 * @return
+	 * @throws java.lang.Exception
+	 */
+	public String updateByUUID( T entity, String uuid ) throws Exception;
+	
+	/**
+	 * Updates an existing JCR Node with the values extracted
+	 * from the object supplied. The node to update is loaded using the
+	 * UUID supplied.
+	 * 
+	 * @param entity the object to be mapped to a JCR node
+	 * @param uuid the UUID of the node to update
+	 * @param childNodeFilter comma separated list of names of child nodes to 
+	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
+	 * makes it an exclusion filter)
+	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
+	 * child nodes are loaded, while a negative value means that no 
+	 * restrictions are set on the depth).
+	 * @return the name of the JCR Node that was updated
+	 * @throws java.lang.Exception
+	 */
+	public String updateByUUID( T entity, String uuid, String childNodeFilter, int maxDepth ) throws Exception;
 	
 	/**
 	 * Permanently delete the entity with the name supplied.

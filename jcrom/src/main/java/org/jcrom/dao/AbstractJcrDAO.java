@@ -104,6 +104,32 @@ public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 		return name;
 	}
 	
+	public String update( T entity, String oldName ) throws Exception {
+		return update(entity, oldName, "*", -1);
+	}
+	
+	public String update( T entity, String oldName, String childNodeFilter, int maxDepth ) throws Exception {
+		Node node = session.getRootNode().getNode(fullPath(oldName));
+		String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
+		if ( saveAfterMod ) {
+			session.save();
+		}
+		return name;
+	}
+	
+	public String updateByUUID( T entity, String uuid ) throws Exception {
+		return updateByUUID(entity, uuid, "*", -1);
+	}
+	
+	public String updateByUUID( T entity, String uuid, String childNodeFilter, int maxDepth ) throws Exception {
+		Node node = session.getNodeByUUID(uuid);
+		String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
+		if ( saveAfterMod ) {
+			session.save();
+		}
+		return name;
+	}
+	
 	public void delete( String name ) throws Exception {
 		session.getRootNode().getNode(fullPath(name)).remove();
 		if ( saveAfterMod ) {
