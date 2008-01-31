@@ -17,7 +17,9 @@ package org.jcrom;
 
 import java.io.File;
 import java.util.Calendar;
+import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrNode;
+import org.jcrom.annotations.JcrPath;
 
 /**
  * This class represents a JCR file node. It has the properties specified
@@ -33,10 +35,10 @@ import org.jcrom.annotations.JcrNode;
  * @author Olafur Gauti Gudmundsson
  */
 @JcrNode(nodeType = "nt:file")
-public class JcrFile implements JcrEntity {
+public class JcrFile {
 
-	protected String path;
-	protected String name;
+	@JcrPath protected String path;
+	@JcrName protected String name;
 	
 	protected String mimeType;
 	protected Calendar lastModified;

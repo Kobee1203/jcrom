@@ -34,6 +34,7 @@ import javax.jcr.ValueFactory;
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrCreated;
 import org.jcrom.annotations.JcrFileNode;
+import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrParentNode;
 import org.jcrom.annotations.JcrProperty;
@@ -51,15 +52,36 @@ import org.jcrom.util.ReflectionUtils;
 class Mapper {
 	
 	/** The Class that this instance maps to/from */
-	private final Class<? extends JcrEntity> entityClass;
+	private final Class entityClass;
 	
 	/**
-	 * Create a Mapper for a specific JcrEntity implementation.
+	 * Create a Mapper for a specific class.
 	 * 
-	 * @param entityClass the class implementing JcrEntity that we will me mapping to/from
+	 * @param entityClass the class that we will me mapping to/from
 	 */
-	Mapper( Class<? extends JcrEntity> entityClass ) {
+	Mapper( Class entityClass ) {
 		this.entityClass = entityClass;
+	}
+	
+	Class getEntityClass() {
+		return entityClass;
+	}
+	
+	private Field findNameField( Object obj ) {
+		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
+			if ( field.isAnnotationPresent(JcrName.class) ) {
+				return field;
+			}
+		}
+		return null;
+	}
+	
+	String getNodeName( Object object ) throws Exception {
+		return (String) findNameField(object).get(object);
+	}
+	
+	private void setNodeName( Object object, String name ) throws Exception {
+		findNameField(object).set(object, name);
 	}
 
 	/**
@@ -74,8 +96,8 @@ class Mapper {
 	 * @return an instance of the JCR entity class, mapped from the node
 	 * @throws java.lang.Exception
 	 */
-	<T extends JcrEntity> T fromNode( Node node, String childNodeFilter, int maxDepth ) throws Exception {
-		T obj = (T)entityClass.newInstance();
+	Object fromNode( Node node, String childNodeFilter, int maxDepth ) throws Exception {
+		Object obj = entityClass.newInstance();
 		mapNodeToClass(obj, entityClass, node, new NameFilter(childNodeFilter), maxDepth, null, 0);
 		return obj;
 	}
@@ -88,7 +110,7 @@ class Mapper {
 	 * @param maxDepth
 	 * @throws java.lang.Exception
 	 */
-	<T extends JcrEntity> String updateNode( Node node, T entity, String childNodeFilter, int maxDepth ) throws Exception {
+	String updateNode( Node node, Object entity, String childNodeFilter, int maxDepth ) throws Exception {
 		if ( entity.getClass() != entityClass ) {
 			throw new JcrMappingException("This mapper was constructed for [" + entityClass.getName() + "] and cannot handle [" + entity.getClass().getName() + "]");
 		}
@@ -96,21 +118,21 @@ class Mapper {
 		return updateNode(node, entity, entityClass, new NameFilter(childNodeFilter), maxDepth, 0);
 	}
 	
-	private JcrEntity findEntityByName( List entities, String name ) {
+	private Object findEntityByName( List entities, String name ) throws Exception {
 		for ( int i = 0; i < entities.size(); i++ ) {
-			JcrEntity entity = (JcrEntity) entities.get(i);
-			if ( PathUtils.createValidName(entity.getName()).equals(name) ) {
+			Object entity = (Object) entities.get(i);
+			if ( PathUtils.createValidName(getNodeName(entity)).equals(name) ) {
 				return entity;
 			}
 		}
 		return null;
 	}
 	
-	private <T extends JcrEntity> String updateNode( Node node, T obj, Class objClass, NameFilter childNameFilter, int maxDepth, int depth ) throws Exception {
+	private String updateNode( Node node, Object obj, Class objClass, NameFilter childNameFilter, int maxDepth, int depth ) throws Exception {
 		
 		// if name is different, then we move the node
-		if ( !node.getName().equals(PathUtils.createValidName(obj.getName())) ) {
-			node.getSession().move(node.getPath(), node.getParent().getPath() + "/" + PathUtils.createValidName(obj.getName()));
+		if ( !node.getName().equals(PathUtils.createValidName(getNodeName(obj))) ) {
+			node.getSession().move(node.getPath(), node.getParent().getPath() + "/" + PathUtils.createValidName(getNodeName(obj)));
 		}
 		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
@@ -141,7 +163,7 @@ class Mapper {
 								NodeIterator childNodes = childContainer.getNodes();
 								while ( childNodes.hasNext() ) {
 									Node child = childNodes.nextNode();
-									JcrEntity childEntity = findEntityByName(children, child.getName());
+									Object childEntity = findEntityByName(children, child.getName());
 									if ( childEntity == null ) {
 										// this child was not found, so we remove it
 										child.remove();
@@ -151,8 +173,8 @@ class Mapper {
 								}
 								// we must add new children, if any
 								for ( int i = 0; i < children.size(); i++ ) {
-									JcrEntity child = (JcrEntity)children.get(i);
-									if ( !childContainer.hasNode(PathUtils.createValidName(child.getName())) ) {
+									Object child = children.get(i);
+									if ( !childContainer.hasNode(PathUtils.createValidName(getNodeName(child))) ) {
 										addNode(childContainer, child, paramClass, null);
 									}
 								}
@@ -160,7 +182,7 @@ class Mapper {
 								// no children exist, we add
 								Node childContainer = node.addNode(PathUtils.createValidName(name));
 								for ( int i = 0; i < children.size(); i++ ) {
-									addNode(childContainer, (JcrEntity)children.get(i), paramClass, null);
+									addNode(childContainer, children.get(i), paramClass, null);
 								}
 							}
 						} else {
@@ -176,11 +198,11 @@ class Mapper {
 							if ( field.get(obj) != null ) {
 								// add the node if it does not exist
 								Node childContainer = node.addNode(PathUtils.createValidName(name));
-								addNode(childContainer, (JcrEntity)field.get(obj), field.getType(), null);
+								addNode(childContainer, field.get(obj), field.getType(), null);
 							}
 						} else {
 							if ( field.get(obj) != null ) {
-								updateNode(node.getNode(name).getNodes().nextNode(), (JcrEntity)field.get(obj), field.getType(), childNameFilter, maxDepth, depth+1);
+								updateNode(node.getNode(name).getNodes().nextNode(), field.get(obj), field.getType(), childNameFilter, maxDepth, depth+1);
 							} else {
 								// field is now null, so we remove the child node
 								NodeIterator nodeIterator = node.getNodes(name);
@@ -225,8 +247,8 @@ class Mapper {
 								}
 								// we must add new children, if any
 								for ( int i = 0; i < children.size(); i++ ) {
-									JcrEntity child = (JcrEntity)children.get(i);
-									if ( !childContainer.hasNode(PathUtils.createValidName(child.getName())) ) {
+									Object child = children.get(i);
+									if ( !childContainer.hasNode(PathUtils.createValidName(getNodeName(child))) ) {
 										addNode(childContainer, child, paramClass, null);
 									}
 								}
@@ -312,18 +334,18 @@ class Mapper {
 	 * @param entity
 	 * @throws java.lang.Exception
 	 */
-	<T extends JcrEntity> Node addNode( Node parentNode, T entity, String[] mixinTypes ) throws Exception {
+	Node addNode( Node parentNode, Object entity, String[] mixinTypes ) throws Exception {
 		if ( entity.getClass() != entityClass ) {
 			throw new JcrMappingException("This mapper was constructed for [" + entityClass.getName() + "] and cannot handle [" + entity.getClass().getName() + "]");
 		}
 		return addNode(parentNode, entity, entityClass, mixinTypes);
 	}
 	
-	private <T extends JcrEntity> Node addNode( Node parentNode, T entity, Class objClass, String[] mixinTypes ) throws Exception {
+	private Node addNode( Node parentNode, Object entity, Class objClass, String[] mixinTypes ) throws Exception {
 		return addNode(parentNode, entity, objClass, mixinTypes, true);
 	}
 	
-	private <T extends JcrEntity> Node addNode( Node parentNode, T entity, Class objClass, String[] mixinTypes, boolean createNode ) throws Exception {
+	private Node addNode( Node parentNode, Object entity, Class objClass, String[] mixinTypes, boolean createNode ) throws Exception {
 		
 		// create the child node
 		Node node = null;
@@ -331,9 +353,9 @@ class Mapper {
 			// check if we should use a specific node type
 			JcrNode jcrNode = getJcrNodeAnnotation(objClass);
 			if ( jcrNode == null || jcrNode.nodeType().equals("nt:unstructured") ) {
-				node = parentNode.addNode(PathUtils.createValidName(entity.getName()));
+				node = parentNode.addNode(PathUtils.createValidName(getNodeName(entity)));
 			} else {
-				node = parentNode.addNode(PathUtils.createValidName(entity.getName()), jcrNode.nodeType());
+				node = parentNode.addNode(PathUtils.createValidName(getNodeName(entity)), jcrNode.nodeType());
 			}
 			// add the mixin types
 			if ( mixinTypes != null ) {
@@ -368,12 +390,12 @@ class Mapper {
 						if ( !children.isEmpty() ) {
 							Node childContainer = node.addNode(PathUtils.createValidName(name));
 							for ( int i = 0; i < children.size(); i++ ) {
-								addNode(childContainer, (JcrEntity)children.get(i), ReflectionUtils.getParameterizedClass(field), null);
+								addNode(childContainer, children.get(i), ReflectionUtils.getParameterizedClass(field), null);
 							}
 						}
 					} else {
 						Node childContainer = node.addNode(PathUtils.createValidName(name));
-						addNode(childContainer, (JcrEntity)field.get(entity), field.getType(), null);
+						addNode(childContainer, field.get(entity), field.getType(), null);
 					}
 				}
 				
@@ -483,11 +505,11 @@ class Mapper {
 		}
 	}
 		
-	private void mapNodeToClass( JcrEntity obj, Class objClass, Node node, NameFilter nameFilter, int maxDepth, JcrEntity parentObject, int depth ) throws Exception {
+	private void mapNodeToClass( Object obj, Class objClass, Node node, NameFilter nameFilter, int maxDepth, Object parentObject, int depth ) throws Exception {
 		
 		if ( !ReflectionUtils.extendsClass(objClass, JcrFile.class) ) {
 			// this does not apply for JcrFile extensions
-			obj.setName(node.getName());
+			setNodeName(obj, node.getName());
 		}
 		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
@@ -530,7 +552,7 @@ class Mapper {
 						NodeIterator iterator = childrenContainer.getNodes();
 						while ( iterator.hasNext() ) {
 							Class childObjClass = (Class)ptype.getActualTypeArguments()[0];
-							JcrEntity childObj = (JcrEntity)childObjClass.newInstance();
+							Object childObj = childObjClass.newInstance();
 							mapNodeToClass(childObj, childObjClass, iterator.nextNode(), nameFilter, maxDepth, obj, depth+1);
 							children.add(childObj);
 						}
@@ -538,7 +560,7 @@ class Mapper {
 						
 					} else {
 						// instantiate the field class
-						JcrEntity childObj = (JcrEntity)field.getType().newInstance();
+						Object childObj = field.getType().newInstance();
 						mapNodeToClass(childObj, field.getType(), childrenContainer.getNodes().nextNode(), nameFilter, maxDepth, obj, depth+1);
 						field.set(obj, childObj);
 					}
@@ -584,7 +606,7 @@ class Mapper {
 		}
 	}
 	
-	private <T extends JcrFile> void mapNodeToFileObject( JcrFileNode jcrFileNode, T fileObj, Node fileNode, NameFilter nameFilter, int maxDepth, JcrEntity parentObject, int depth ) throws Exception {
+	private <T extends JcrFile> void mapNodeToFileObject( JcrFileNode jcrFileNode, T fileObj, Node fileNode, NameFilter nameFilter, int maxDepth, Object parentObject, int depth ) throws Exception {
 		Node contentNode = fileNode.getNode("jcr:content");
 		fileObj.setName(fileNode.getName());
 		fileObj.setPath(fileNode.getPath());
@@ -704,4 +726,21 @@ class Mapper {
 		}
 		return out.toByteArray();
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if ( obj == null || !(obj instanceof Mapper) ) {
+			return false;
+		}
+		Mapper other = (Mapper) obj;
+		
+		return other.entityClass == entityClass;
+	}
+
+	@Override
+	public int hashCode() {
+		return entityClass.hashCode();
+	}
+	
+	
 }

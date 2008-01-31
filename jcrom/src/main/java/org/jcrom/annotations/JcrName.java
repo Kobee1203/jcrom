@@ -13,38 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jcrom;
+package org.jcrom.annotations;
 
-import org.jcrom.annotations.JcrName;
-import org.jcrom.annotations.JcrPath;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Abstract implementation with protected variables
- * for name and path, and implements the getters and setters.
- * 
+ *
  * @author Olafur Gauti Gudmundsson
  */
-public abstract class AbstractJcrEntity {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface JcrName {
 
-	@JcrName protected String name;
-	@JcrPath protected String path;
-	
-	public AbstractJcrEntity() {
-	}
-	
-	public void setName( String name ) {
-		this.name = name;
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public void setPath( String path ) {
-		this.path = path;
-	}
-	
-	public String getPath() {
-		return path;
-	}
 }

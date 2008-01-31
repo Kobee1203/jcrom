@@ -21,7 +21,9 @@ import java.util.List;
 import java.util.Set;
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrFileNode;
+import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrParentNode;
+import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrUUID;
 import org.jcrom.util.ReflectionUtils;
@@ -30,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class is used by Jcrom to validate that the classes being mapped
- * are valid JcrEntity implementations, and are correctly annotated.
+ * are correctly annotated as valid JCR classes.
  * 
  * @author Olafur Gauti Gudmundsson
  */
@@ -39,8 +41,8 @@ class Validator {
 	private static final Logger logger = LoggerFactory.getLogger(Validator.class);
 
 	/**
-	 * Takes a class that extends JcrEntity, validates it, and adds it to a Set
-	 * which is then returned. All JcrEntity implementations referenced from
+	 * Takes a class, validates it, and adds it to a Set
+	 * which is then returned. All annotated classes referenced from
 	 * this class (e.g. child nodes) are also validated and added to the set.
 	 * Throws a JcrMappingException if invalid mapping is found.
 	 * 
@@ -48,13 +50,13 @@ class Validator {
 	 * @return a Set of the input class and referenced classes, validated
 	 * and ready for mapping
 	 */
-	static Set<Class<? extends JcrEntity>> validate( Class<? extends JcrEntity> c ) {
-		Set<Class<? extends JcrEntity>> validClasses = new HashSet<Class<? extends JcrEntity>>();
+	static Set<Mapper> validate( Class c ) {
+		Set<Mapper> validClasses = new HashSet<Mapper>();
 		validateInternal(c, validClasses);
 		return validClasses;
 	}
 	
-	private static void validateInternal( Class<? extends JcrEntity> c, Set<Class<? extends JcrEntity>> validClasses ) {
+	private static void validateInternal( Class c, Set<Mapper> validClasses ) {
 		if ( validClasses.contains(c) ) {
 			return;
 		}
@@ -63,16 +65,12 @@ class Validator {
 		}
 		
 		validateFields(c, ReflectionUtils.getDeclaredAndInheritedFields(c), validClasses);
-		validClasses.add(c);
-	}
-
-	
-	private static boolean implementsJcrEntity( Class<?> type ) {
-		return ReflectionUtils.implementsInterface(type, JcrEntity.class);
+		validClasses.add(new Mapper(c));
 	}
 	
 	
-	private static void validateFields( Class c, Field[] fields, Set<Class<? extends JcrEntity>> validClasses ) {
+	private static void validateFields( Class c, Field[] fields, Set<Mapper> validClasses ) {
+		boolean foundNameField = false;
 		for ( Field field : fields ) {
 			field.setAccessible(true);
 			if ( logger.isDebugEnabled() ) {
@@ -89,30 +87,44 @@ class Validator {
 				} else if ( !ReflectionUtils.isPropertyType(field.getType()) ) {
 					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProperty is not a valid JCR property (type is " + field.getType().getName() + ").");
 				}
+				
+			} else if ( field.isAnnotationPresent(JcrName.class) ) {
+				// make sure this is a String field
+				if ( field.getType() != String.class ) {
+					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrName must be of type java.lang.String, but is of type: " + field.getType().getName());
+				}
+				foundNameField = true;
+			
 			} else if ( field.isAnnotationPresent(JcrUUID.class) ) {
 				// make sure this is a String field
 				if ( field.getType() != String.class ) {
 					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrUUID must be of type java.lang.String, but is of type: " + field.getType().getName());
 				}
 				
+			} else if ( field.isAnnotationPresent(JcrPath.class) ) {
+				// make sure this is a String field
+				if ( field.getType() != String.class ) {
+					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrPath must be of type java.lang.String, but is of type: " + field.getType().getName());
+				}
+				
 			} else if ( field.isAnnotationPresent(JcrParentNode.class) ) {
-				// make sure that the parent node type implements JcrEntity
-				if ( !implementsJcrEntity(field.getType()) ) {
-					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrParentNode is of type that does not implement JcrEntity: " + field.getType().getName());
+				// make sure that the parent node type is a valid JCR class
+				boolean foundName = false;
+				for ( Field f : ReflectionUtils.getDeclaredAndInheritedFields(field.getType()) ) {
+					if ( f.isAnnotationPresent(JcrName.class) && f.getType() == String.class ) {
+						foundName = true;
+					}
+				}
+				if ( !foundName ) {
+					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] of class [" + field.getType().getName() + "] which is annotated as @JcrParentNode is missing @JcrName annotated field.");
 				}
 				
 			} else if ( field.isAnnotationPresent(JcrChildNode.class) ) {
-				// make sure that the child node type implements JcrEntity
+				// make sure that the child node type are valid JCR classes
 				if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
-					if ( !ReflectionUtils.isFieldParameterizedWithClass(field, JcrEntity.class) ) {
-						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is a List annotated as @JcrChildNode is not parameterized with a JcrEntity implementation.");
-					}
 					validateInternal(ReflectionUtils.getParameterizedClass(field), validClasses);
 				} else { 
-					if ( !implementsJcrEntity(field.getType()) ) {
-						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is of type that does not implement JcrEntity: " + field.getType().getName());
-					}
-					validateInternal((Class)field.getType(), validClasses);
+					validateInternal(field.getType(), validClasses);
 				}
 				
 			} else if ( field.isAnnotationPresent(JcrFileNode.class) ) {
@@ -127,6 +139,9 @@ class Validator {
 					}
 				}
 			}
+		}
+		if ( !foundNameField ) {
+			throw new JcrMappingException("In [" + c.getName() + "]: No field is annotated with @JcrName.");
 		}
 	}
 }

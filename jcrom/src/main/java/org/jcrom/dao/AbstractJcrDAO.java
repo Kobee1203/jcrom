@@ -23,14 +23,13 @@ import javax.jcr.Session;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
-import org.jcrom.JcrEntity;
 import org.jcrom.JcrMappingException;
 import org.jcrom.Jcrom;
 import org.jcrom.util.PathUtils;
 
 /**
  * An abstract implementation of the JcrDAO interface. This should be extended
- * for specific JcrEntity implementations.
+ * for specific entity implementations.
  * This class implements all the methods defined in the JcrDAO interface, and
  * provides a few protected methods that are useful for implementing custom
  * finder methods.
@@ -46,7 +45,7 @@ import org.jcrom.util.PathUtils;
  *
  * @author Olafur Gauti Gudmundsson
  */
-public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
+public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 
 	protected final boolean saveAfterMod;
 	protected final String rootPath;
@@ -80,7 +79,8 @@ public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 	}
 	
 	public Node create( T entity ) throws Exception {
-		if ( entity.getName() == null || entity.getName().equals("") ) {
+		String entityName = jcrom.getName(entity);
+		if ( entityName == null || entityName.equals("") ) {
 			throw new JcrMappingException("The name of the entity being created is empty!");
 		}
 		Node parentNode = session.getRootNode().getNode(rootPath);
@@ -96,7 +96,7 @@ public abstract class AbstractJcrDAO<T extends JcrEntity> implements JcrDAO<T> {
 	}
 	
 	public String update( T entity, String childNodeFilter, int maxDepth ) throws Exception {
-		Node node = session.getRootNode().getNode(fullPath(entity.getName()));
+		Node node = session.getRootNode().getNode(fullPath(jcrom.getName(entity)));
 		String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
 		if ( saveAfterMod ) {
 			session.save();

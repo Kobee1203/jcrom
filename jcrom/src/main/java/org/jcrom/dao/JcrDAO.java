@@ -17,7 +17,6 @@ package org.jcrom.dao;
 
 import java.util.List;
 import javax.jcr.Node;
-import org.jcrom.JcrEntity;
 
 /**
  * The base interface for JCR Data Access Objects.
@@ -29,7 +28,7 @@ import org.jcrom.JcrEntity;
  * 
  * @author Olafur Gauti Gudmundsson
  */
-public interface JcrDAO<T extends JcrEntity> {
+public interface JcrDAO<T> {
 	
 	/**
 	 * Creates a new JCR Node from the object supplied.
