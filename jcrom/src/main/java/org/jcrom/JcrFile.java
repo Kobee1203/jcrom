@@ -15,6 +15,7 @@
  */
 package org.jcrom;
 
+import java.io.File;
 import java.util.Calendar;
 import org.jcrom.annotations.JcrNode;
 
@@ -44,6 +45,20 @@ public class JcrFile implements JcrEntity {
 	protected JcrDataProvider dataProvider;
 	
 	public JcrFile() {
+	}
+	
+	public static JcrFile fromFile( String name, File file, String mimeType ) {
+		JcrFile jcrFile = new JcrFile();
+		jcrFile.setName(name);
+		
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeInMillis(file.lastModified());
+		
+		jcrFile.setLastModified(cal);
+		jcrFile.setMimeType(mimeType);
+		jcrFile.setDataProvider( new JcrDataProviderImpl(JcrDataProvider.TYPE.FILE, file) );
+		
+		return jcrFile;
 	}
 	
 	public JcrDataProvider getDataProvider() {
