@@ -21,6 +21,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * This annotation is used to mark a field that should store a JCR path
+ * read from a node. 
  *
  * @author Olafur Gauti Gudmundsson
  */
