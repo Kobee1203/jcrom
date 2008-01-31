@@ -24,10 +24,10 @@ import org.jcrom.annotations.JcrParentNode;
  *
  * @author Olafur Gauti Gudmundsson
  */
-public class Child extends AbstractEntity implements JcrEntity {
+public class Child extends AbstractEntity {
 
 	@JcrParentNode
-	private JcrEntity parent;
+	private Parent parent;
 	
 	@JcrChildNode
 	private GrandChild adoptedGrandChild;
@@ -52,7 +52,7 @@ public class Child extends AbstractEntity implements JcrEntity {
 		this.grandChildren = grandChildren;
 	}
 	
-	public JcrEntity getParent() {
+	public Parent getParent() {
 		return parent;
 	}
 	

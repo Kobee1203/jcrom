@@ -21,7 +21,7 @@ import org.jcrom.annotations.JcrParentNode;
  *
  * @author Olafur Gauti Gudmundsson
  */
-public class GrandChild extends AbstractEntity implements JcrEntity {
+public class GrandChild extends AbstractEntity {
 	
 	@JcrParentNode
 	private Child parent;

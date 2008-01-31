@@ -16,6 +16,8 @@
 package org.jcrom;
 
 import java.util.Date;
+import org.jcrom.annotations.JcrName;
+import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
 
 /**
@@ -24,8 +26,8 @@ import org.jcrom.annotations.JcrProperty;
  */
 public abstract class AbstractEntity {
 
-	protected String path;
-	protected String name;
+	@JcrPath protected String path;
+	@JcrName protected String name;
 	
 	@JcrProperty protected String title;
 	@JcrProperty protected Date birthDay;

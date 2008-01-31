@@ -25,7 +25,7 @@ import org.jcrom.annotations.JcrUUID;
  *
  * @author Olafur Gauti Gudmundsson
  */
-public class Parent extends AbstractEntity implements JcrEntity {
+public class Parent extends AbstractEntity {
 	
 	@JcrUUID String uuid;
 	

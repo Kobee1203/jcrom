@@ -15,22 +15,26 @@
  */
 package org.jcrom;
 
-import org.jcrom.JcrEntity;
 import java.util.List;
 import org.jcrom.annotations.JcrChildNode;
+import org.jcrom.annotations.JcrName;
+import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
 
 /**
  *
  * @author Olafur Gauti Gudmundsson
  */
-public class InvalidEntity implements JcrEntity {
+public class InvalidEntity {
 
 	public InvalidEntity() {
 
 	}
 	
+	@JcrPath
 	private String path;
+	
+	@JcrName
 	private String name;
 
 	@JcrProperty

@@ -145,7 +145,7 @@ public class TestMapping {
 		
 		jcrFile.setFileSize(imageFile.length());
 		jcrFile.setPhotographer("Testino");
-		jcrFile.setChild(createChild("Kate"));
+		jcrFile.setChild(createParent("Kate"));
 		
 		JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.FILE, imageFile);
 		jcrFile.setDataProvider(dataProvider);

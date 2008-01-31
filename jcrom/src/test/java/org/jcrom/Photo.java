@@ -33,17 +33,17 @@ public class Photo extends JcrFile {
 	@JcrProperty private String photographer;
 	
 	@JcrChildNode
-	private Child child;
+	private Parent child;
 	
 	public Photo() {
 		super();
 	}
 
-	public Child getChild() {
+	public Parent getChild() {
 		return child;
 	}
 
-	public void setChild(Child child) {
+	public void setChild(Parent child) {
 		this.child = child;
 	}
 
