@@ -53,11 +53,10 @@ public class NameFilter {
 			filterStr = filterStr.substring(1);
 			// exclusion filter
 			exclusion = true;
-			if ( filterStr.equals("none") ) {
-				all = true;
-			} else {
-				addToSet(filterStr);
-			}
+			addToSet(filterStr);
+		} else if ( filterStr.equals("none") ) {
+			exclusion = true;
+			all = true;
 		} else {
 			// inclusion filter
 			exclusion = false;

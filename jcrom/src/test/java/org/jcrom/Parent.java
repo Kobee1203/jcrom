@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrFileNode;
+import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrUUID;
 
 /**
@@ -28,6 +29,8 @@ import org.jcrom.annotations.JcrUUID;
 public class Parent extends AbstractEntity {
 	
 	@JcrUUID String uuid;
+	
+	@JcrProperty List<String> tags;
 	
 	@JcrChildNode
 	private Child adoptedChild;
@@ -42,6 +45,7 @@ public class Parent extends AbstractEntity {
 	private List<JcrFile> files;
 	
 	public Parent() {
+		tags = new ArrayList<String>();
 		children = new ArrayList<Child>();
 		files = new ArrayList<JcrFile>();
 	}
@@ -92,5 +96,17 @@ public class Parent extends AbstractEntity {
 	
 	public void addFile( JcrFile file ) {
 		files.add(file);
+	}
+
+	public List<String> getTags() {
+		return tags;
+	}
+
+	public void setTags(List<String> tags) {
+		this.tags = tags;
+	}
+	
+	public void addTag( String tag ) {
+		tags.add(tag);
 	}
 }

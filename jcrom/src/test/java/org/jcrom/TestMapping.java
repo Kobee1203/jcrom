@@ -85,6 +85,11 @@ public class TestMapping {
 		parent.setHeight(1.80);
 		parent.setWeight(83.54);
 		parent.setNickName("Daddy");
+		
+		parent.addTag("father");
+		parent.addTag("parent");
+		parent.addTag("male");
+		
 		return parent;
 	}
 	
@@ -119,7 +124,7 @@ public class TestMapping {
 		jcrFile.setName(name);
 		jcrFile.setMimeType("image/jpeg");
 		
-		File imageFile = new File("/Users/gauti/Pictures/MyPicture_11.jpg");
+		File imageFile = new File("src/test/resources/ogg.jpg");
 		
 		Calendar lastModified = Calendar.getInstance();
 		lastModified.setTimeInMillis(imageFile.lastModified());
@@ -137,7 +142,7 @@ public class TestMapping {
 		jcrFile.setMimeType("image/jpeg");
 		jcrFile.setOriginalFilename(name);
 		
-		File imageFile = new File("/Users/gauti/Pictures/MyPicture_11.jpg");
+		File imageFile = new File("src/test/resources/ogg.jpg");
 		
 		Calendar lastModified = Calendar.getInstance();
 		lastModified.setTimeInMillis(imageFile.lastModified());
@@ -256,20 +261,21 @@ public class TestMapping {
 		Node newNode = jcrom.addNode(rootNode, parent, mixinTypes);
 
 		String uuid = newNode.getUUID();
-		System.out.println("UUID: " + uuid);
-		assertTrue( newNode.getUUID() != null );
+		assertTrue( newNode.getUUID() != null && newNode.getUUID().length() > 0 );
 		assertTrue( newNode.getProperty("birthDay").getDate().getTime().equals(parent.getBirthDay()) );
 		assertTrue( newNode.getProperty("weight").getDouble() == parent.getWeight() );
 		assertTrue( (int)newNode.getProperty("fingers").getDouble() == parent.getFingers() );
 		assertTrue( new Boolean(newNode.getProperty("drivingLicense").getBoolean()).equals(new Boolean(parent.isDrivingLicense())) );
 		assertTrue( newNode.getProperty("hairs").getLong() == parent.getHairs() );
 		assertTrue( newNode.getNode("children").getNodes().nextNode().getName().equals("Jane") );
+		assertTrue( newNode.getProperty("tags").getValues().length == 3 );
+		assertTrue( newNode.getProperty("tags").getValues()[0].getString().equals("father") );
 
 		// map back to object
 		Parent parentFromNode = jcrom.fromNode(Parent.class, newNode);
 
 		// check the file
-		File imageFileFromNode = new File("/Users/gauti/Pictures/MyPicture_11_copy.jpg");
+		File imageFileFromNode = new File("target/ogg_copy.jpg");
 		write(parentFromNode.getPassportPhoto().getDataProvider().getInputStream(), imageFileFromNode);
 
 		// check the list of files
@@ -283,6 +289,7 @@ public class TestMapping {
 		assertTrue( parentFromNode.getFingers() == parent.getFingers() );
 		assertTrue( new Boolean(parentFromNode.isDrivingLicense()).equals(new Boolean(parent.isDrivingLicense())) );
 		assertTrue( parentFromNode.getHairs() == parent.getHairs() );
+		assertTrue( parentFromNode.getTags().size() == 3 );
 
 		// validate children
 		assertTrue( parentFromNode.getAdoptedChild() != null && parentFromNode.getAdoptedChild().getName().equals(adoptedChild.getName()) );
@@ -305,6 +312,10 @@ public class TestMapping {
 		parent.setFingers(9);
 		parent.setDrivingLicense(false);
 		parent.setHairs(2);
+		
+		parent.getTags().remove(0);
+		parent.addTag("test1");
+		parent.addTag("test2");
 
 		parent.getAdoptedChild().setFingers(10);
 		
@@ -315,7 +326,7 @@ public class TestMapping {
 		// update the node
 		jcrom.updateNode(newNode, parent);
 		
-		printNode(newNode, "");
+		//printNode(newNode, "");
 		parentFromNode = jcrom.fromNode(Parent.class, newNode);
 		System.out.println("Updated photographer: " + parentFromNode.getPassportPhoto().getPhotographer());
 		System.out.println("InputStream is null: " + (parentFromNode.getPassportPhoto().getDataProvider().getInputStream()==null));
@@ -328,7 +339,8 @@ public class TestMapping {
 		assertTrue( new Boolean(newNode.getProperty("drivingLicense").getBoolean()).equals(new Boolean(parent.isDrivingLicense())) );
 		assertTrue( newNode.getProperty("hairs").getLong() == parent.getHairs() );
 		assertTrue( (int)newNode.getNode("adoptedChild").getNodes().nextNode().getProperty("fingers").getDouble() == parent.getAdoptedChild().getFingers() );
-
+		assertTrue( parentFromNode.getTags().equals(parent.getTags()) );
+		
 		// move the node
 		parent.setTitle("Mohammed");
 		parent.setNickName("Momo");

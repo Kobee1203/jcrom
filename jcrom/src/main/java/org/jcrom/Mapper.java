@@ -490,6 +490,7 @@ class Mapper {
 					for ( int i = 0; i < fieldValues.size(); i++ ) {
 						values[i] = createValue(paramClass, fieldValues.get(i), valueFactory);
 					}
+					node.setProperty(name, values);
 				}
 
 			} else {
