@@ -176,7 +176,7 @@ public class TestMapping {
 	@Test(expected = JcrMappingException.class)
 	public void mapInvalidObject() throws Exception {
 		Jcrom jcrom = new Jcrom();
-		jcrom.addMappedClass(InvalidEntity.class);
+		jcrom.map(InvalidEntity.class);
 	}
 
 	
@@ -184,7 +184,7 @@ public class TestMapping {
 	public void testDAOs() throws Exception {
 		
 		Jcrom jcrom = new Jcrom();
-		jcrom.addMappedClass(Parent.class);
+		jcrom.map(Parent.class);
 		
 		// create the root
 		session.getRootNode().addNode("content").addNode("parents");
@@ -247,7 +247,7 @@ public class TestMapping {
 		
 		// map to node
 		Jcrom jcrom = new Jcrom();
-		jcrom.addMappedClass(Parent.class); // this should automatically map the other classes, since they are referenced
+		jcrom.map(Parent.class); // this should automatically map the other classes, since they are referenced
 
 		Node rootNode = session.getRootNode().addNode("root");
 

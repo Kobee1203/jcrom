@@ -43,14 +43,16 @@ public class Jcrom {
 	 * referenced from this class.
 	 * 
 	 * @param entityClass the class that will be mapped
+	 * @return the Jcrom instance
 	 */
-	public void addMappedClass( Class entityClass ) {
+	public Jcrom map( Class entityClass ) {
 		if ( !isMapped(entityClass) ) {
 			Set<Mapper> validMappers = Validator.validate(entityClass);
 			for ( Mapper m : validMappers ) {
 				mappers.put(m.getEntityClass(), m);
 			}
 		}
+		return this;
 	}
 	
 	/**
