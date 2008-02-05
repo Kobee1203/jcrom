@@ -193,7 +193,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	 * Find JCR nodes that match the xpath supplied, and map to objects.
 	 * 
 	 * @param xpath the XPath for finding the nodes
-	 * @param childNodeFilter comma separated list of names of child nodes to 
+	 * @param childNameFilter comma separated list of names of child nodes to 
 	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
 	 * makes it an exclusion filter)
 	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
@@ -217,7 +217,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	 * Find JCR nodes that match the xpath supplied, and map to objects.
 	 * 
 	 * @param xpath the XPath for finding the nodes
-	 * @param childNodeFilter comma separated list of names of child nodes to 
+	 * @param childNameFilter comma separated list of names of child nodes to 
 	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
 	 * makes it an exclusion filter)
 	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
@@ -237,7 +237,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	 * Maps JCR nodes to a List of JcrEntity implementations.
 	 * 
 	 * @param nodeIterator the iterator pointing to the nodes
-	 * @param childNodeFilter comma separated list of names of child nodes to 
+	 * @param childNameFilter comma separated list of names of child nodes to 
 	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
 	 * makes it an exclusion filter)
 	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
@@ -258,7 +258,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	 * Maps JCR nodes to a List of JcrEntity implementations.
 	 * 
 	 * @param nodeIterator the iterator pointing to the nodes
-	 * @param childNodeFilter comma separated list of names of child nodes to 
+	 * @param childNameFilter comma separated list of names of child nodes to 
 	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
 	 * makes it an exclusion filter)
 	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
