@@ -39,9 +39,6 @@ import org.jcrom.util.PathUtils;
  * session. The constructor also takes a Jcrom instance that can be shared
  * across multiple DAOs.
  * <br/><br/>
- * 
- * Note that this implementation never calls save() methods on nodes or the
- * session. This must be managed outside the DAO.
  *
  * @author Olafur Gauti Gudmundsson
  */
@@ -54,10 +51,28 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	protected final Class<T> entityClass;
 	protected final String[] mixinTypes;
 	
+	/**
+	 * Constructor.
+	 * 
+	 * @param entityClass the class handled by this DAO implementation
+	 * @param rootPath the JCR root path under which entities should be created
+	 * @param session the current JCR session
+	 * @param jcrom the Jcrom instance to use for object mapping
+	 */
 	public AbstractJcrDAO( Class<T> entityClass, String rootPath, Session session, Jcrom jcrom ) {
 		this(entityClass, rootPath, session, jcrom, true, new String[0]);
 	}
 	
+	/**
+	 * Constructor.
+	 * 
+	 * @param entityClass the class handled by this DAO implementation
+	 * @param rootPath the JCR root path under which entities should be created
+	 * @param session the current JCR session
+	 * @param jcrom the Jcrom instance to use for object mapping
+	 * @param saveAfterMod specifies whether to call session.save() after write methods
+	 * @param mixinTypes an array of mixin types to apply to new nodes
+	 */
 	public AbstractJcrDAO( Class<T> entityClass, String rootPath, Session session, Jcrom jcrom, boolean saveAfterMod, String[] mixinTypes ) {
 		this.entityClass = entityClass;
 		this.rootPath = rootPath;
