@@ -18,6 +18,7 @@
 	</licenses>
 	<scm>
 		<url>http://code.google.com/p/jcrom/source/browse</url>
+		<connection>http://jcrom.googlecode.com/svn/trunk/</connection>
 	</scm>
 	
 	
