@@ -93,6 +93,14 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 		}
 	}
 	
+	 private String relativePath( String absolutePath ) {
+		 if ( absolutePath.startsWith("/") ) {
+			 return absolutePath.substring(1);
+		 } else {
+			 return absolutePath;
+		 }
+	 }
+	
 	public Node create( T entity ) throws Exception {
 		String entityName = jcrom.getName(entity);
 		if ( entityName == null || entityName.equals("") ) {
@@ -131,6 +139,19 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 		}
 		return name;
 	}
+
+	public String updateByPath( T entity, String path ) throws Exception {
+		return updateByPath(entity, path, "*", -1);
+	}
+	
+	public String updateByPath( T entity, String path, String childNodeFilter, int maxDepth ) throws Exception {
+		Node node = session.getRootNode().getNode(relativePath(path));
+		String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
+		if ( saveAfterMod ) {
+			session.save();
+		}
+		return name;
+	}
 	
 	public String updateByUUID( T entity, String uuid ) throws Exception {
 		return updateByUUID(entity, uuid, "*", -1);
@@ -147,6 +168,13 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	
 	public void delete( String name ) throws Exception {
 		session.getRootNode().getNode(fullPath(name)).remove();
+		if ( saveAfterMod ) {
+			session.save();
+		}
+	}
+	
+	public void deleteByPath( String path ) throws Exception {
+		session.getRootNode().getNode(relativePath(path)).remove();
 		if ( saveAfterMod ) {
 			session.save();
 		}
@@ -170,6 +198,20 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	public T get( String name, String childNodeFilter, int maxDepth ) throws Exception {
 		if ( exists(name) ) {
 			Node node = session.getRootNode().getNode(fullPath(name));
+			return (T)jcrom.fromNode(entityClass, node, childNodeFilter, maxDepth);
+		} else {
+			return null;
+		}
+	}
+	
+	public T getByPath( String path ) throws Exception {
+		return getByPath(path, "*", -1);
+	}
+	
+	public T getByPath( String path, String childNodeFilter, int maxDepth ) throws Exception {
+		Node rootNode = session.getRootNode();
+		if ( rootNode.hasNode(relativePath(path)) ) {
+			Node node = rootNode.getNode(relativePath(path));
 			return (T)jcrom.fromNode(entityClass, node, childNodeFilter, maxDepth);
 		} else {
 			return null;

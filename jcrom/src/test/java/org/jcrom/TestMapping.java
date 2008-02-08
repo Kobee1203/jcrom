@@ -209,7 +209,16 @@ public class TestMapping {
 
 		Parent loadedParent = parentDao.get(dad.getName());
 		assertTrue(loadedParent.getNickName().equals(dad.getNickName()));
+		
+		Parent uuidParent = parentDao.loadByUUID(loadedParent.getUuid());
+		assertTrue(uuidParent.getNickName().equals(dad.getNickName()));
+		
+		Parent pathParent = parentDao.getByPath(loadedParent.getPath());
+		assertTrue(pathParent.getNickName().equals(dad.getNickName()));
 
+		Parent loadedMom = parentDao.get(mom.getName());
+		assertTrue(loadedMom.getNickName().equals(mom.getNickName()));
+		
 		List<Parent> parents = parentDao.findAll();
 		assertTrue(parents.size() == 2);
 
@@ -218,6 +227,9 @@ public class TestMapping {
 
 		parentDao.delete(dad.getName());
 		assertFalse(parentDao.exists(dad.getName()));
+		
+		parentDao.deleteByPath(loadedMom.getPath());
+		assertFalse(parentDao.exists(mom.getName()));
 	}
 	
 	

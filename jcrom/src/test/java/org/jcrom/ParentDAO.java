@@ -25,8 +25,10 @@ import org.jcrom.dao.AbstractJcrDAO;
  */
 public class ParentDAO extends AbstractJcrDAO<Parent> {
 
+	private static final String[] MIXIN_TYPES = {"mix:referenceable"};
+	
 	public ParentDAO( Session session, Jcrom jcrom ) {
-		super(Parent.class, "content/parents", session, jcrom);
+		super(Parent.class, "content/parents", session, jcrom, true, MIXIN_TYPES);
 	}
 	
 	public List<Parent> findByLicense() throws Exception {

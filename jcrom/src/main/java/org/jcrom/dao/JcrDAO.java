@@ -100,12 +100,41 @@ public interface JcrDAO<T> {
 	/**
 	 * Updates an existing JCR Node with the values extracted
 	 * from the object supplied. The node to update is loaded using the 
+	 * full path supplied (from a @JcrPath field).
+	 * 
+	 * @param entity the object to be mapped to a JCR node
+	 * @param path the full path of the node to update
+	 * @return the name of the node that was updated
+	 * @throws java.lang.Exception
+	 */
+	public String updateByPath( T entity, String path ) throws Exception;
+	
+	/**
+	 * Updates an existing JCR Node with the values extracted
+	 * from the object supplied. The node to update is loaded using the 
+	 * full path supplied (from a @JcrPath field).
+	 * 
+	 * @param entity the object to be mapped to a JCR node
+	 * @param path the full path of the node to update
+	 * @param childNameFilter comma separated list of names of child nodes to 
+	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
+	 * makes it an exclusion filter)
+	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
+	 * child nodes are loaded, while a negative value means that no 
+	 * restrictions are set on the depth).
+	 * @return the name of the node that was updated
+	 * @throws java.lang.Exception
+	 */
+	public String updateByPath( T entity, String path, String childNodeFilter, int maxDepth ) throws Exception;
+	
+	/**
+	 * Updates an existing JCR Node with the values extracted
+	 * from the object supplied. The node to update is loaded using the 
 	 * UUID supplied.
 	 * 
 	 * @param entity the object to be mapped to a JCR node
-	 * @param uuid the UUID of the node to update
-	 * node and move it to the new name)
-	 * @return
+	 * @param uuid the JCR UUID of the node to update
+	 * @return the name of the node that was updated
 	 * @throws java.lang.Exception
 	 */
 	public String updateByUUID( T entity, String uuid ) throws Exception;
@@ -136,6 +165,8 @@ public interface JcrDAO<T> {
 	 */
 	public void delete( String name ) throws Exception;
 		
+	public void deleteByPath( String path ) throws Exception;
+	
 	/**
 	 * Permanently delete the entity with the UUID supplied.
 	 * 
@@ -178,6 +209,9 @@ public interface JcrDAO<T> {
 	 * @throws java.lang.Exception
 	 */
 	public T get( String name, String childNameFilter, int maxDepth ) throws Exception;
+	
+	public T getByPath( String path ) throws Exception;
+	public T getByPath( String path, String childNodeFilter, int maxDepth ) throws Exception;
 	
 	/**
 	 * Load an entity from JCR by UUID lookup.
