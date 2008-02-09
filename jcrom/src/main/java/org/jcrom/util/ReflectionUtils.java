@@ -110,6 +110,10 @@ public class ReflectionUtils {
 				;
 	}
 	
+	public static boolean isDateType( Class type ) {
+		return type == Date.class || type == Calendar.class || type == Timestamp.class;
+	}
+	
 	/**
 	 * Get the (first) class that parameterizes the Field supplied.
 	 * 

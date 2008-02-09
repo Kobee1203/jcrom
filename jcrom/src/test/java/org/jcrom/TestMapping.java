@@ -30,6 +30,9 @@ import javax.jcr.PropertyIterator;
 import javax.jcr.Repository;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
 import org.apache.jackrabbit.core.TransientRepository;
 import org.junit.After;
 import org.junit.Before;
@@ -184,6 +187,53 @@ public class TestMapping {
 		jcrom.map(InvalidEntity.class);
 	}
 
+	@Test
+	public void versioningDAO() throws Exception {
+		
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(VersionedEntity.class);
+		
+		// create the root
+		session.getRootNode().addNode("content").addNode("versionedEntities");
+		VersionedDAO versionedDao = new VersionedDAO(session, jcrom);
+		
+		VersionedEntity entity = new VersionedEntity();
+		entity.setTitle("MyEntity");
+		entity.setBody("First");
+		
+		versionedDao.create(entity);
+		
+		// change it
+		entity.setBody("Second");
+		versionedDao.update(entity);
+			
+		assertTrue(versionedDao.getVersionSize(entity.getName()) == 2);
+		
+		// load entity
+		VersionedEntity loadedEntity = versionedDao.get(entity.getName());
+		
+		assertTrue(loadedEntity.getBaseVersionName().equals("1.1"));
+		assertTrue(loadedEntity.getVersionName().equals("1.1"));
+		assertTrue(versionedDao.getVersionList(entity.getName()).size() == versionedDao.getVersionSize(entity.getName()));
+				
+		// restore
+		versionedDao.restoreVersion(entity.getName(), "1.0");
+		
+		loadedEntity = versionedDao.get(entity.getName());
+		assertTrue(loadedEntity.getBaseVersionName().equals("1.0"));
+		
+		loadedEntity.setBody("Third");
+		versionedDao.update(loadedEntity);
+		
+		VersionedEntity oldEntity = versionedDao.getVersion(entity.getName(), "1.0");
+		assertTrue(oldEntity != null);
+		assertTrue(oldEntity.getBody().equals("First"));
+		
+		List<VersionedEntity> versions = versionedDao.getVersionList(entity.getName());
+		for ( VersionedEntity version : versions ) {
+			System.out.println("Version [" + version.getVersionName() + "] [" + version.getBody() + "], base [" + version.getBaseVersionName() + "] [" + version.getBaseVersionCreated() + "]");
+		}
+	}
 	
 	@Test
 	public void testDAOs() throws Exception {
@@ -232,6 +282,57 @@ public class TestMapping {
 		assertFalse(parentDao.exists(mom.getName()));
 	}
 	
+	/*
+	@Test
+	public void versioning() throws Exception {
+		
+		Node node = session.getRootNode().addNode("versionTest");
+		node.addMixin("mix:versionable");
+		node.setProperty("title", "version 1");
+		session.save();
+		node.checkin();
+		
+		node.checkout();
+		node.setProperty("title", "version 2");
+		session.save();
+		node.checkin();
+		
+		node.checkout();
+		node.setProperty("title", "version 3");
+		session.save();
+		node.checkin();
+		
+		// print version history
+		VersionHistory history = session.getRootNode().getNode("versionTest").getVersionHistory();
+		VersionIterator iterator = history.getAllVersions();
+		iterator.skip(1);
+		while ( iterator.hasNext() ) {
+			Version version = iterator.nextVersion();
+			System.out.println("Version [" + version.getName() + "], [" + version.getPrimaryNodeType().getName() + "], created " + version.getCreated().getTime());
+			
+			NodeIterator nodeIterator = version.getNodes();
+			while ( nodeIterator.hasNext() ) {
+				Node versionNode = nodeIterator.nextNode();
+				System.out.println("\tTitle: " + versionNode.getProperty("title").getString());
+				
+				if ( versionNode.getParent().isNodeType("nt:version") ) {
+					Version parentVersion = (Version) versionNode.getParent();
+					System.out.println("\tVersion name: " + parentVersion.getName() + " " + parentVersion.getCreated().getTime());
+				}
+			}
+		}
+		
+		// print base version
+		System.out.println("Base version name: " + session.getRootNode().getNode("versionTest").getBaseVersion().getName());
+		
+		// restore
+		node.checkout();
+		node.restore("1.0", true);
+		
+		System.out.println("Base version name (after restore): " + session.getRootNode().getNode("versionTest").getBaseVersion().getName());
+	}
+	*/
+
 	
 	@Test
 	public void mapObjectsToNodesAndBack() throws Exception {

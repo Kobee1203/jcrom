@@ -23,6 +23,9 @@ import javax.jcr.Session;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
 import org.jcrom.JcrMappingException;
 import org.jcrom.Jcrom;
 import org.jcrom.util.PathUtils;
@@ -44,12 +47,12 @@ import org.jcrom.util.PathUtils;
  */
 public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 
-	protected final boolean saveAfterMod;
 	protected final String rootPath;
 	protected final Jcrom jcrom;
 	protected final Session session;
 	protected final Class<T> entityClass;
 	protected final String[] mixinTypes;
+	protected final boolean isVersionable;
 	
 	/**
 	 * Constructor.
@@ -60,7 +63,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	 * @param jcrom the Jcrom instance to use for object mapping
 	 */
 	public AbstractJcrDAO( Class<T> entityClass, String rootPath, Session session, Jcrom jcrom ) {
-		this(entityClass, rootPath, session, jcrom, true, new String[0]);
+		this(entityClass, rootPath, session, jcrom, new String[0]);
 	}
 	
 	/**
@@ -70,16 +73,24 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	 * @param rootPath the JCR root path under which entities should be created
 	 * @param session the current JCR session
 	 * @param jcrom the Jcrom instance to use for object mapping
-	 * @param saveAfterMod specifies whether to call session.save() after write methods
 	 * @param mixinTypes an array of mixin types to apply to new nodes
 	 */
-	public AbstractJcrDAO( Class<T> entityClass, String rootPath, Session session, Jcrom jcrom, boolean saveAfterMod, String[] mixinTypes ) {
+	public AbstractJcrDAO( Class<T> entityClass, String rootPath, Session session, Jcrom jcrom, String[] mixinTypes ) {
 		this.entityClass = entityClass;
 		this.rootPath = rootPath;
 		this.session = session;
 		this.jcrom = jcrom;
-		this.saveAfterMod = saveAfterMod;
 		this.mixinTypes = mixinTypes;
+		this.isVersionable = isVersionable(mixinTypes);
+	}
+	
+	private boolean isVersionable( String[] mixinTypes ) {
+		for ( String mixinType : mixinTypes ) {
+			if ( mixinType.equals("mix:versionable") ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private String fullPath( String name ) {
@@ -108,8 +119,9 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 		}
 		Node parentNode = session.getRootNode().getNode(rootPath);
 		Node newNode = jcrom.addNode(parentNode, entity, mixinTypes);
-		if ( saveAfterMod ) {
-			session.save();
+		session.save();
+		if ( isVersionable ) {
+			newNode.checkin();
 		}
 		return newNode;
 	}
@@ -120,11 +132,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	
 	public String update( T entity, String childNodeFilter, int maxDepth ) throws Exception {
 		Node node = session.getRootNode().getNode(fullPath(jcrom.getName(entity)));
-		String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
-		if ( saveAfterMod ) {
-			session.save();
-		}
-		return name;
+		return update(node, entity, childNodeFilter, maxDepth);
 	}
 	
 	public String update( T entity, String oldName ) throws Exception {
@@ -133,11 +141,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	
 	public String update( T entity, String oldName, String childNodeFilter, int maxDepth ) throws Exception {
 		Node node = session.getRootNode().getNode(fullPath(oldName));
-		String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
-		if ( saveAfterMod ) {
-			session.save();
-		}
-		return name;
+		return update(node, entity, childNodeFilter, maxDepth);
 	}
 
 	public String updateByPath( T entity, String path ) throws Exception {
@@ -146,11 +150,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	
 	public String updateByPath( T entity, String path, String childNodeFilter, int maxDepth ) throws Exception {
 		Node node = session.getRootNode().getNode(relativePath(path));
-		String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
-		if ( saveAfterMod ) {
-			session.save();
-		}
-		return name;
+		return update(node, entity, childNodeFilter, maxDepth);
 	}
 	
 	public String updateByUUID( T entity, String uuid ) throws Exception {
@@ -159,32 +159,34 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	
 	public String updateByUUID( T entity, String uuid, String childNodeFilter, int maxDepth ) throws Exception {
 		Node node = session.getNodeByUUID(uuid);
+		return update(node, entity, childNodeFilter, maxDepth);
+	}
+	
+	protected String update( Node node, T entity, String childNodeFilter, int maxDepth ) throws Exception {
+		if ( isVersionable ) {
+			node.checkout();
+		}
 		String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
-		if ( saveAfterMod ) {
-			session.save();
+		session.save();
+		if ( isVersionable ) {
+			node.checkin();
 		}
 		return name;
 	}
 	
 	public void delete( String name ) throws Exception {
 		session.getRootNode().getNode(fullPath(name)).remove();
-		if ( saveAfterMod ) {
-			session.save();
-		}
+		session.save();
 	}
 	
 	public void deleteByPath( String path ) throws Exception {
 		session.getRootNode().getNode(relativePath(path)).remove();
-		if ( saveAfterMod ) {
-			session.save();
-		}
+		session.save();
 	}
 	
 	public void deleteByUUID( String uuid ) throws Exception {
 		session.getNodeByUUID(uuid).remove();
-		if ( saveAfterMod ) {
-			session.save();
-		}
+		session.save();
 	}
 	
 	public boolean exists( String name ) throws Exception {
@@ -225,6 +227,155 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	public T loadByUUID( String uuid, String childNodeFilter, int maxDepth ) throws Exception {
 		Node node = session.getNodeByUUID(uuid);
 		return (T)jcrom.fromNode(entityClass, node, childNodeFilter, maxDepth);
+	}
+	
+	public T getVersion( String name, String versionName ) throws Exception {
+		return getVersion(name, versionName, "*", -1);
+	}
+	public T getVersion( String name, String versionName, String childNodeFilter, int maxDepth ) throws Exception {
+		return getVersion(session.getRootNode().getNode(fullPath(name)), versionName, childNodeFilter, maxDepth);
+	}
+	
+	public T getVersionByPath( String path, String versionName ) throws Exception {
+		return getVersionByPath(path, versionName, "*", -1);
+	}
+	public T getVersionByPath( String path, String versionName, String childNodeFilter, int maxDepth ) throws Exception {
+		return getVersion(session.getRootNode().getNode(relativePath(path)), versionName, childNodeFilter, maxDepth);
+	}
+	
+	public T getVersionByUUID( String uuid, String versionName ) throws Exception {
+		return getVersionByUUID(uuid, versionName, "*", -1);
+	}
+	public T getVersionByUUID( String uuid, String versionName, String childNodeFilter, int maxDepth ) throws Exception {
+		return getVersion(session.getNodeByUUID(uuid), versionName, childNodeFilter, maxDepth);
+	}
+	
+	protected T getVersion( Node node, String versionName, String childNodeFilter, int maxDepth ) throws Exception {
+		VersionHistory versionHistory = node.getVersionHistory();
+		Version version = versionHistory.getVersion(versionName);
+		return (T)jcrom.fromNode(entityClass, version.getNodes().nextNode(), childNodeFilter, maxDepth);
+	}
+	
+	public void restoreVersion( String name, String versionName ) throws Exception {
+		restoreVersion(session.getRootNode().getNode(fullPath(name)), versionName);
+	}
+	public void restoreVersionByPath( String path, String versionName ) throws Exception {
+		restoreVersion(session.getRootNode().getNode(relativePath(path)), versionName);
+	}
+	public void restoreVersionByUUID( String uuid, String versionName ) throws Exception {
+		restoreVersion(session.getNodeByUUID(uuid), versionName);
+	}
+	protected void restoreVersion( Node node, String versionName ) throws Exception {
+		node.checkout();
+		node.restore(versionName, true);
+	}
+	
+	public void removeVersion( String name, String versionName ) throws Exception {
+		removeVersion(session.getRootNode().getNode(fullPath(name)), versionName);
+	}
+	public void removeVersionByPath( String path, String versionName ) throws Exception {
+		removeVersion(session.getRootNode().getNode(relativePath(path)), versionName);
+	}
+	public void removeVersionByUUID( String uuid, String versionName ) throws Exception {
+		removeVersion(session.getNodeByUUID(uuid), versionName);
+	}
+	protected void removeVersion( Node node, String versionName ) throws Exception {
+		node.getVersionHistory().removeVersion(versionName);
+	}
+	
+	public long getVersionSize( String name ) throws Exception {
+		return getVersionSize(session.getRootNode().getNode(fullPath(name)));
+	}
+	
+	public long getVersionSizeByPath( String path ) throws Exception {
+		return getVersionSize(session.getRootNode().getNode(relativePath(path)));
+	}
+	
+	public long getVersionSizeByUUID( String uuid ) throws Exception {
+		return getVersionSize(session.getNodeByUUID(uuid));
+	}
+	
+	protected long getVersionSize( Node node ) throws Exception {
+		VersionHistory versionHistory = node.getVersionHistory();
+		return versionHistory.getAllVersions().getSize()-1;
+	}
+	
+	public List<T> getVersionList( String name ) throws Exception {
+		return getVersionList(session.getRootNode().getNode(fullPath(name)), "*", -1);
+	}
+	
+	public List<T> getVersionList( String name, String childNameFilter, int maxDepth ) throws Exception {
+		return getVersionList(session.getRootNode().getNode(fullPath(name)), childNameFilter, maxDepth);
+	}
+	
+	public List<T> getVersionList( String name, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception {
+		return getVersionList(session.getRootNode().getNode(fullPath(name)), childNameFilter, maxDepth, startIndex, resultSize);
+	}
+	
+	public List<T> getVersionListByPath( String path ) throws Exception {
+		return getVersionList(session.getRootNode().getNode(relativePath(path)), "*", -1);
+	}
+	
+	public List<T> getVersionListByPath( String path, String childNameFilter, int maxDepth ) throws Exception {
+		return getVersionList(session.getRootNode().getNode(relativePath(path)), childNameFilter, maxDepth);
+	}
+	
+	public List<T> getVersionListByPath( String path, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception {
+		return getVersionList(session.getRootNode().getNode(relativePath(path)), childNameFilter, maxDepth, startIndex, resultSize);
+	}
+	
+	public List<T> getVersionListByUUID( String uuid ) throws Exception {
+		return getVersionList(session.getNodeByUUID(uuid), "*", -1);
+	}
+	
+	public List<T> getVersionListByUUID( String uuid, String childNameFilter, int maxDepth ) throws Exception {
+		return getVersionList(session.getNodeByUUID(uuid), childNameFilter, maxDepth);
+	}
+	
+	public List<T> getVersionListByUUID( String uuid, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception {
+		return getVersionList(session.getNodeByUUID(uuid), childNameFilter, maxDepth, startIndex, resultSize);
+	}
+	
+	protected List<T> getVersionList( Node node, String childNameFilter, int maxDepth ) throws Exception {
+		List<T> versionList = new ArrayList<T>();
+		VersionHistory versionHistory = node.getVersionHistory();
+		VersionIterator versionIterator = versionHistory.getAllVersions();
+		versionIterator.skip(1);
+		while ( versionIterator.hasNext() ) {
+			Version version = versionIterator.nextVersion();
+			NodeIterator nodeIterator = version.getNodes();
+			while ( nodeIterator.hasNext() ) {
+				versionList.add((T)jcrom.fromNode(entityClass, nodeIterator.nextNode(), childNameFilter, maxDepth));
+			}
+		}
+		return versionList;
+	}
+	
+	protected List<T> getVersionList( Node node, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception {
+		List<T> versionList = new ArrayList<T>();
+		VersionHistory versionHistory = node.getVersionHistory();
+		VersionIterator versionIterator = versionHistory.getAllVersions();
+		versionIterator.skip(1 + startIndex);
+		
+		long counter = 0;
+		while ( versionIterator.hasNext() ) {
+			if ( counter == resultSize ) {
+				break;
+			}
+			Version version = versionIterator.nextVersion();
+			NodeIterator nodeIterator = version.getNodes();
+			while ( nodeIterator.hasNext() ) {
+				versionList.add((T)jcrom.fromNode(entityClass, nodeIterator.nextNode(), childNameFilter, maxDepth));
+			}
+			counter++;
+		}
+		return versionList;
+	}
+	
+	
+	public long getSize() throws Exception {
+		NodeIterator nodeIterator = session.getRootNode().getNode(rootPath).getNodes();
+		return nodeIterator.getSize();
 	}
 	
 	public List<T> findAll() throws Exception {

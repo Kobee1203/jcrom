@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jcrom;
+package org.jcrom.annotations;
 
-import java.util.List;
-import javax.jcr.Session;
-import org.jcrom.dao.AbstractJcrDAO;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
+ * This annotation is used to mark a field that should store a JCR
+ * version name read from the node. 
+ * <br/>
+ * Note: this will only be relevant for nodes that use the mix:versionable
+ * mixin type.
+ * Also note that this will be empty unless iterating over older versions.
  *
  * @author Olafur Gauti Gudmundsson
  */
-public class ParentDAO extends AbstractJcrDAO<Parent> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface JcrVersionName {
 
-	private static final String[] MIXIN_TYPES = {"mix:referenceable"};
-	
-	public ParentDAO( Session session, Jcrom jcrom ) {
-		super(Parent.class, "content/parents", session, jcrom, MIXIN_TYPES);
-	}
-	
-	public List<Parent> findByLicense() throws Exception {
-		return super.findByXPath("/jcr:root/content/parents/*[@drivingLicense = 'true']", "*", -1);
-	}
 }

@@ -31,6 +31,11 @@ import javax.jcr.NodeIterator;
 import javax.jcr.Property;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.version.Version;
+import org.jcrom.annotations.JcrBaseVersionCreated;
+import org.jcrom.annotations.JcrBaseVersionName;
+import org.jcrom.annotations.JcrCheckedout;
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrCreated;
 import org.jcrom.annotations.JcrFileNode;
@@ -39,6 +44,8 @@ import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrParentNode;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrUUID;
+import org.jcrom.annotations.JcrVersionCreated;
+import org.jcrom.annotations.JcrVersionName;
 import org.jcrom.util.NameFilter;
 import org.jcrom.util.PathUtils;
 import org.jcrom.util.ReflectionUtils;
@@ -70,6 +77,7 @@ class Mapper {
 	private Field findNameField( Object obj ) {
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
 			if ( field.isAnnotationPresent(JcrName.class) ) {
+				field.setAccessible(true);
 				return field;
 			}
 		}
@@ -505,6 +513,15 @@ class Mapper {
 			node.setProperty(name, (Value)null);
 		}
 	}
+	
+	private boolean isVersionable( Node node ) throws Exception {
+		for ( NodeType mixinType : node.getMixinNodeTypes() ) {
+			if ( mixinType.getName().equals("mix:versionable") ) {
+				return true;
+			}
+		}
+		return false;
+	}
 		
 	private void mapNodeToClass( Object obj, Class objClass, Node node, NameFilter nameFilter, int maxDepth, Object parentObject, int depth ) throws Exception {
 		
@@ -523,6 +540,36 @@ class Mapper {
 				if ( node.hasProperty("jcr:uuid") ) {
 					field.set(obj, node.getUUID());
 				}
+				
+			} else if ( field.isAnnotationPresent(JcrBaseVersionName.class) ) {
+				if ( isVersionable(node) ) {
+					field.set(obj, node.getBaseVersion().getName());
+				}
+				
+			} else if ( field.isAnnotationPresent(JcrBaseVersionCreated.class) ) {
+				if ( isVersionable(node) ) {
+					field.set(obj, getValue(field.getType(), node.getSession().getValueFactory().createValue(node.getBaseVersion().getCreated())));
+				}
+				
+			} else if ( field.isAnnotationPresent(JcrVersionName.class) ) {
+				if ( node.getParent() != null && node.getParent().isNodeType("nt:version") ) {
+					field.set(obj, node.getParent().getName());
+				} else if ( isVersionable(node) ) {
+					// if we're not browsing version history, then this must be the base version
+					field.set(obj, node.getBaseVersion().getName());
+				}
+				
+			} else if ( field.isAnnotationPresent(JcrVersionCreated.class) ) {
+				if ( node.getParent() != null && node.getParent().isNodeType("nt:version") ) {
+					Version version = (Version) node.getParent();
+					field.set(obj, getValue(field.getType(), node.getSession().getValueFactory().createValue(version.getCreated())));
+				} else if ( isVersionable(node) ) {
+					// if we're not browsing version history, then this must be the base version
+					field.set(obj, getValue(field.getType(), node.getSession().getValueFactory().createValue(node.getBaseVersion().getCreated())));
+				}
+				
+			} else if ( field.isAnnotationPresent(JcrCheckedout.class) ) {
+				field.set(obj, node.isCheckedOut());
 				
 			} else if ( field.isAnnotationPresent(JcrCreated.class) ) {
 				if ( node.hasProperty("jcr:created") ) {

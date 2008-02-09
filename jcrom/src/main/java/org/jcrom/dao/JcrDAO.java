@@ -164,7 +164,14 @@ public interface JcrDAO<T> {
 	 * @throws java.lang.Exception
 	 */
 	public void delete( String name ) throws Exception;
-		
+	
+	/**
+	 * Permanently delete the entity with the path supplied 
+	 * (from a @JcrPath field).
+	 * 
+	 * @param path the full path of the entity
+	 * @throws java.lang.Exception
+	 */
 	public void deleteByPath( String path ) throws Exception;
 	
 	/**
@@ -210,7 +217,30 @@ public interface JcrDAO<T> {
 	 */
 	public T get( String name, String childNameFilter, int maxDepth ) throws Exception;
 	
+	/**
+	 * Get an entity from JCR by path (from a @JcrPath field).
+	 * 
+	 * @param path the full path of the entity to be loaded
+	 * @return an object instance mapped from the JCR node with the path
+	 * supplied, or null if no such node was found
+	 * @throws java.lang.Exception
+	 */
 	public T getByPath( String path ) throws Exception;
+	
+	/**
+	 * Get an entity from JCR by path (from a @JcrPath field).
+	 * 
+	 * @param path the full path of the entity to be loaded
+	 * @param childNameFilter comma separated list of names of child nodes to 
+	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
+	 * makes it an exclusion filter)
+	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
+	 * child nodes are loaded, while a negative value means that no 
+	 * restrictions are set on the depth).
+	 * @return an object instance mapped from the JCR node with the path
+	 * supplied, or null if no such node was found
+	 * @throws java.lang.Exception
+	 */
 	public T getByPath( String path, String childNodeFilter, int maxDepth ) throws Exception;
 	
 	/**
@@ -230,6 +260,48 @@ public interface JcrDAO<T> {
 	 * @throws java.lang.Exception if no such node is found, or other things go wrong
 	 */
 	public T loadByUUID( String uuid, String childNodeFilter, int maxDepth ) throws Exception;
+	
+	
+	public List<T> getVersionList( String name ) throws Exception;
+	public List<T> getVersionList( String name, String childNameFilter, int maxDepth ) throws Exception;
+	public List<T> getVersionList( String name, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception;
+	
+	public List<T> getVersionListByPath( String path ) throws Exception;
+	public List<T> getVersionListByPath( String path, String childNameFilter, int maxDepth ) throws Exception;
+	public List<T> getVersionListByPath( String path, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception;
+	
+	public List<T> getVersionListByUUID( String uuid ) throws Exception;
+	public List<T> getVersionListByUUID( String uuid, String childNameFilter, int maxDepth ) throws Exception;
+	public List<T> getVersionListByUUID( String uuid, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception;
+	
+	public long getVersionSize( String name ) throws Exception;
+	public long getVersionSizeByPath( String path ) throws Exception;
+	public long getVersionSizeByUUID( String uuid ) throws Exception;
+	
+	public T getVersion( String name, String versionName ) throws Exception;
+	public T getVersion( String name, String versionName, String childNodeFilter, int maxDepth ) throws Exception;
+	
+	public T getVersionByPath( String path, String versionName ) throws Exception;
+	public T getVersionByPath( String path, String versionName, String childNodeFilter, int maxDepth ) throws Exception;
+	
+	public T getVersionByUUID( String uuid, String versionName ) throws Exception;
+	public T getVersionByUUID( String uuid, String versionName, String childNodeFilter, int maxDepth ) throws Exception;
+	
+	public void restoreVersion( String name, String versionName ) throws Exception;
+	public void restoreVersionByPath( String path, String versionName ) throws Exception;
+	public void restoreVersionByUUID( String uuid, String versionName ) throws Exception;
+	
+	public void removeVersion( String name, String versionName ) throws Exception;
+	public void removeVersionByPath( String path, String versionName ) throws Exception;
+	public void removeVersionByUUID( String uuid, String versionName ) throws Exception;
+	
+	/**
+	 * Get the number of entities.
+	 * 
+	 * @return the size of the list returned by findAll()
+	 * @throws java.lang.Exception
+	 */
+	public long getSize() throws Exception;
 	
 	/**
 	 * Find all entities represented by this DAO.
