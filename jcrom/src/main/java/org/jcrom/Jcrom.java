@@ -47,10 +47,8 @@ public class Jcrom {
 	 */
 	public Jcrom map( Class entityClass ) {
 		if ( !isMapped(entityClass) ) {
-			Set<Mapper> validMappers = Validator.validate(entityClass);
-			for ( Mapper m : validMappers ) {
-				mappers.put(m.getEntityClass(), m);
-			}
+			Map<Class,Mapper> validMappers = Validator.validate(entityClass);
+			mappers.putAll(validMappers);
 		}
 		return this;
 	}
@@ -76,6 +74,10 @@ public class Jcrom {
 	
 	public String getName( Object object ) throws Exception {
 		return mappers.get(object.getClass()).getNodeName(object);
+	}
+	
+	public String getPath( Object object ) throws Exception {
+		return mappers.get(object.getClass()).getNodePath(object);
 	}
 	
 	/**

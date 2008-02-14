@@ -42,6 +42,7 @@ import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrParentNode;
+import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrUUID;
 import org.jcrom.annotations.JcrVersionCreated;
@@ -74,9 +75,9 @@ class Mapper {
 		return entityClass;
 	}
 	
-	private Field findNameField( Object obj ) {
+	private Field findAnnotatedField( Object obj, Class annotationClass ) {
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
-			if ( field.isAnnotationPresent(JcrName.class) ) {
+			if ( field.isAnnotationPresent(annotationClass) ) {
 				field.setAccessible(true);
 				return field;
 			}
@@ -84,12 +85,28 @@ class Mapper {
 		return null;
 	}
 	
+	private Field findPathField( Object obj ) {
+		return findAnnotatedField(obj, JcrPath.class);
+	}
+	
+	private Field findNameField( Object obj ) {
+		return findAnnotatedField(obj, JcrName.class);
+	}
+	
 	String getNodeName( Object object ) throws Exception {
 		return (String) findNameField(object).get(object);
 	}
 	
+	String getNodePath( Object object ) throws Exception {
+		return (String) findPathField(object).get(object);
+	}
+	
 	private void setNodeName( Object object, String name ) throws Exception {
 		findNameField(object).set(object, name);
+	}
+	
+	private void setNodePath( Object object, String path ) throws Exception {
+		findPathField(object).set(object, path);
 	}
 
 	/**
@@ -141,6 +158,10 @@ class Mapper {
 		// if name is different, then we move the node
 		if ( !node.getName().equals(PathUtils.createValidName(getNodeName(obj))) ) {
 			node.getSession().move(node.getPath(), node.getParent().getPath() + "/" + PathUtils.createValidName(getNodeName(obj)));
+			
+			// update the object name and path
+			setNodeName(obj, node.getName());
+			setNodePath(obj, node.getPath());
 		}
 		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
@@ -373,6 +394,11 @@ class Mapper {
 					}
 				}
 			}
+			
+			// update the object name and path
+			setNodeName(entity, node.getName());
+			setNodePath(entity, node.getPath());
+			
 		} else {
 			node = parentNode;
 		}
@@ -390,18 +416,18 @@ class Mapper {
 					name = jcrChildNode.name();
 				}
 				
-				// make sure that the field value is not null
-				if ( field.get(entity) != null ) {
-					if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
-						// we can expect more than one child object here
-						List children = (List)field.get(entity);
-						if ( !children.isEmpty() ) {
-							Node childContainer = node.addNode(PathUtils.createValidName(name));
-							for ( int i = 0; i < children.size(); i++ ) {
-								addNode(childContainer, children.get(i), ReflectionUtils.getParameterizedClass(field), null);
-							}
+				if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
+					// we can expect more than one child object here
+					Node childContainer = node.addNode(PathUtils.createValidName(name));
+					List children = (List)field.get(entity);
+					if ( children != null && !children.isEmpty() ) {
+						for ( int i = 0; i < children.size(); i++ ) {
+							addNode(childContainer, children.get(i), ReflectionUtils.getParameterizedClass(field), null);
 						}
-					} else {
+					}
+				} else {
+					// make sure that the field value is not null
+					if ( field.get(entity) != null ) {
 						Node childContainer = node.addNode(PathUtils.createValidName(name));
 						addNode(childContainer, field.get(entity), field.getType(), null);
 					}

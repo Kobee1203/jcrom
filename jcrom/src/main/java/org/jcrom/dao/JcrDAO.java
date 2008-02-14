@@ -48,20 +48,7 @@ public interface JcrDAO<T> {
 	 * @throws java.lang.Exception
 	 */
 	public String update( T entity ) throws Exception;
-	
-	/**
-	 * Updates an existing JCR Node with the values extracted
-	 * from the object supplied. Use this method if the entity name
-	 * has changed.
-	 * 
-	 * @param entity the object to be mapped to a JCR node
-	 * @param oldName the old name of the entity (this will be used to load the
-	 * node and move it to the new name)
-	 * @return
-	 * @throws java.lang.Exception
-	 */
-	public String update( T entity, String oldName ) throws Exception;
-	
+		
 	/**
 	 * Updates an existing JCR Node with the values extracted
 	 * from the object supplied.
@@ -77,55 +64,6 @@ public interface JcrDAO<T> {
 	 * @throws java.lang.Exception
 	 */
 	public String update( T entity, String childNameFilter, int maxDepth ) throws Exception;
-	
-	/**
-	 * Updates an existing JCR Node with the values extracted
-	 * from the object supplied. Use this method if the entity name
-	 * has changed.
-	 * 
-	 * @param entity the object to be mapped to a JCR node
-	 * @param oldName the old name of the entity (this will be used to load the
-	 * node and move it to the new name)
-	 * @param childNameFilter comma separated list of names of child nodes to 
-	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
-	 * makes it an exclusion filter)
-	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
-	 * child nodes are loaded, while a negative value means that no 
-	 * restrictions are set on the depth).
-	 * @return the name of the JCR Node that was updated
-	 * @throws java.lang.Exception
-	 */
-	public String update( T entity, String oldName, String childNameFilter, int maxDepth ) throws Exception;
-	
-	/**
-	 * Updates an existing JCR Node with the values extracted
-	 * from the object supplied. The node to update is loaded using the 
-	 * full path supplied (from a @JcrPath field).
-	 * 
-	 * @param entity the object to be mapped to a JCR node
-	 * @param path the full path of the node to update
-	 * @return the name of the node that was updated
-	 * @throws java.lang.Exception
-	 */
-	public String updateByPath( T entity, String path ) throws Exception;
-	
-	/**
-	 * Updates an existing JCR Node with the values extracted
-	 * from the object supplied. The node to update is loaded using the 
-	 * full path supplied (from a @JcrPath field).
-	 * 
-	 * @param entity the object to be mapped to a JCR node
-	 * @param path the full path of the node to update
-	 * @param childNameFilter comma separated list of names of child nodes to 
-	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
-	 * makes it an exclusion filter)
-	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
-	 * child nodes are loaded, while a negative value means that no 
-	 * restrictions are set on the depth).
-	 * @return the name of the node that was updated
-	 * @throws java.lang.Exception
-	 */
-	public String updateByPath( T entity, String path, String childNodeFilter, int maxDepth ) throws Exception;
 	
 	/**
 	 * Updates an existing JCR Node with the values extracted
@@ -156,15 +94,7 @@ public interface JcrDAO<T> {
 	 * @throws java.lang.Exception
 	 */
 	public String updateByUUID( T entity, String uuid, String childNameFilter, int maxDepth ) throws Exception;
-	
-	/**
-	 * Permanently delete the entity with the name supplied.
-	 * 
-	 * @param name the name of the entity
-	 * @throws java.lang.Exception
-	 */
-	public void delete( String name ) throws Exception;
-	
+		
 	/**
 	 * Permanently delete the entity with the path supplied 
 	 * (from a @JcrPath field).
@@ -172,7 +102,7 @@ public interface JcrDAO<T> {
 	 * @param path the full path of the entity
 	 * @throws java.lang.Exception
 	 */
-	public void deleteByPath( String path ) throws Exception;
+	public void delete( String path ) throws Exception;
 	
 	/**
 	 * Permanently delete the entity with the UUID supplied.
@@ -183,40 +113,14 @@ public interface JcrDAO<T> {
 	public void deleteByUUID( String uuid ) throws Exception;
 
 	/**
-	 * Check whether an entity with the name supplied exists in JCR.
+	 * Check whether an entity with the path supplied exists in JCR.
 	 * 
-	 * @param name the name of the entity
+	 * @param path the path of the entity
 	 * @return true if the entity exists, else false
 	 * @throws java.lang.Exception
 	 */
-	public boolean exists( String name ) throws Exception;
-	
-	/**
-	 * Get an entity from JCR.
-	 * 
-	 * @param name the name of the entity to be loaded
-	 * @return an object instance mapped from the JCR node with the name
-	 * supplied, or null if no such node was found
-	 * @throws java.lang.Exception
-	 */
-	public T get( String name ) throws Exception;
-	
-	/**
-	 * Get an entity from JCR.
-	 * 
-	 * @param name the name of the entity to be loaded
-	 * @param childNameFilter comma separated list of names of child nodes to 
-	 * load ("*" loads all, "none" loads no children, and "-" at the beginning
-	 * makes it an exclusion filter)
-	 * @param maxDepth the maximum depth of loaded child nodes (0 means no 
-	 * child nodes are loaded, while a negative value means that no 
-	 * restrictions are set on the depth).
-	 * @return an object instance mapped from the JCR node with the name
-	 * supplied, or null if no such node was found
-	 * @throws java.lang.Exception
-	 */
-	public T get( String name, String childNameFilter, int maxDepth ) throws Exception;
-	
+	public boolean exists( String path ) throws Exception;
+		
 	/**
 	 * Get an entity from JCR by path (from a @JcrPath field).
 	 * 
@@ -225,7 +129,7 @@ public interface JcrDAO<T> {
 	 * supplied, or null if no such node was found
 	 * @throws java.lang.Exception
 	 */
-	public T getByPath( String path ) throws Exception;
+	public T get( String path ) throws Exception;
 	
 	/**
 	 * Get an entity from JCR by path (from a @JcrPath field).
@@ -241,7 +145,7 @@ public interface JcrDAO<T> {
 	 * supplied, or null if no such node was found
 	 * @throws java.lang.Exception
 	 */
-	public T getByPath( String path, String childNodeFilter, int maxDepth ) throws Exception;
+	public T get( String path, String childNodeFilter, int maxDepth ) throws Exception;
 	
 	/**
 	 * Load an entity from JCR by UUID lookup.
@@ -261,38 +165,27 @@ public interface JcrDAO<T> {
 	 */
 	public T loadByUUID( String uuid, String childNodeFilter, int maxDepth ) throws Exception;
 	
-	
-	public List<T> getVersionList( String name ) throws Exception;
-	public List<T> getVersionList( String name, String childNameFilter, int maxDepth ) throws Exception;
-	public List<T> getVersionList( String name, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception;
-	
-	public List<T> getVersionListByPath( String path ) throws Exception;
-	public List<T> getVersionListByPath( String path, String childNameFilter, int maxDepth ) throws Exception;
-	public List<T> getVersionListByPath( String path, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception;
+	public List<T> getVersionList( String path ) throws Exception;
+	public List<T> getVersionList( String path, String childNameFilter, int maxDepth ) throws Exception;
+	public List<T> getVersionList( String path, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception;
 	
 	public List<T> getVersionListByUUID( String uuid ) throws Exception;
 	public List<T> getVersionListByUUID( String uuid, String childNameFilter, int maxDepth ) throws Exception;
 	public List<T> getVersionListByUUID( String uuid, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception;
 	
-	public long getVersionSize( String name ) throws Exception;
-	public long getVersionSizeByPath( String path ) throws Exception;
+	public long getVersionSize( String path ) throws Exception;
 	public long getVersionSizeByUUID( String uuid ) throws Exception;
 	
-	public T getVersion( String name, String versionName ) throws Exception;
-	public T getVersion( String name, String versionName, String childNodeFilter, int maxDepth ) throws Exception;
-	
-	public T getVersionByPath( String path, String versionName ) throws Exception;
-	public T getVersionByPath( String path, String versionName, String childNodeFilter, int maxDepth ) throws Exception;
+	public T getVersion( String path, String versionName ) throws Exception;
+	public T getVersion( String path, String versionName, String childNodeFilter, int maxDepth ) throws Exception;
 	
 	public T getVersionByUUID( String uuid, String versionName ) throws Exception;
 	public T getVersionByUUID( String uuid, String versionName, String childNodeFilter, int maxDepth ) throws Exception;
 	
-	public void restoreVersion( String name, String versionName ) throws Exception;
-	public void restoreVersionByPath( String path, String versionName ) throws Exception;
+	public void restoreVersion( String path, String versionName ) throws Exception;
 	public void restoreVersionByUUID( String uuid, String versionName ) throws Exception;
 	
-	public void removeVersion( String name, String versionName ) throws Exception;
-	public void removeVersionByPath( String path, String versionName ) throws Exception;
+	public void removeVersion( String path, String versionName ) throws Exception;
 	public void removeVersionByUUID( String uuid, String versionName ) throws Exception;
 	
 	/**
@@ -301,7 +194,7 @@ public interface JcrDAO<T> {
 	 * @return the size of the list returned by findAll()
 	 * @throws java.lang.Exception
 	 */
-	public long getSize() throws Exception;
+	public long getSize( String rootPath ) throws Exception;
 	
 	/**
 	 * Find all entities represented by this DAO.
@@ -309,7 +202,7 @@ public interface JcrDAO<T> {
 	 * @return all entities represented by this DAO
 	 * @throws java.lang.Exception
 	 */
-	public List<T> findAll() throws Exception;
+	public List<T> findAll( String rootPath ) throws Exception;
 	
 	/**
 	 * Find all entities represented by this DAO.
@@ -320,7 +213,7 @@ public interface JcrDAO<T> {
 	 * @return all entities represented by this DAO
 	 * @throws java.lang.Exception
 	 */
-	public List<T> findAll( long startIndex, long resultSize ) throws Exception;
+	public List<T> findAll( String rootPath, long startIndex, long resultSize ) throws Exception;
 	
 	/**
 	 * Find all entities represented by this DAO.
@@ -334,7 +227,7 @@ public interface JcrDAO<T> {
 	 * @return all entities represented by this DAO
 	 * @throws java.lang.Exception
 	 */
-	public List<T> findAll( String childNameFilter, int maxDepth ) throws Exception;
+	public List<T> findAll( String rootPath, String childNameFilter, int maxDepth ) throws Exception;
 	
 	/**
 	 * Find all entities represented by this DAO.
@@ -352,6 +245,6 @@ public interface JcrDAO<T> {
 	 * @return all entities represented by this DAO
 	 * @throws java.lang.Exception
 	 */
-	public List<T> findAll( String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception;
+	public List<T> findAll( String rootPath, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception;
 
 }

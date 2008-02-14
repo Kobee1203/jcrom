@@ -12,6 +12,6 @@ public class VersionedDAO extends AbstractJcrDAO<VersionedEntity> {
 	private static final String[] MIXIN_TYPES = {"mix:versionable"};
 	
 	public VersionedDAO( Session session, Jcrom jcrom ) {
-		super(VersionedEntity.class, "content/versionedEntities", session, jcrom, MIXIN_TYPES);
+		super(VersionedEntity.class, session, jcrom, MIXIN_TYPES);
 	}
 }

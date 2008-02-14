@@ -30,9 +30,6 @@ import javax.jcr.PropertyIterator;
 import javax.jcr.Repository;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
-import javax.jcr.version.VersionIterator;
 import org.apache.jackrabbit.core.TransientRepository;
 import org.junit.After;
 import org.junit.Before;
@@ -194,12 +191,13 @@ public class TestMapping {
 		jcrom.map(VersionedEntity.class);
 		
 		// create the root
-		session.getRootNode().addNode("content").addNode("versionedEntities");
+		Node rootNode = session.getRootNode().addNode("content").addNode("versionedEntities");
 		VersionedDAO versionedDao = new VersionedDAO(session, jcrom);
 		
 		VersionedEntity entity = new VersionedEntity();
 		entity.setTitle("MyEntity");
 		entity.setBody("First");
+		entity.setPath(rootNode.getPath());
 		
 		versionedDao.create(entity);
 		
@@ -207,29 +205,29 @@ public class TestMapping {
 		entity.setBody("Second");
 		versionedDao.update(entity);
 			
-		assertTrue(versionedDao.getVersionSize(entity.getName()) == 2);
+		assertTrue(versionedDao.getVersionSize(entity.getPath()) == 2);
 		
 		// load entity
-		VersionedEntity loadedEntity = versionedDao.get(entity.getName());
+		VersionedEntity loadedEntity = versionedDao.get(entity.getPath());
 		
 		assertTrue(loadedEntity.getBaseVersionName().equals("1.1"));
 		assertTrue(loadedEntity.getVersionName().equals("1.1"));
-		assertTrue(versionedDao.getVersionList(entity.getName()).size() == versionedDao.getVersionSize(entity.getName()));
+		assertTrue(versionedDao.getVersionList(entity.getPath()).size() == versionedDao.getVersionSize(entity.getPath()));
 				
 		// restore
-		versionedDao.restoreVersion(entity.getName(), "1.0");
+		versionedDao.restoreVersion(entity.getPath(), "1.0");
 		
-		loadedEntity = versionedDao.get(entity.getName());
+		loadedEntity = versionedDao.get(entity.getPath());
 		assertTrue(loadedEntity.getBaseVersionName().equals("1.0"));
 		
 		loadedEntity.setBody("Third");
 		versionedDao.update(loadedEntity);
 		
-		VersionedEntity oldEntity = versionedDao.getVersion(entity.getName(), "1.0");
+		VersionedEntity oldEntity = versionedDao.getVersion(entity.getPath(), "1.0");
 		assertTrue(oldEntity != null);
 		assertTrue(oldEntity.getBody().equals("First"));
 		
-		List<VersionedEntity> versions = versionedDao.getVersionList(entity.getName());
+		List<VersionedEntity> versions = versionedDao.getVersionList(entity.getPath());
 		for ( VersionedEntity version : versions ) {
 			System.out.println("Version [" + version.getVersionName() + "] [" + version.getBody() + "], base [" + version.getBaseVersionName() + "] [" + version.getBaseVersionCreated() + "]");
 		}
@@ -242,44 +240,43 @@ public class TestMapping {
 		jcrom.map(Parent.class);
 		
 		// create the root
-		session.getRootNode().addNode("content").addNode("parents");
+		Node rootNode = session.getRootNode().addNode("content").addNode("parents");
 		ParentDAO parentDao = new ParentDAO(session, jcrom);
 
 		Parent dad = createParent("John Bobs");
 		dad.setDrivingLicense(false);
+		dad.setPath(rootNode.getPath());
 		Parent mom = createParent("Jane");
-		assertFalse(parentDao.exists(dad.getName()));
+		mom.setPath(rootNode.getPath());
+		assertFalse(parentDao.exists(dad.getPath() + "/" + dad.getName()));
 
 		parentDao.create(dad);
 		parentDao.create(mom);
 
 		session.save();
 		
-		assertTrue(parentDao.exists(dad.getName()));
+		assertTrue(parentDao.exists(dad.getPath()));
 
-		Parent loadedParent = parentDao.get(dad.getName());
+		Parent loadedParent = parentDao.get(dad.getPath());
 		assertTrue(loadedParent.getNickName().equals(dad.getNickName()));
 		
 		Parent uuidParent = parentDao.loadByUUID(loadedParent.getUuid());
 		assertTrue(uuidParent.getNickName().equals(dad.getNickName()));
-		
-		Parent pathParent = parentDao.getByPath(loadedParent.getPath());
-		assertTrue(pathParent.getNickName().equals(dad.getNickName()));
 
-		Parent loadedMom = parentDao.get(mom.getName());
+		Parent loadedMom = parentDao.get(mom.getPath());
 		assertTrue(loadedMom.getNickName().equals(mom.getNickName()));
 		
-		List<Parent> parents = parentDao.findAll();
+		List<Parent> parents = parentDao.findAll(rootNode.getPath());
 		assertTrue(parents.size() == 2);
 
 		List<Parent> parentsWithLicense = parentDao.findByLicense();
 		assertTrue(parentsWithLicense.size() == 1);
 
-		parentDao.delete(dad.getName());
-		assertFalse(parentDao.exists(dad.getName()));
+		parentDao.delete(dad.getPath());
+		assertFalse(parentDao.exists(dad.getPath()));
 		
-		parentDao.deleteByPath(loadedMom.getPath());
-		assertFalse(parentDao.exists(mom.getName()));
+		parentDao.delete(loadedMom.getPath());
+		assertFalse(parentDao.exists(mom.getPath()));
 	}
 	
 	/*
