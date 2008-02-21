@@ -418,7 +418,7 @@ class Mapper {
 				
 				if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 					// we can expect more than one child object here
-					Node childContainer = node.addNode(PathUtils.createValidName(name));
+					Node childContainer = node.addNode(PathUtils.createValidName(name), jcrChildNode.containerNodeType());
 					List children = (List)field.get(entity);
 					if ( children != null && !children.isEmpty() ) {
 						for ( int i = 0; i < children.size(); i++ ) {
@@ -428,7 +428,7 @@ class Mapper {
 				} else {
 					// make sure that the field value is not null
 					if ( field.get(entity) != null ) {
-						Node childContainer = node.addNode(PathUtils.createValidName(name));
+						Node childContainer = node.addNode(PathUtils.createValidName(name), jcrChildNode.containerNodeType());
 						addNode(childContainer, field.get(entity), field.getType(), null);
 					}
 				}

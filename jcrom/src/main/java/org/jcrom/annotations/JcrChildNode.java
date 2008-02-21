@@ -44,4 +44,13 @@ public @interface JcrChildNode {
 	 * represents
 	 */
 	String name() default "fieldName";
+	
+	/**
+	 * The node type to be applied for the child container node.
+	 * Defaults to "nt:unstructured".
+	 * 
+	 * @return the node type to use when creating a container node for
+	 * the children
+	 */
+	String containerNodeType() default "nt:unstructured";
 }
