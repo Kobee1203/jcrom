@@ -17,6 +17,7 @@ package org.jcrom;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.jcr.Node;
@@ -40,7 +41,7 @@ public class Jcrom {
 	public Jcrom() {
 		this(true);
 	}
-	
+
 	/**
 	 * Create a new Jcrom instance.
 	 * 
@@ -48,8 +49,31 @@ public class Jcrom {
 	 * replace illegal characters and spaces automatically
 	 */
 	public Jcrom( boolean cleanNames ) {
+		this(cleanNames, new HashSet<Class>());
+	}
+
+	/**
+	 * Create a new Jcrom instance.
+	 * 
+	 * @param mappedClasses a set of classes to map by this instance
+	 */
+	public Jcrom( Set<Class> mappedClasses ) {
+		this(true, mappedClasses);
+	}
+	
+	/**
+	 * Create a new Jcrom instance.
+	 * 
+	 * @param cleanNames specifies whether to clean names of new nodes, that is,
+	 * replace illegal characters and spaces automatically
+	 * @param mappedClasses a set of classes to map by this instance
+	 */
+	public Jcrom( boolean cleanNames, Set<Class> mappedClasses ) {
 		this.cleanNames = cleanNames;
 		this.mappers = Collections.synchronizedMap(new HashMap<Class, Mapper>());
+		for ( Class c : mappedClasses ) {
+			map(c);
+		}
 	}
 	
 	/**
