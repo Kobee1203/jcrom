@@ -62,17 +62,28 @@ class Mapper {
 	/** The Class that this instance maps to/from */
 	private final Class entityClass;
 	
+	private final boolean cleanNames;
+	
 	/**
 	 * Create a Mapper for a specific class.
 	 * 
 	 * @param entityClass the class that we will me mapping to/from
 	 */
-	Mapper( Class entityClass ) {
+	Mapper( Class entityClass, boolean cleanNames ) {
 		this.entityClass = entityClass;
+		this.cleanNames = cleanNames;
 	}
 	
 	Class getEntityClass() {
 		return entityClass;
+	}
+	
+	private String getCleanName( String name ) {
+		if ( cleanNames ) {
+			return PathUtils.createValidName(name);
+		} else {
+			return name;
+		}
 	}
 	
 	private Field findAnnotatedField( Object obj, Class annotationClass ) {
@@ -146,7 +157,7 @@ class Mapper {
 	private Object findEntityByName( List entities, String name ) throws Exception {
 		for ( int i = 0; i < entities.size(); i++ ) {
 			Object entity = (Object) entities.get(i);
-			if ( PathUtils.createValidName(getNodeName(entity)).equals(name) ) {
+			if ( getCleanName(getNodeName(entity)).equals(name) ) {
 				return entity;
 			}
 		}
@@ -156,8 +167,8 @@ class Mapper {
 	private String updateNode( Node node, Object obj, Class objClass, NameFilter childNameFilter, int maxDepth, int depth ) throws Exception {
 		
 		// if name is different, then we move the node
-		if ( !node.getName().equals(PathUtils.createValidName(getNodeName(obj))) ) {
-			node.getSession().move(node.getPath(), node.getParent().getPath() + "/" + PathUtils.createValidName(getNodeName(obj)));
+		if ( !node.getName().equals(getCleanName(getNodeName(obj))) ) {
+			node.getSession().move(node.getPath(), node.getParent().getPath() + "/" + getCleanName(getNodeName(obj)));
 			
 			// update the object name and path
 			setNodeName(obj, node.getName());
@@ -203,13 +214,13 @@ class Mapper {
 								// we must add new children, if any
 								for ( int i = 0; i < children.size(); i++ ) {
 									Object child = children.get(i);
-									if ( !childContainer.hasNode(PathUtils.createValidName(getNodeName(child))) ) {
+									if ( !childContainer.hasNode(getCleanName(getNodeName(child))) ) {
 										addNode(childContainer, child, paramClass, null);
 									}
 								}
 							} else {
 								// no children exist, we add
-								Node childContainer = node.addNode(PathUtils.createValidName(name));
+								Node childContainer = node.addNode(getCleanName(name));
 								for ( int i = 0; i < children.size(); i++ ) {
 									addNode(childContainer, children.get(i), paramClass, null);
 								}
@@ -226,7 +237,7 @@ class Mapper {
 						if ( !node.hasNode(name) ) {
 							if ( field.get(obj) != null ) {
 								// add the node if it does not exist
-								Node childContainer = node.addNode(PathUtils.createValidName(name));
+								Node childContainer = node.addNode(getCleanName(name));
 								addNode(childContainer, field.get(obj), field.getType(), null);
 							}
 						} else {
@@ -277,7 +288,7 @@ class Mapper {
 								// we must add new children, if any
 								for ( int i = 0; i < children.size(); i++ ) {
 									Object child = children.get(i);
-									if ( !childContainer.hasNode(PathUtils.createValidName(getNodeName(child))) ) {
+									if ( !childContainer.hasNode(getCleanName(getNodeName(child))) ) {
 										addNode(childContainer, child, paramClass, null);
 									}
 								}
@@ -349,11 +360,11 @@ class Mapper {
 	
 	private Node createFileFolderNode( JcrNode jcrNode, String nodeName, Node parentNode ) throws Exception {
 		if ( jcrNode != null && jcrNode.nodeType().equals("nt:unstructured") ) {
-			return parentNode.addNode(PathUtils.createValidName(nodeName));
+			return parentNode.addNode(getCleanName(nodeName));
 		} else {
 			// assume it is an nt:file or extension of that, 
 			// so we create an nt:folder
-			return parentNode.addNode(PathUtils.createValidName(nodeName), "nt:folder");
+			return parentNode.addNode(getCleanName(nodeName), "nt:folder");
 		}
 	}
 	
@@ -382,9 +393,9 @@ class Mapper {
 			// check if we should use a specific node type
 			JcrNode jcrNode = getJcrNodeAnnotation(objClass);
 			if ( jcrNode == null || jcrNode.nodeType().equals("nt:unstructured") ) {
-				node = parentNode.addNode(PathUtils.createValidName(getNodeName(entity)));
+				node = parentNode.addNode(getCleanName(getNodeName(entity)));
 			} else {
-				node = parentNode.addNode(PathUtils.createValidName(getNodeName(entity)), jcrNode.nodeType());
+				node = parentNode.addNode(getCleanName(getNodeName(entity)), jcrNode.nodeType());
 			}
 			// add the mixin types
 			if ( mixinTypes != null ) {
@@ -418,7 +429,7 @@ class Mapper {
 				
 				if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 					// we can expect more than one child object here
-					Node childContainer = node.addNode(PathUtils.createValidName(name), jcrChildNode.containerNodeType());
+					Node childContainer = node.addNode(getCleanName(name), jcrChildNode.containerNodeType());
 					List children = (List)field.get(entity);
 					if ( children != null && !children.isEmpty() ) {
 						for ( int i = 0; i < children.size(); i++ ) {
@@ -428,7 +439,7 @@ class Mapper {
 				} else {
 					// make sure that the field value is not null
 					if ( field.get(entity) != null ) {
-						Node childContainer = node.addNode(PathUtils.createValidName(name), jcrChildNode.containerNodeType());
+						Node childContainer = node.addNode(getCleanName(name), jcrChildNode.containerNodeType());
 						addNode(childContainer, field.get(entity), field.getType(), null);
 					}
 				}
@@ -473,9 +484,9 @@ class Mapper {
 	private <T extends JcrFile> void addFileNode( JcrNode jcrNode, Node parentNode, T file ) throws Exception {
 		Node fileNode = null;
 		if ( jcrNode == null || jcrNode.nodeType().equals("nt:unstructured") ) {
-			fileNode = parentNode.addNode(PathUtils.createValidName(file.getName()));
+			fileNode = parentNode.addNode(getCleanName(file.getName()));
 		} else {
-			fileNode = parentNode.addNode(PathUtils.createValidName(file.getName()), jcrNode.nodeType());
+			fileNode = parentNode.addNode(getCleanName(file.getName()), jcrNode.nodeType());
 		}
 		Node contentNode = fileNode.addNode("jcr:content", "nt:resource");
 		setFileNodeProperties(contentNode, file);

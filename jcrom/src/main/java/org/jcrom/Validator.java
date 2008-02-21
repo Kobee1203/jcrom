@@ -55,13 +55,13 @@ class Validator {
 	 * @return a Set of the input class and referenced classes, validated
 	 * and ready for mapping
 	 */
-	static Map<Class,Mapper> validate( Class c ) {
+	static Map<Class,Mapper> validate( Class c, boolean cleanNames ) {
 		Map<Class,Mapper> validClasses = new HashMap<Class,Mapper>();
-		validateInternal(c, validClasses);
+		validateInternal(c, validClasses, cleanNames);
 		return validClasses;
 	}
 	
-	private static void validateInternal( Class c, Map<Class,Mapper> validClasses ) {
+	private static void validateInternal( Class c, Map<Class,Mapper> validClasses, boolean cleanNames ) {
 		if ( validClasses.keySet().contains(c) ) {
 			return;
 		}
@@ -69,12 +69,12 @@ class Validator {
 			logger.debug("Processing class: " + c.getName());
 		}
 		
-		validClasses.put(c, new Mapper(c));
-		validateFields(c, ReflectionUtils.getDeclaredAndInheritedFields(c), validClasses);
+		validClasses.put(c, new Mapper(c, cleanNames));
+		validateFields(c, ReflectionUtils.getDeclaredAndInheritedFields(c), validClasses, cleanNames);
 	}
 	
 	
-	private static void validateFields( Class c, Field[] fields, Map<Class,Mapper> validClasses ) {
+	private static void validateFields( Class c, Field[] fields, Map<Class,Mapper> validClasses, boolean cleanNames ) {
 		boolean foundNameField = false;
 		boolean foundPathField = false;
 		for ( Field field : fields ) {
@@ -146,14 +146,14 @@ class Validator {
 				
 			} else if ( field.isAnnotationPresent(JcrParentNode.class) ) {
 				// make sure that the parent node type is a valid JCR class
-				validateInternal(field.getType(), validClasses);
+				validateInternal(field.getType(), validClasses, cleanNames);
 				
 			} else if ( field.isAnnotationPresent(JcrChildNode.class) ) {
 				// make sure that the child node type are valid JCR classes
 				if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
-					validateInternal(ReflectionUtils.getParameterizedClass(field), validClasses);
+					validateInternal(ReflectionUtils.getParameterizedClass(field), validClasses, cleanNames);
 				} else { 
-					validateInternal(field.getType(), validClasses);
+					validateInternal(field.getType(), validClasses, cleanNames);
 				}
 				
 			} else if ( field.isAnnotationPresent(JcrFileNode.class) ) {

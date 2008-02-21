@@ -32,9 +32,24 @@ import javax.jcr.Node;
 public class Jcrom {
 
 	private final Map<Class, Mapper> mappers;
+	private final boolean cleanNames;
 	
+	/**
+	 * Create a new Jcrom instance that cleans node names.
+	 */
 	public Jcrom() {
-		mappers = Collections.synchronizedMap(new HashMap<Class, Mapper>());
+		this(true);
+	}
+	
+	/**
+	 * Create a new Jcrom instance.
+	 * 
+	 * @param cleanNames specifies whether to clean names of new nodes, that is,
+	 * replace illegal characters and spaces automatically
+	 */
+	public Jcrom( boolean cleanNames ) {
+		this.cleanNames = cleanNames;
+		this.mappers = Collections.synchronizedMap(new HashMap<Class, Mapper>());
 	}
 	
 	/**
@@ -47,7 +62,7 @@ public class Jcrom {
 	 */
 	public Jcrom map( Class entityClass ) {
 		if ( !isMapped(entityClass) ) {
-			Map<Class,Mapper> validMappers = Validator.validate(entityClass);
+			Map<Class,Mapper> validMappers = Validator.validate(entityClass, cleanNames);
 			mappers.putAll(validMappers);
 		}
 		return this;
