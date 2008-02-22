@@ -129,10 +129,10 @@ class Mapper {
 		findPathField(object).set(object, path);
 	}
 	
-	private void setUUID( Object object, String path ) throws Exception {
+	private void setUUID( Object object, String uuid ) throws Exception {
 		Field uuidField = findUUIDField(object);
 		if ( uuidField != null ) {
-			uuidField.set(object, path);
+			uuidField.set(object, uuid);
 		}
 	}
 
@@ -729,16 +729,21 @@ class Mapper {
 					}
 				}
 				
-			} else if ( field.isAnnotationPresent(JcrReference.class)
-					&& ( maxDepth < 0 || depth < maxDepth ) ) {
+			} else if ( field.isAnnotationPresent(JcrReference.class) ) {
 				JcrReference jcrReference = field.getAnnotation(JcrReference.class);
 				String name = field.getName();
 				if ( !jcrReference.name().equals("fieldName") ) {
 					name = jcrReference.name();
 				}
-				if ( node.hasProperty(name) && nameFilter.isIncluded(name) ) {
+				if ( node.hasProperty(name) ) {
 					Object referencedObject = field.getType().newInstance();
-					mapNodeToClass(referencedObject, field.getType(), node.getProperty(name).getNode(), nameFilter, maxDepth, obj, depth+1);
+					if ( nameFilter.isIncluded(name) && ( maxDepth < 0 || depth < maxDepth ) ) {
+						// load the object
+						mapNodeToClass(referencedObject, field.getType(), node.getProperty(name).getNode(), nameFilter, maxDepth, obj, depth+1);
+					} else {
+						// just load the UUID
+						setUUID(obj, node.getProperty(name).getString());
+					}
 					field.set(obj, referencedObject);
 				}
 				
