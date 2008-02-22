@@ -28,6 +28,7 @@ import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrParentNode;
 import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
+import org.jcrom.annotations.JcrReference;
 import org.jcrom.annotations.JcrUUID;
 import org.jcrom.annotations.JcrVersionCreated;
 import org.jcrom.annotations.JcrVersionName;
@@ -167,6 +168,20 @@ class Validator {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrFileNode is of type that does not extend JcrFile: " + field.getType().getName());
 					}
 				}
+				
+			} else if ( field.isAnnotationPresent(JcrReference.class) ) {
+				// make sure the class has a @JcrUUID
+				boolean foundUUID = false;
+				for ( Field refField : ReflectionUtils.getDeclaredAndInheritedFields(field.getType()) ) {
+					if ( refField.isAnnotationPresent(JcrUUID.class) ) {
+						foundUUID = true;
+					}
+				}
+				if ( !foundUUID ) {
+					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is of type that has no @JcrUUID: " + field.getType().getName());
+				}
+				// validate the class
+				validateInternal(field.getType(), validClasses, cleanNames);
 			}
 		}
 		if ( !foundNameField ) {

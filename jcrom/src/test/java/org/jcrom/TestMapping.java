@@ -183,6 +183,35 @@ public class TestMapping {
 		Jcrom jcrom = new Jcrom();
 		jcrom.map(InvalidEntity.class);
 	}
+	
+	@Test
+	public void references() throws Exception {
+		
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(Parent.class);
+		
+		// create the entity we will reference
+		ReferencedEntity reference = new ReferencedEntity();
+		reference.setName("myReference");
+		reference.setBody("myBody");
+		
+		String[] mixinTypes = {"mix:referenceable"};
+		
+		Node rootNode = session.getRootNode().addNode("referenceTest");
+		Node referenceNode = jcrom.addNode(rootNode, reference, mixinTypes);
+		session.save();
+		
+		Parent parent = createParent("Bobby");
+		parent.setReference(reference);
+		
+		Node parentNode = jcrom.addNode(rootNode, parent, mixinTypes);
+		
+		Parent fromNode = jcrom.fromNode(Parent.class, parentNode);
+		
+		assertTrue(fromNode.getReference() != null);
+		assertTrue(fromNode.getReference().getName().equals(reference.getName()));
+		assertTrue(fromNode.getReference().getBody().equals(reference.getBody()));
+	}
 
 	@Test
 	public void versioningDAO() throws Exception {

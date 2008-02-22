@@ -44,6 +44,7 @@ import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrParentNode;
 import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
+import org.jcrom.annotations.JcrReference;
 import org.jcrom.annotations.JcrUUID;
 import org.jcrom.annotations.JcrVersionCreated;
 import org.jcrom.annotations.JcrVersionName;
@@ -104,6 +105,10 @@ class Mapper {
 		return findAnnotatedField(obj, JcrName.class);
 	}
 	
+	private Field findUUIDField( Object obj ) {
+		return findAnnotatedField(obj, JcrUUID.class);
+	}
+	
 	String getNodeName( Object object ) throws Exception {
 		return (String) findNameField(object).get(object);
 	}
@@ -112,12 +117,23 @@ class Mapper {
 		return (String) findPathField(object).get(object);
 	}
 	
+	String getNodeUUID( Object object ) throws Exception {
+		return (String) findUUIDField(object).get(object);
+	}
+	
 	private void setNodeName( Object object, String name ) throws Exception {
 		findNameField(object).set(object, name);
 	}
 	
 	private void setNodePath( Object object, String path ) throws Exception {
 		findPathField(object).set(object, path);
+	}
+	
+	private void setUUID( Object object, String path ) throws Exception {
+		Field uuidField = findUUIDField(object);
+		if ( uuidField != null ) {
+			uuidField.set(object, path);
+		}
 	}
 
 	/**
@@ -183,6 +199,9 @@ class Mapper {
 				
 			} else if ( field.isAnnotationPresent(JcrChildNode.class) 
 					&& ( maxDepth < 0 || depth < maxDepth ) ) {
+				//
+				// CHILD NODES
+				//
 				JcrChildNode jcrChildNode = field.getAnnotation(JcrChildNode.class);
 				String name = field.getName();
 				if ( !jcrChildNode.name().equals("fieldName") ) {
@@ -254,9 +273,48 @@ class Mapper {
 					}
 				}
 				
+			} else if ( field.isAnnotationPresent(JcrReference.class) ) {
+				//
+				// REFERENCES
+				//
+				JcrReference jcrReference = field.getAnnotation(JcrReference.class);
+				String name = field.getName();
+				if ( !jcrReference.name().equals("fieldName") ) {
+					name = jcrReference.name();
+				}
+				
+				// make sure that the reference should be updated
+				if ( childNameFilter.isIncluded(name) ) {
+					if ( !node.hasProperty(name) ) {
+						Object referencedObject = field.get(obj);
+						String referencedUUID = referencedObject == null ? null : getNodeUUID(referencedObject);
+						if ( referencedObject != null && referencedUUID != null && !referencedUUID.equals("") ) {
+							// load the node and add a reference
+							Node referencedNode = node.getSession().getNodeByUUID(referencedUUID);
+							node.setProperty(name, referencedNode);
+						}
+					} else {
+						// this reference already exists
+						Object referencedObject = field.get(obj);
+						String referencedUUID = referencedObject == null ? null : getNodeUUID(referencedObject);
+						if ( referencedObject != null && referencedUUID != null && !referencedUUID.equals("") ) {
+							// update the reference, but only if it changed
+							if ( !node.getProperty(name).getString().equals(referencedUUID) ) {
+								Node referencedNode = node.getSession().getNodeByUUID(referencedUUID);
+								node.setProperty(name, referencedNode);
+							}
+						} else {
+							// remove the reference
+							node.setProperty(name, (Value)null);
+						}
+					}
+				}
+				
 			} else if ( field.isAnnotationPresent(JcrFileNode.class) 
 					&& ( maxDepth < 0 || depth < maxDepth ) ) {
-				
+				//
+				// FILE NODES
+				//
 				JcrFileNode jcrFileNode = field.getAnnotation(JcrFileNode.class);
 				String name = field.getName();
 				if ( !jcrFileNode.name().equals("fieldName") ) {
@@ -409,6 +467,9 @@ class Mapper {
 			// update the object name and path
 			setNodeName(entity, node.getName());
 			setNodePath(entity, node.getPath());
+			if ( node.hasProperty("jcr:uuid") ) {
+				setUUID(entity, node.getUUID());
+			}
 			
 		} else {
 			node = parentNode;
@@ -444,6 +505,23 @@ class Mapper {
 					}
 				}
 				
+			} else if ( field.isAnnotationPresent(JcrReference.class) ) {
+				JcrReference jcrReference = field.getAnnotation(JcrReference.class);
+				String name = field.getName();
+				if ( !jcrReference.name().equals("fieldName") ) {
+					name = jcrReference.name();
+				}
+				// extract the UUID from the object, load the node, and
+				// add a reference to it
+				Object referenceObject = field.get(entity);
+				if ( referenceObject != null ) {
+					String referenceUUID = getNodeUUID(referenceObject);
+					if ( referenceUUID != null && !referenceUUID.equals("") ) {
+						Node referencedNode = node.getSession().getNodeByUUID(referenceUUID);
+						node.setProperty(name, referencedNode);
+					}
+				}
+			
 			} else if ( field.isAnnotationPresent(JcrFileNode.class) ) {
 				JcrFileNode jcrFileNode = field.getAnnotation(JcrFileNode.class);
 				String name = field.getName();
@@ -649,6 +727,19 @@ class Mapper {
 						mapNodeToClass(childObj, field.getType(), childrenContainer.getNodes().nextNode(), nameFilter, maxDepth, obj, depth+1);
 						field.set(obj, childObj);
 					}
+				}
+				
+			} else if ( field.isAnnotationPresent(JcrReference.class)
+					&& ( maxDepth < 0 || depth < maxDepth ) ) {
+				JcrReference jcrReference = field.getAnnotation(JcrReference.class);
+				String name = field.getName();
+				if ( !jcrReference.name().equals("fieldName") ) {
+					name = jcrReference.name();
+				}
+				if ( node.hasProperty(name) && nameFilter.isIncluded(name) ) {
+					Object referencedObject = field.getType().newInstance();
+					mapNodeToClass(referencedObject, field.getType(), node.getProperty(name).getNode(), nameFilter, maxDepth, obj, depth+1);
+					field.set(obj, referencedObject);
 				}
 				
 			} else if ( field.isAnnotationPresent(JcrFileNode.class) 
