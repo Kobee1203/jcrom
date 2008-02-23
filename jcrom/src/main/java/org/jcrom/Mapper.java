@@ -209,7 +209,7 @@ class Mapper {
 				}
 				
 				// make sure that this child is supposed to be updated
-				if ( childNameFilter.isIncluded(name) ) {
+				if ( childNameFilter.isIncluded(field.getName()) ) {
 					if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 						// can expect multiple children
 						boolean nullOrEmpty = field.get(obj) == null || ((List)field.get(obj)).isEmpty();
@@ -284,7 +284,7 @@ class Mapper {
 				}
 				
 				// make sure that the reference should be updated
-				if ( childNameFilter.isIncluded(name) ) {
+				if ( childNameFilter.isIncluded(field.getName()) ) {
 					if ( !node.hasProperty(name) ) {
 						Object referencedObject = field.get(obj);
 						String referencedUUID = referencedObject == null ? null : getNodeUUID(referencedObject);
@@ -322,7 +322,7 @@ class Mapper {
 				}
 				
 				// make sure that this child is supposed to be updated
-				if ( childNameFilter.isIncluded(name) ) {
+				if ( childNameFilter.isIncluded(field.getName()) ) {
 					if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 						// can expect multiple children
 						boolean nullOrEmpty = field.get(obj) == null || ((List)field.get(obj)).isEmpty();
@@ -704,7 +704,7 @@ class Mapper {
 					name = jcrChildNode.name();
 				}
 				
-				if ( node.hasNode(name) && nameFilter.isIncluded(name) ) {
+				if ( node.hasNode(name) && nameFilter.isIncluded(field.getName()) ) {
 					// child nodes are always stored inside a container node
 					Node childrenContainer = node.getNode(name);
 					if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
@@ -737,7 +737,7 @@ class Mapper {
 				}
 				if ( node.hasProperty(name) ) {
 					Object referencedObject = field.getType().newInstance();
-					if ( nameFilter.isIncluded(name) && ( maxDepth < 0 || depth < maxDepth ) ) {
+					if ( nameFilter.isIncluded(field.getName()) && ( maxDepth < 0 || depth < maxDepth ) ) {
 						// load the object
 						mapNodeToClass(referencedObject, field.getType(), node.getProperty(name).getNode(), nameFilter, maxDepth, obj, depth+1);
 					} else {
@@ -755,7 +755,7 @@ class Mapper {
 					name = jcrFileNode.name();
 				}
 				
-				if ( node.hasNode(name) && nameFilter.isIncluded(name) ) {
+				if ( node.hasNode(name) && nameFilter.isIncluded(field.getName()) ) {
 					// file nodes are always stored inside a folder node
 					Node fileContainer = node.getNode(name);
 					if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
