@@ -16,7 +16,9 @@
 package org.jcrom.util;
 
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
@@ -100,14 +102,29 @@ public class ReflectionUtils {
 	 * @return true if the class represents a valid JCR property type
 	 */
 	public static boolean isPropertyType( Class type ) {
-		return type == String.class
-				|| type == Date.class || type == Calendar.class || type == Timestamp.class
-				|| type == InputStream.class || (type.isArray() && type.getComponentType() == byte.class)
-				|| type == Integer.class || type == int.class
-				|| type == Long.class || type == long.class
-				|| type == Double.class || type == double.class
-				|| type == Boolean.class || type == boolean.class
+		return isValidMapValueType(type) 
+				|| type == InputStream.class || isArrayOfType(type, byte.class)
 				;
+	}
+	
+	public static boolean isValidMapValueType( Class type ) {
+		return type == String.class || isArrayOfType(type, String.class)
+				|| type == Date.class || isArrayOfType(type, Date.class)
+				|| type == Calendar.class || isArrayOfType(type, Calendar.class)
+				|| type == Timestamp.class || isArrayOfType(type, Timestamp.class)
+				|| type == Integer.class || isArrayOfType(type, Integer.class)
+				|| type == int.class || isArrayOfType(type, int.class)
+				|| type == Long.class || isArrayOfType(type, Long.class)
+				|| type == long.class || isArrayOfType(type, long.class)
+				|| type == Double.class || isArrayOfType(type, Double.class)
+				|| type == double.class || isArrayOfType(type, double.class)
+				|| type == Boolean.class || isArrayOfType(type, Boolean.class)
+				|| type == boolean.class || isArrayOfType(type, boolean.class)
+				;
+	}
+	
+	private static boolean isArrayOfType( Class c, Class type ) {
+		return c.isArray() && c.getComponentType() == type;
 	}
 	
 	public static boolean isDateType( Class type ) {
@@ -122,9 +139,28 @@ public class ReflectionUtils {
 	 * not parameterized
 	 */
 	public static Class getParameterizedClass( Field field ) {
+		return getParameterizedClass(field, 0);
+	}
+
+	/**
+	 * Get the class that parameterizes the Field supplied, at the index
+	 * supplied (field can be parameterized with multiple param classes).
+	 * 
+	 * @param field the field
+	 * @param index the index of the parameterizing class
+	 * @return the class that parameterizes the field, or null if field is
+	 * not parameterized
+	 */
+	public static Class getParameterizedClass( Field field, int index ) {
 		if ( field.getGenericType() instanceof ParameterizedType ) {
 			ParameterizedType ptype = (ParameterizedType) field.getGenericType();
-			return (Class) ptype.getActualTypeArguments()[0];
+			Type paramType = ptype.getActualTypeArguments()[index];
+			if ( paramType instanceof GenericArrayType ) {
+				Class arrayType = (Class) ((GenericArrayType)paramType).getGenericComponentType();
+				return Array.newInstance(arrayType, 0).getClass();
+			} else {
+				return (Class) paramType;
+			}
 		}
 		return null;
 	}

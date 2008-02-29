@@ -19,16 +19,20 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
@@ -249,6 +253,23 @@ class Mapper {
 							NodeIterator nodeIterator = node.getNodes(name);
 							while ( nodeIterator.hasNext() ) {
 								nodeIterator.nextNode().remove();
+							}
+						}
+						
+					} else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
+						// this is a Map child, where we map the key/value pairs as properties
+						Map<String,Object> map = (Map<String,Object>)field.get(obj);
+						boolean nullOrEmpty = map == null || map.isEmpty();
+						// remove the child node
+						NodeIterator nodeIterator = node.getNodes(name);
+						while ( nodeIterator.hasNext() ) {
+							nodeIterator.nextNode().remove();
+						}
+						// add the map as a child node
+						if ( !nullOrEmpty ) {
+							Node childContainer = node.addNode(getCleanName(name));
+							for ( String key : map.keySet() ) {
+								mapToProperty(key, ReflectionUtils.getParameterizedClass(field, 1), null, map.get(key), childContainer);
 							}
 						}
 					} else {
@@ -497,6 +518,24 @@ class Mapper {
 							addNode(childContainer, children.get(i), ReflectionUtils.getParameterizedClass(field), null);
 						}
 					}
+					
+				} else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
+					// this is a Map child, where we map the key/value pairs as properties
+					Map<String,Object> map = (Map<String,Object>)field.get(entity);
+					boolean nullOrEmpty = map == null || map.isEmpty();
+					// remove the child node
+					NodeIterator nodeIterator = node.getNodes(name);
+					while ( nodeIterator.hasNext() ) {
+						nodeIterator.nextNode().remove();
+					}
+					// add the map as a child node
+					if ( !nullOrEmpty ) {
+						Node childContainer = node.addNode(getCleanName(name));
+						for ( String key : map.keySet() ) {
+							mapToProperty(key, ReflectionUtils.getParameterizedClass(field, 1), null, map.get(key), childContainer);
+						}
+					}
+						
 				} else {
 					// make sure that the field value is not null
 					if ( field.get(entity) != null ) {
@@ -599,33 +638,78 @@ class Mapper {
 			name = jcrProperty.name();
 		}
 		
+		Class paramClass = ReflectionUtils.implementsInterface(field.getType(), List.class) ? ReflectionUtils.getParameterizedClass(field) : null;
+		mapToProperty(name, field.getType(), paramClass, field.get(obj), node);
+	}
+	
+	private void mapToProperty( String propertyName, Class type, Class paramClass, Object propertyValue, Node node ) throws Exception {
+		
 		// make sure that the field value is not null
-		if ( field.get(obj) != null ) {
+		if ( propertyValue != null ) {
 		
 			ValueFactory valueFactory = node.getSession().getValueFactory();
 
-			if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
-				// multi-value property
-				Class paramClass = ReflectionUtils.getParameterizedClass(field);
-				List fieldValues = (List)field.get(obj);
+			if ( ReflectionUtils.implementsInterface(type, List.class) ) {
+				// multi-value property List
+				List fieldValues = (List)propertyValue;
 				if ( !fieldValues.isEmpty() ) {
 					Value[] values = new Value[fieldValues.size()];
 					for ( int i = 0; i < fieldValues.size(); i++ ) {
 						values[i] = createValue(paramClass, fieldValues.get(i), valueFactory);
 					}
-					node.setProperty(name, values);
+					node.setProperty(propertyName, values);
+				}
+				
+			} else if ( type.isArray() ) {
+				// multi-value property array
+				if ( propertyValue != null ) {
+					Value[] values = null;
+					if ( type.getComponentType() == int.class ) {
+						int[] ints = (int[]) propertyValue;
+						values = new Value[ints.length];
+						for ( int i = 0; i < ints.length; i++ ) {
+							values[i] = createValue(int.class, ints[i], valueFactory);
+						}
+					} else if ( type.getComponentType() == long.class ) {
+						long[] longs = (long[]) propertyValue;
+						values = new Value[longs.length];
+						for ( int i = 0; i < longs.length; i++ ) {
+							values[i] = createValue(long.class, longs[i], valueFactory);
+						}
+					} else if ( type.getComponentType() == double.class ) {
+						double[] doubles = (double[]) propertyValue;
+						values = new Value[doubles.length];
+						for ( int i = 0; i < doubles.length; i++ ) {
+							values[i] = createValue(double.class, doubles[i], valueFactory);
+						}
+					} else if ( type.getComponentType() == boolean.class ) {
+						boolean[] booleans = (boolean[]) propertyValue;
+						values = new Value[booleans.length];
+						for ( int i = 0; i < booleans.length; i++ ) {
+							values[i] = createValue(boolean.class, booleans[i], valueFactory);
+						}
+					} else {
+						// Object
+						Object[] objects = (Object[]) propertyValue;
+						values = new Value[objects.length];
+						for ( int i = 0; i < objects.length; i++ ) {
+							values[i] = createValue(type.getComponentType(), objects[i], valueFactory);
+						}
+						
+					}
+					node.setProperty(propertyName, values);
 				}
 
 			} else {
 				// single-value property
-				Value value = createValue(field.getType(), field.get(obj), valueFactory);
+				Value value = createValue(type, propertyValue, valueFactory);
 				if ( value != null ) {
-					node.setProperty(name, value);
+					node.setProperty(propertyName, value);
 				}
 			}
 		} else {
 			// remove the value
-			node.setProperty(name, (Value)null);
+			node.setProperty(propertyName, (Value)null);
 		}
 	}
 	
@@ -721,6 +805,12 @@ class Mapper {
 						}
 						field.set(obj, children);
 						
+					} else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
+						// map of properties
+						Class valueType = ReflectionUtils.getParameterizedClass(field, 1);
+						PropertyIterator propIterator = childrenContainer.getProperties();
+						mapPropertiesToMap(obj, field, valueType, propIterator);
+						
 					} else {
 						// instantiate the field class
 						Object childObj = field.getType().newInstance();
@@ -811,6 +901,36 @@ class Mapper {
 		mapNodeToClass(fileObj, fileObj.getClass(), fileNode, nameFilter, maxDepth, parentObject, depth+1);
 	}
 	
+	private void mapPropertiesToMap( Object obj, Field field, Class valueType, PropertyIterator propIterator ) throws Exception {
+		Map<String,Object> map = new HashMap<String,Object>();
+		while ( propIterator.hasNext() ) {
+			Property p = propIterator.nextProperty();
+			// we ignore the read-only properties added by the repository
+			if ( !p.getName().startsWith("jcr:") && !p.getName().startsWith("nt:") ) {
+				if ( valueType.isArray() ) {
+					if ( p.getDefinition().isMultiple() ) {
+						map.put(p.getName(), valuesToArray(valueType.getComponentType(), p.getValues()));
+					} else {
+						Value[] values = new Value[1];
+						values[0] = p.getValue();
+						map.put(p.getName(), valuesToArray(valueType.getComponentType(), values));
+					}
+				} else {
+					map.put(p.getName(), getValue(valueType, p.getValue()));
+				}
+			}
+		}
+		field.set(obj, map);
+	}
+	
+	private Object[] valuesToArray( Class type, Value[] values ) throws Exception {
+		Object[] arr = (Object[])Array.newInstance(type, values.length);
+		for ( int i = 0; i < values.length; i++ ) {
+			arr[i] = (Object) getValue(type, values[i]);
+		}
+		return arr;
+	}
+	
 	private void mapPropertyToField( Object obj, Field field, Node node ) throws Exception {
 		JcrProperty jcrProperty = field.getAnnotation(JcrProperty.class);
 		String name = field.getName();
@@ -821,13 +941,46 @@ class Mapper {
 			Property p = node.getProperty(name);
 			
 			if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
-				// multi-value property
+				// multi-value property (List)
 				List properties = new ArrayList();
-				ParameterizedType ptype = (ParameterizedType) field.getGenericType();
+				Class paramClass = ReflectionUtils.getParameterizedClass(field);
 				for ( Value value : p.getValues() ) {
-					properties.add(getValue((Class)ptype.getActualTypeArguments()[0], value));
+					properties.add(getValue(paramClass, value));
 				}
 				field.set(obj, properties);
+			
+			} else if ( field.getType().isArray() ) {
+				// multi-value property (array)
+				Value[] values = p.getValues();
+				if ( field.getType().getComponentType() == int.class ) {
+					int[] arr = new int[values.length];
+					for ( int i = 0; i < values.length; i++ ) {
+						arr[i] = (int) values[i].getDouble();
+					}
+					field.set(obj, arr);
+				} else if ( field.getType().getComponentType() == long.class ) {
+					long[] arr = new long[values.length];
+					for ( int i = 0; i < values.length; i++ ) {
+						arr[i] = values[i].getLong();
+					}
+					field.set(obj, arr);
+				} else if ( field.getType().getComponentType() == double.class ) {
+					double[] arr = new double[values.length];
+					for ( int i = 0; i < values.length; i++ ) {
+						arr[i] = values[i].getDouble();
+					}
+					field.set(obj, arr);
+				} else if ( field.getType().getComponentType() == boolean.class ) {
+					boolean[] arr = new boolean[values.length];
+					for ( int i = 0; i < values.length; i++ ) {
+						arr[i] = values[i].getBoolean();
+					}
+					field.set(obj, arr);
+				} else {
+					Object[] arr = valuesToArray(field.getType().getComponentType(), values);
+					field.set(obj, arr);
+				}
+				
 			} else {
 				// single-value property
 				field.set(obj, getValue(field.getType(), p.getValue()));
@@ -835,7 +988,7 @@ class Mapper {
 		}
 	}
 	
-	Value createValue( Class c, Object fieldValue, ValueFactory valueFactory ) throws Exception {		
+	private Value createValue( Class c, Object fieldValue, ValueFactory valueFactory ) throws Exception {		
 		if ( c == String.class ) {
 			return valueFactory.createValue((String) fieldValue);
 		} else if ( c == Date.class ) {
@@ -858,8 +1011,6 @@ class Mapper {
 			return valueFactory.createValue((Long)fieldValue);
 		} else if ( c == Double.class || c == double.class ) {
 			return valueFactory.createValue((Double)fieldValue);
-		} else if ( c == Float.class || c == float.class ) {
-			return valueFactory.createValue((Float)fieldValue);
 		} else if ( c == Boolean.class || c == boolean.class ) {
 			return valueFactory.createValue((Boolean)fieldValue);
 		}

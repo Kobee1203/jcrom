@@ -185,6 +185,60 @@ public class TestMapping {
 	}
 	
 	@Test
+	public void mapsAsChildren() throws Exception {
+		
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(EntityWithMapChildren.class);
+		
+		Integer[] myIntArr1 = {1,2,3};
+		Integer[] myIntArr2 = {4,5,6};
+		int[] myIntArr3 = {7,8,9};
+		
+		int myInt1 = 1;
+		int myInt2 = 2;
+		
+		String[] myStringArr1 = {"a","b","c"};
+		String[] myStringArr2 = {"d","e","f"};
+		String[] myStringArr3 = {"h","i","j"};
+		
+		String myString1 = "string1";
+		String myString2 = "string2";
+		
+		EntityWithMapChildren entity = new EntityWithMapChildren();
+		entity.setName("mapEntity");
+		entity.addIntegerArray("myIntArr1", myIntArr1);
+		entity.addIntegerArray("myIntArr2", myIntArr2);
+		entity.setMultiInt(myIntArr3);
+		entity.addStringArray("myStringArr1", myStringArr1);
+		entity.addStringArray("myStringArr2", myStringArr2);
+		entity.setMultiString(myStringArr3);
+		entity.addString("myString1", myString1);
+		entity.addString("myString2", myString2);
+		entity.addInteger("myInt1", myInt1);
+		entity.addInteger("myInt2", myInt2);
+		
+		Node rootNode = session.getRootNode().addNode("mapChildTest");
+		Node newNode = jcrom.addNode(rootNode, entity);
+		session.save();
+		
+		EntityWithMapChildren entityFromJcr = jcrom.fromNode(EntityWithMapChildren.class, newNode);
+		
+		assertTrue( entityFromJcr.getIntegers().equals(entity.getIntegers()) );
+		assertTrue( entityFromJcr.getStrings().equals(entity.getStrings()) );
+		assertTrue( entityFromJcr.getMultiInt().length == entity.getMultiInt().length );
+		assertTrue( entityFromJcr.getMultiInt()[1] == myIntArr3[1] );
+		assertTrue( entityFromJcr.getMultiString().length == entity.getMultiString().length );
+		assertTrue( entityFromJcr.getIntegerArrays().size() == entity.getIntegerArrays().size() );
+		assertTrue( entityFromJcr.getIntegerArrays().get("myIntArr1").length == myIntArr1.length );
+		assertTrue( entityFromJcr.getIntegerArrays().get("myIntArr2").length == myIntArr2.length );
+		assertTrue( entityFromJcr.getIntegerArrays().get("myIntArr1")[1] == myIntArr1[1] );
+		assertTrue( entityFromJcr.getStringArrays().size() == entity.getStringArrays().size() );
+		assertTrue( entityFromJcr.getStringArrays().get("myStringArr1").length == myStringArr1.length );
+		assertTrue( entityFromJcr.getStringArrays().get("myStringArr2").length == myStringArr2.length );
+		assertTrue( entityFromJcr.getStringArrays().get("myStringArr1")[1].equals(myStringArr1[1]) );
+	}
+	
+	@Test
 	public void references() throws Exception {
 		
 		Jcrom jcrom = new Jcrom();
