@@ -268,7 +268,9 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 			Version version = versionIterator.nextVersion();
 			NodeIterator nodeIterator = version.getNodes();
 			while ( nodeIterator.hasNext() ) {
-				versionList.add((T)jcrom.fromNode(entityClass, nodeIterator.nextNode(), childNameFilter, maxDepth));
+				T entityVersion = (T)jcrom.fromNode(entityClass, nodeIterator.nextNode(), childNameFilter, maxDepth);
+				jcrom.setBaseVersionInfo(entityVersion, node.getBaseVersion().getName(), node.getBaseVersion().getCreated());
+				versionList.add(entityVersion);
 			}
 		}
 		return versionList;

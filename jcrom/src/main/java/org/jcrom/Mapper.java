@@ -125,6 +125,23 @@ class Mapper {
 		return (String) findUUIDField(object).get(object);
 	}
 	
+	void setBaseVersionInfo( Object object, String name, Calendar created ) throws Exception {
+		Field baseName = findAnnotatedField(object, JcrBaseVersionName.class);
+		if ( baseName != null ) {
+			baseName.set(object, name);
+		}
+		Field baseCreated = findAnnotatedField(object, JcrBaseVersionCreated.class);
+		if ( baseCreated != null ) {
+			if ( baseCreated.getType() == Date.class ) {
+				baseCreated.set(object, created.getTime());
+			} else if ( baseCreated.getType() == Timestamp.class ) {
+				baseCreated.set(object, new Timestamp(created.getTimeInMillis()));
+			} else if ( baseCreated.getType() == Calendar.class ) {
+				baseCreated.set(object, created);
+			}
+		}
+	}
+	
 	private void setNodeName( Object object, String name ) throws Exception {
 		findNameField(object).set(object, name);
 	}

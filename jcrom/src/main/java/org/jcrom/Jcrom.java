@@ -15,6 +15,7 @@
  */
 package org.jcrom;
 
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -117,6 +118,10 @@ public class Jcrom {
 	
 	public String getPath( Object object ) throws Exception {
 		return mappers.get(object.getClass()).getNodePath(object);
+	}
+	
+	public void setBaseVersionInfo( Object object, String name, Calendar created ) throws Exception {
+		mappers.get(object.getClass()).setBaseVersionInfo(object, name, created);
 	}
 	
 	/**
