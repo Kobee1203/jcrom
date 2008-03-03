@@ -15,7 +15,9 @@
  */
 package org.jcrom;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -136,7 +138,7 @@ public class TestMapping {
 		return jcrFile;
 	}
 	
-	private Photo createPhoto( String name ) {
+	private Photo createPhoto( String name ) throws Exception {
 		Photo jcrFile = new Photo();
 		jcrFile.setName(name);
 		jcrFile.setMimeType("image/jpeg");
@@ -155,7 +157,26 @@ public class TestMapping {
 		JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.FILE, imageFile);
 		jcrFile.setDataProvider(dataProvider);
 		
+		// also read the file to byte array and store it that way
+		jcrFile.setFileBytes(readBytes(new FileInputStream(imageFile)));
+		
 		return jcrFile;
+	}
+	
+	private byte[] readBytes( InputStream in ) throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try {
+			// Transfer bytes from in to out
+			byte[] buf = new byte[1024];
+			int len;
+			while ((len = in.read(buf)) > 0) {
+				out.write(buf, 0, len);
+			}
+		} finally {
+			in.close();
+	        out.close();
+		}
+		return out.toByteArray();
 	}
 	
 	private void printNode( Node node, String indentation ) throws Exception {
@@ -182,6 +203,29 @@ public class TestMapping {
 	public void mapInvalidObject() throws Exception {
 		Jcrom jcrom = new Jcrom();
 		jcrom.map(InvalidEntity.class);
+	}
+	
+	@Test
+	public void serializedProperties() throws Exception {
+		
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(EntityWithSerializedProperties.class);
+		
+		EntityWithSerializedProperties entity = new EntityWithSerializedProperties();
+		entity.setName("withSerializedProperties");
+		
+		Parent parent = createParent("John");
+		entity.setParent(parent);
+		
+		Node rootNode = session.getRootNode().addNode("mapChildTest");
+		Node newNode = jcrom.addNode(rootNode, entity);
+		session.save();
+		
+		EntityWithSerializedProperties entityFromJcr = jcrom.fromNode(EntityWithSerializedProperties.class, newNode);
+		
+		assertTrue( entityFromJcr.getParent().getName().equals(entity.getParent().getName()) );
+		assertTrue( entityFromJcr.getParent().getBirthDay().equals(entity.getParent().getBirthDay()) );
+		assertTrue( entityFromJcr.getParent().getHeight() == entity.getParent().getHeight() );
 	}
 	
 	@Test
@@ -470,6 +514,8 @@ public class TestMapping {
 		// check the file
 		File imageFileFromNode = new File("target/ogg_copy.jpg");
 		write(parentFromNode.getPassportPhoto().getDataProvider().getInputStream(), imageFileFromNode);
+		
+		assertTrue(parentFromNode.getPassportPhoto().getFileBytes().length == photo.getFileBytes().length);
 
 		// check the list of files
 		assertTrue( parentFromNode.getFiles().size() == 3 );

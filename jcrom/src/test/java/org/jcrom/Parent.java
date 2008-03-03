@@ -15,6 +15,7 @@
  */
 package org.jcrom;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import org.jcrom.annotations.JcrChildNode;
@@ -27,7 +28,7 @@ import org.jcrom.annotations.JcrUUID;
  *
  * @author Olafur Gauti Gudmundsson
  */
-public class Parent extends AbstractEntity {
+public class Parent extends AbstractEntity implements Serializable {
 	
 	@JcrUUID String uuid;
 	

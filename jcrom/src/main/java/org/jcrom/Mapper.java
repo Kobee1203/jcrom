@@ -19,6 +19,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -49,6 +51,7 @@ import org.jcrom.annotations.JcrParentNode;
 import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrReference;
+import org.jcrom.annotations.JcrSerializedProperty;
 import org.jcrom.annotations.JcrUUID;
 import org.jcrom.annotations.JcrVersionCreated;
 import org.jcrom.annotations.JcrVersionName;
@@ -217,6 +220,9 @@ class Mapper {
 		
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {
 				mapFieldToProperty(field, obj, node);
+				
+			} else if ( field.isAnnotationPresent(JcrSerializedProperty.class) ) {
+				mapSerializedFieldToProperty(field, obj, node);
 				
 			} else if ( field.isAnnotationPresent(JcrChildNode.class) 
 					&& ( maxDepth < 0 || depth < maxDepth ) ) {
@@ -519,6 +525,9 @@ class Mapper {
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {
 				mapFieldToProperty(field, entity, node);
 				
+			} else if ( field.isAnnotationPresent(JcrSerializedProperty.class) ) {
+				mapSerializedFieldToProperty(field, entity, node);
+				
 			} else if ( field.isAnnotationPresent(JcrChildNode.class) ) {
 				JcrChildNode jcrChildNode = field.getAnnotation(JcrChildNode.class);
 				String name = field.getName();
@@ -648,7 +657,24 @@ class Mapper {
 		}
 	}
 	
-	void mapFieldToProperty( Field field, Object obj, Node node ) throws Exception {
+	private void mapSerializedFieldToProperty( Field field, Object obj, Node node ) throws Exception {
+		JcrSerializedProperty jcrProperty = field.getAnnotation(JcrSerializedProperty.class);
+		String propertyName = field.getName();
+		if ( !jcrProperty.name().equals("fieldName") ) {
+			propertyName = jcrProperty.name();
+		}
+		
+		Object fieldValue = field.get(obj);
+		if ( fieldValue != null ) {
+			// serialize and store
+			node.setProperty(propertyName, new ByteArrayInputStream(serialize(fieldValue)));
+		} else {
+			// remove the value
+			node.setProperty(propertyName, (Value)null);
+		}
+	}
+	
+	private void mapFieldToProperty( Field field, Object obj, Node node ) throws Exception {
 		JcrProperty jcrProperty = field.getAnnotation(JcrProperty.class);
 		String name = field.getName();
 		if ( !jcrProperty.name().equals("fieldName") ) {
@@ -677,7 +703,7 @@ class Mapper {
 					node.setProperty(propertyName, values);
 				}
 				
-			} else if ( type.isArray() ) {
+			} else if ( type.isArray() && type.getComponentType() != byte.class ) {
 				// multi-value property array
 				if ( propertyValue != null ) {
 					Value[] values = null;
@@ -751,6 +777,9 @@ class Mapper {
 			
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {
 				mapPropertyToField(obj, field, node);
+				
+			} else if ( field.isAnnotationPresent(JcrSerializedProperty.class) ) {
+				mapSerializedPropertyToField(obj, field, node);
 				
 			} else if ( field.isAnnotationPresent(JcrUUID.class) ) {
 				if ( node.hasProperty("jcr:uuid") ) {
@@ -948,6 +977,18 @@ class Mapper {
 		return arr;
 	}
 	
+	private void mapSerializedPropertyToField( Object obj, Field field, Node node ) throws Exception {
+		JcrSerializedProperty jcrProperty = field.getAnnotation(JcrSerializedProperty.class);
+		String propertyName = field.getName();
+		if ( !jcrProperty.name().equals("fieldName") ) {
+			propertyName = jcrProperty.name();
+		}
+		if ( node.hasProperty(propertyName) ) {
+			Property p = node.getProperty(propertyName);
+			field.set(obj, deserialize(p.getStream()));
+		}
+	}
+	
 	private void mapPropertyToField( Object obj, Field field, Node node ) throws Exception {
 		JcrProperty jcrProperty = field.getAnnotation(JcrProperty.class);
 		String name = field.getName();
@@ -966,7 +1007,7 @@ class Mapper {
 				}
 				field.set(obj, properties);
 			
-			} else if ( field.getType().isArray() ) {
+			} else if ( field.getType().isArray() && field.getType().getComponentType() != byte.class ) {
 				// multi-value property (array)
 				Value[] values = p.getValues();
 				if ( field.getType().getComponentType() == int.class ) {
@@ -1074,6 +1115,41 @@ class Mapper {
 	        out.close();
 		}
 		return out.toByteArray();
+	}
+	
+	/**
+	 * Serialize an object to a byte array.
+	 * 
+	 * @param obj the object to be serialized
+	 * @return the serialized object
+	 * @throws java.lang.Exception
+	 */
+	private byte[] serialize( Object obj ) throws Exception {
+        // Serialize to a byte array
+        ByteArrayOutputStream bos = new ByteArrayOutputStream() ;
+        ObjectOutputStream out = new ObjectOutputStream(bos) ;
+        out.writeObject(obj);
+        out.close();
+    
+        // Get the bytes of the serialized object
+        return bos.toByteArray();
+	}
+	
+	/**
+	 * Deserialize an object from a byte array.
+	 * 
+	 * @param bytes
+	 * @return
+	 * @throws java.lang.Exception
+	 */
+	private Object deserialize( InputStream byteStream ) throws Exception {
+        // Deserialize from a byte array
+        ObjectInputStream in = new ObjectInputStream(byteStream);
+		try {
+			return in.readObject();
+		} finally {
+			in.close();
+		}
 	}
 
 	@Override

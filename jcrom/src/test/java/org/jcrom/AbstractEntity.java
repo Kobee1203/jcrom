@@ -15,6 +15,7 @@
  */
 package org.jcrom;
 
+import java.io.Serializable;
 import java.util.Date;
 import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrPath;
@@ -24,7 +25,7 @@ import org.jcrom.annotations.JcrProperty;
  *
  * @author Olafur Gauti Gudmundsson
  */
-public abstract class AbstractEntity {
+public abstract class AbstractEntity implements Serializable {
 
 	@JcrPath protected String path;
 	@JcrName protected String name;

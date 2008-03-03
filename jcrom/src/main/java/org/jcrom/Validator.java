@@ -15,6 +15,7 @@
  */
 package org.jcrom;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +30,7 @@ import org.jcrom.annotations.JcrParentNode;
 import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrReference;
+import org.jcrom.annotations.JcrSerializedProperty;
 import org.jcrom.annotations.JcrUUID;
 import org.jcrom.annotations.JcrVersionCreated;
 import org.jcrom.annotations.JcrVersionName;
@@ -93,6 +95,12 @@ class Validator {
 					
 				} else if ( !ReflectionUtils.isPropertyType(field.getType()) ) {
 					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProperty is not a valid JCR property (type is " + field.getType().getName() + ").");
+				}
+				
+			} else if ( field.isAnnotationPresent(JcrSerializedProperty.class) ) {
+				// make sure field is Serializable
+				if ( !ReflectionUtils.implementsInterface(field.getType(), Serializable.class) ) {
+					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrSerializedProperty does not implement java.io.Serializable (type is " + field.getType().getName() + ").");
 				}
 				
 			} else if ( field.isAnnotationPresent(JcrName.class) ) {

@@ -32,6 +32,8 @@ public class Photo extends JcrFile {
 	
 	@JcrProperty private String photographer;
 	
+	@JcrProperty private byte[] fileBytes;
+	
 	@JcrChildNode
 	private Parent child;
 	
@@ -69,6 +71,14 @@ public class Photo extends JcrFile {
 
 	public void setOriginalFilename(String originalFilename) {
 		this.originalFilename = originalFilename;
+	}
+
+	public byte[] getFileBytes() {
+		return fileBytes;
+	}
+
+	public void setFileBytes(byte[] fileBytes) {
+		this.fileBytes = fileBytes;
 	}
 	
 	
