@@ -49,7 +49,7 @@ public class TestMapping {
 	
 	@Before
 	public void setUpRepository() throws Exception {
-		repo = new TransientRepository();
+		repo = (Repository) new TransientRepository();
 		session = repo.login(new SimpleCredentials("a", "b".toCharArray()));
 	}
 	

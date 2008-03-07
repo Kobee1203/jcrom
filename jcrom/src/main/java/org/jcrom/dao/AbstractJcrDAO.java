@@ -79,7 +79,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 		this.isVersionable = isVersionable(mixinTypes);
 	}
 	
-	private boolean isVersionable( String[] mixinTypes ) {
+	protected boolean isVersionable( String[] mixinTypes ) {
 		for ( String mixinType : mixinTypes ) {
 			if ( mixinType.equals("mix:versionable") ) {
 				return true;
@@ -88,7 +88,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 		return false;
 	}
 	
-	 private String relativePath( String absolutePath ) {
+	protected String relativePath( String absolutePath ) {
 		 if ( absolutePath.startsWith("/") ) {
 			 return absolutePath.substring(1);
 		 } else {
