@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
@@ -248,6 +249,9 @@ public class TestMapping {
 		String myString1 = "string1";
 		String myString2 = "string2";
 		
+		Locale locale = Locale.ITALIAN;
+		Locale[] locales = {Locale.FRENCH, Locale.GERMAN};
+		
 		EntityWithMapChildren entity = new EntityWithMapChildren();
 		entity.setName("mapEntity");
 		entity.addIntegerArray("myIntArr1", myIntArr1);
@@ -260,6 +264,8 @@ public class TestMapping {
 		entity.addString("myString2", myString2);
 		entity.addInteger("myInt1", myInt1);
 		entity.addInteger("myInt2", myInt2);
+		entity.setLocale(locale);
+		entity.setMultiLocale(locales);
 		
 		Node rootNode = session.getRootNode().addNode("mapChildTest");
 		Node newNode = jcrom.addNode(rootNode, entity);
@@ -280,6 +286,10 @@ public class TestMapping {
 		assertTrue( entityFromJcr.getStringArrays().get("myStringArr1").length == myStringArr1.length );
 		assertTrue( entityFromJcr.getStringArrays().get("myStringArr2").length == myStringArr2.length );
 		assertTrue( entityFromJcr.getStringArrays().get("myStringArr1")[1].equals(myStringArr1[1]) );
+		
+		assertTrue( entityFromJcr.getLocale().equals(locale) );
+		assertTrue( entityFromJcr.getMultiLocale().length == entity.getMultiLocale().length );
+		assertTrue( entityFromJcr.getMultiLocale()[1].equals(locales[1]) );
 	}
 	
 	@Test

@@ -1,6 +1,7 @@
 package org.jcrom;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrProperty;
@@ -13,6 +14,9 @@ public class EntityWithMapChildren extends AbstractJcrEntity {
 
 	@JcrProperty private int[] multiInt;
 	@JcrProperty private String[] multiString;
+	
+	@JcrProperty private Locale locale;
+	@JcrProperty private Locale[] multiLocale;
 	
 	@JcrChildNode private Map<String,String> strings;
 	@JcrChildNode private Map<String,String[]> stringArrays;
@@ -84,6 +88,22 @@ public class EntityWithMapChildren extends AbstractJcrEntity {
 	}
 	public void addString( String name, String value ) {
 		this.strings.put(name, value);
+	}
+
+	public Locale getLocale() {
+		return locale;
+	}
+
+	public void setLocale(Locale locale) {
+		this.locale = locale;
+	}
+
+	public Locale[] getMultiLocale() {
+		return multiLocale;
+	}
+
+	public void setMultiLocale(Locale[] multiLocale) {
+		this.multiLocale = multiLocale;
 	}
 	
 }

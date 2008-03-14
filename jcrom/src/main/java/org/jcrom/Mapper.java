@@ -30,7 +30,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.StringTokenizer;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
@@ -731,6 +733,12 @@ class Mapper {
 						for ( int i = 0; i < booleans.length; i++ ) {
 							values[i] = createValue(boolean.class, booleans[i], valueFactory);
 						}
+					} else if ( type.getComponentType() == Locale.class ) {
+						Locale[] locales = (Locale[]) propertyValue;
+						values = new Value[locales.length];
+						for ( int i = 0; i < locales.length; i++ ) {
+							values[i] = createValue(Locale.class, locales[i], valueFactory);
+						}
 					} else {
 						// Object
 						Object[] objects = (Object[]) propertyValue;
@@ -1034,6 +1042,12 @@ class Mapper {
 						arr[i] = values[i].getBoolean();
 					}
 					field.set(obj, arr);
+				} else if ( field.getType().getComponentType() == Locale.class ) {
+					Locale[] arr = new Locale[values.length];
+					for ( int i = 0; i < values.length; i++ ) {
+						arr[i] = parseLocale(values[i].getString());
+					}
+					field.set(obj, arr);
 				} else {
 					Object[] arr = valuesToArray(field.getType().getComponentType(), values);
 					field.set(obj, arr);
@@ -1071,6 +1085,8 @@ class Mapper {
 			return valueFactory.createValue((Double)fieldValue);
 		} else if ( c == Boolean.class || c == boolean.class ) {
 			return valueFactory.createValue((Boolean)fieldValue);
+		} else if ( c == Locale.class ) {
+			return valueFactory.createValue( ((Locale)fieldValue).toString() );
 		}
 		return null;
 	}
@@ -1097,6 +1113,28 @@ class Mapper {
 			return value.getDouble(); 
 		} else if ( c == Boolean.class || c == boolean.class ) {
 			return value.getBoolean();
+		} else if ( c == Locale.class ) {
+			return parseLocale(value.getString());
+		}
+		return null;
+	}
+	
+	/**
+	 * Parses given locale string to Locale object. If the string is empty or
+	 * null then the we return null.
+	 *
+	 * @param localeString a string containing locale in
+	 * <code>language_country_variant</code> format.
+	 * @return Locale
+	 */
+	private static Locale parseLocale( String localeString ) {
+		if ( localeString != null && localeString.length() > 0 ) {
+			StringTokenizer st = new StringTokenizer(localeString, "_");
+			String language = st.hasMoreElements() ? st.nextToken()
+											: Locale.getDefault().getLanguage();
+			String country = st.hasMoreElements() ? st.nextToken() : "";
+			String variant = st.hasMoreElements() ? st.nextToken() : "";
+			return new Locale(language, country, variant);
 		}
 		return null;
 	}

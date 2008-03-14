@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Various reflection utility methods, used mainly in the Mapper.
@@ -120,6 +121,7 @@ public class ReflectionUtils {
 				|| type == double.class || isArrayOfType(type, double.class)
 				|| type == Boolean.class || isArrayOfType(type, Boolean.class)
 				|| type == boolean.class || isArrayOfType(type, boolean.class)
+				|| type == Locale.class || isArrayOfType(type, Locale.class)
 				;
 	}
 	
