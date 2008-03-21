@@ -75,11 +75,12 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 		this.entityClass = entityClass;
 		this.session = session;
 		this.jcrom = jcrom;
-		this.mixinTypes = mixinTypes;
-		this.isVersionable = isVersionable(mixinTypes);
+		this.mixinTypes = new String[mixinTypes.length];
+		System.arraycopy(mixinTypes, 0, this.mixinTypes, 0, mixinTypes.length);
+		this.isVersionable = checkIfVersionable();
 	}
 	
-	protected boolean isVersionable( String[] mixinTypes ) {
+	private boolean checkIfVersionable() {
 		for ( String mixinType : mixinTypes ) {
 			if ( mixinType.equals("mix:versionable") ) {
 				return true;

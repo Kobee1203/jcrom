@@ -17,10 +17,11 @@ package org.jcrom;
 
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.jcr.Node;
 
 /**
@@ -29,11 +30,13 @@ import javax.jcr.Node;
  * you want to be mapped to it. Jcrom will validate that the classes you add
  * can be mapped to/from JCR.
  * 
+ * <p>Instances of this class are thread-safe.</p>
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 public class Jcrom {
 
-	private final Map<Class, Mapper> mappers;
+	private final ConcurrentMap<Class, Mapper> mappers = new ConcurrentHashMap<Class, Mapper>();
 	private final boolean cleanNames;
 	
 	/**
@@ -71,7 +74,6 @@ public class Jcrom {
 	 */
 	public Jcrom( boolean cleanNames, Set<Class> mappedClasses ) {
 		this.cleanNames = cleanNames;
-		this.mappers = Collections.synchronizedMap(new HashMap<Class, Mapper>());
 		for ( Class c : mappedClasses ) {
 			map(c);
 		}
@@ -85,10 +87,12 @@ public class Jcrom {
 	 * @param entityClass the class that will be mapped
 	 * @return the Jcrom instance
 	 */
-	public Jcrom map( Class entityClass ) {
+	public synchronized Jcrom map( Class entityClass ) {
 		if ( !isMapped(entityClass) ) {
 			Map<Class,Mapper> validMappers = Validator.validate(entityClass, cleanNames);
-			mappers.putAll(validMappers);
+			for ( Map.Entry<Class,Mapper> entry : validMappers.entrySet() ) {
+				mappers.putIfAbsent(entry.getKey(), entry.getValue());
+			}
 		}
 		return this;
 	}
@@ -98,8 +102,12 @@ public class Jcrom {
 	 *
 	 * @return all classes that are mapped by this instance
 	 */
-	public Set<Class> getMappedClasses() {
+	public synchronized Set<Class> getMappedClasses() {
 		return Collections.unmodifiableSet(mappers.keySet());
+	}
+	
+	private synchronized Mapper getMapper( Class c ) {
+		return mappers.get(c);
 	}
 	
 	/**
@@ -108,20 +116,20 @@ public class Jcrom {
 	 * @param entityClass the class we want to check
 	 * @return true if the class is mapped, else false
 	 */
-	public boolean isMapped( Class entityClass ) {
+	public synchronized boolean isMapped( Class entityClass ) {
 		return mappers.containsKey(entityClass);
 	}
 	
 	public String getName( Object object ) throws Exception {
-		return mappers.get(object.getClass()).getNodeName(object);
+		return getMapper(object.getClass()).getNodeName(object);
 	}
 	
 	public String getPath( Object object ) throws Exception {
-		return mappers.get(object.getClass()).getNodePath(object);
+		return getMapper(object.getClass()).getNodePath(object);
 	}
 	
 	public void setBaseVersionInfo( Object object, String name, Calendar created ) throws Exception {
-		mappers.get(object.getClass()).setBaseVersionInfo(object, name, created);
+		getMapper(object.getClass()).setBaseVersionInfo(object, name, created);
 	}
 	
 	/**
@@ -134,7 +142,7 @@ public class Jcrom {
 	 * @throws java.lang.Exception
 	 */
 	public <T> T fromNode( Class<T> entityClass, Node node ) throws Exception {
-		return (T)mappers.get(entityClass).fromNode(node, "*", -1);
+		return (T)getMapper(entityClass).fromNode(node, "*", -1);
 	}
 	
 	/**
@@ -150,7 +158,7 @@ public class Jcrom {
 	 * @throws java.lang.Exception
 	 */
 	public <T> T fromNode( Class entityClass, Node node, String childNodeFilter, int maxDepth ) throws Exception {
-		return (T)mappers.get(entityClass).fromNode(node, childNodeFilter, maxDepth);
+		return (T)getMapper(entityClass).fromNode(node, childNodeFilter, maxDepth);
 	}
 	
 	/**
@@ -177,7 +185,7 @@ public class Jcrom {
 	 * @throws java.lang.Exception
 	 */
 	public Node addNode( Node parentNode, Object entity, String[] mixinTypes ) throws Exception {
-		return mappers.get(entity.getClass()).addNode(parentNode, entity, mixinTypes);
+		return getMapper(entity.getClass()).addNode(parentNode, entity, mixinTypes);
 	}
 	
 	/**
@@ -205,6 +213,6 @@ public class Jcrom {
 	 * @throws java.lang.Exception
 	 */
 	public String updateNode( Node node, Object entity, String childNodeFilter, int maxDepth ) throws Exception {
-		return mappers.get(entity.getClass()).updateNode(node, entity, childNodeFilter, maxDepth);
+		return getMapper(entity.getClass()).updateNode(node, entity, childNodeFilter, maxDepth);
 	}
 }

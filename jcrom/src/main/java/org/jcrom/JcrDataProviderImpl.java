@@ -34,7 +34,8 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 	
 	public JcrDataProviderImpl( TYPE type, byte[] bytes ) {
 		this.type = type;
-		this.bytes = bytes;
+		this.bytes = new byte[bytes.length];
+		System.arraycopy(bytes, 0, this.bytes, 0, bytes.length);
 		this.file = null;
 		this.inputStream = null;
 	}

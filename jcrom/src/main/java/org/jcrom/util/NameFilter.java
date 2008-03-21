@@ -36,34 +36,36 @@ import java.util.Set;
  */
 public class NameFilter {
 
-	private boolean exclusion;
-	private boolean all;
-	private Set<String> names;
+	private final boolean exclusion;
+	private final boolean all;
+	private final Set<String> names;
 
 	public NameFilter( String filterStr ) {
 		names = new HashSet<String>();
-		all = false;
 		if ( filterStr == null ) {
 			exclusion = false;
 			all = true;
-		}
-
-		filterStr = filterStr.trim();
-		if ( filterStr.startsWith("-") ) {
-			filterStr = filterStr.substring(1);
-			// exclusion filter
-			exclusion = true;
-			addToSet(filterStr);
-		} else if ( filterStr.equals("none") ) {
-			exclusion = true;
-			all = true;
 		} else {
-			// inclusion filter
-			exclusion = false;
-			if ( filterStr.equals("*") ) {
+
+			filterStr = filterStr.trim();
+			if ( filterStr.startsWith("-") ) {
+				filterStr = filterStr.substring(1);
+				// exclusion filter
+				exclusion = true;
+				all = false;
+				addToSet(filterStr);
+			} else if ( filterStr.equals("none") ) {
+				exclusion = true;
 				all = true;
 			} else {
-				addToSet(filterStr);
+				// inclusion filter
+				exclusion = false;
+				if ( filterStr.equals("*") ) {
+					all = true;
+				} else {
+					all = false;
+					addToSet(filterStr);
+				}
 			}
 		}
 	}

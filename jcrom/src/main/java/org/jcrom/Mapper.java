@@ -69,6 +69,8 @@ import org.jcrom.util.ReflectionUtils;
  */
 class Mapper {
 	
+	private static final String DEFAULT_FIELDNAME = "fieldName";
+	
 	/** The Class that this instance maps to/from */
 	private final Class entityClass;
 	
@@ -233,7 +235,7 @@ class Mapper {
 				//
 				JcrChildNode jcrChildNode = field.getAnnotation(JcrChildNode.class);
 				String name = field.getName();
-				if ( !jcrChildNode.name().equals("fieldName") ) {
+				if ( !jcrChildNode.name().equals(DEFAULT_FIELDNAME) ) {
 					name = jcrChildNode.name();
 				}
 				
@@ -293,8 +295,8 @@ class Mapper {
 						// add the map as a child node
 						if ( !nullOrEmpty ) {
 							Node childContainer = node.addNode(getCleanName(name));
-							for ( String key : map.keySet() ) {
-								mapToProperty(key, ReflectionUtils.getParameterizedClass(field, 1), null, map.get(key), childContainer);
+							for ( Map.Entry<String,Object> entry : map.entrySet() ) {
+								mapToProperty(entry.getKey(), ReflectionUtils.getParameterizedClass(field, 1), null, entry.getValue(), childContainer);
 							}
 						}
 					} else {
@@ -325,7 +327,7 @@ class Mapper {
 				//
 				JcrReference jcrReference = field.getAnnotation(JcrReference.class);
 				String name = field.getName();
-				if ( !jcrReference.name().equals("fieldName") ) {
+				if ( !jcrReference.name().equals(DEFAULT_FIELDNAME) ) {
 					name = jcrReference.name();
 				}
 				
@@ -363,7 +365,7 @@ class Mapper {
 				//
 				JcrFileNode jcrFileNode = field.getAnnotation(JcrFileNode.class);
 				String name = field.getName();
-				if ( !jcrFileNode.name().equals("fieldName") ) {
+				if ( !jcrFileNode.name().equals(DEFAULT_FIELDNAME) ) {
 					name = jcrFileNode.name();
 				}
 				
@@ -492,7 +494,7 @@ class Mapper {
 	private Node addNode( Node parentNode, Object entity, Class objClass, String[] mixinTypes, boolean createNode ) throws Exception {
 		
 		// create the child node
-		Node node = null;
+		Node node;
 		if ( createNode ) {
 			// check if we should use a specific node type
 			JcrNode jcrNode = getJcrNodeAnnotation(objClass);
@@ -533,7 +535,7 @@ class Mapper {
 			} else if ( field.isAnnotationPresent(JcrChildNode.class) ) {
 				JcrChildNode jcrChildNode = field.getAnnotation(JcrChildNode.class);
 				String name = field.getName();
-				if ( !jcrChildNode.name().equals("fieldName") ) {
+				if ( !jcrChildNode.name().equals(DEFAULT_FIELDNAME) ) {
 					name = jcrChildNode.name();
 				}
 				
@@ -559,8 +561,8 @@ class Mapper {
 					// add the map as a child node
 					if ( !nullOrEmpty ) {
 						Node childContainer = node.addNode(getCleanName(name));
-						for ( String key : map.keySet() ) {
-							mapToProperty(key, ReflectionUtils.getParameterizedClass(field, 1), null, map.get(key), childContainer);
+						for ( Map.Entry<String,Object> entry : map.entrySet() ) {
+							mapToProperty(entry.getKey(), ReflectionUtils.getParameterizedClass(field, 1), null, entry.getValue(), childContainer);
 						}
 					}
 						
@@ -575,7 +577,7 @@ class Mapper {
 			} else if ( field.isAnnotationPresent(JcrReference.class) ) {
 				JcrReference jcrReference = field.getAnnotation(JcrReference.class);
 				String name = field.getName();
-				if ( !jcrReference.name().equals("fieldName") ) {
+				if ( !jcrReference.name().equals(DEFAULT_FIELDNAME) ) {
 					name = jcrReference.name();
 				}
 				// extract the UUID from the object, load the node, and
@@ -592,7 +594,7 @@ class Mapper {
 			} else if ( field.isAnnotationPresent(JcrFileNode.class) ) {
 				JcrFileNode jcrFileNode = field.getAnnotation(JcrFileNode.class);
 				String name = field.getName();
-				if ( !jcrFileNode.name().equals("fieldName") ) {
+				if ( !jcrFileNode.name().equals(DEFAULT_FIELDNAME) ) {
 					name = jcrFileNode.name();
 				}
 				
@@ -627,7 +629,7 @@ class Mapper {
 	}
 	
 	private <T extends JcrFile> void addFileNode( JcrNode jcrNode, Node parentNode, T file ) throws Exception {
-		Node fileNode = null;
+		Node fileNode;
 		if ( jcrNode == null || jcrNode.nodeType().equals("nt:unstructured") ) {
 			fileNode = parentNode.addNode(getCleanName(file.getName()));
 		} else {
@@ -662,7 +664,7 @@ class Mapper {
 	private void mapSerializedFieldToProperty( Field field, Object obj, Node node ) throws Exception {
 		JcrSerializedProperty jcrProperty = field.getAnnotation(JcrSerializedProperty.class);
 		String propertyName = field.getName();
-		if ( !jcrProperty.name().equals("fieldName") ) {
+		if ( !jcrProperty.name().equals(DEFAULT_FIELDNAME) ) {
 			propertyName = jcrProperty.name();
 		}
 		
@@ -679,7 +681,7 @@ class Mapper {
 	private void mapFieldToProperty( Field field, Object obj, Node node ) throws Exception {
 		JcrProperty jcrProperty = field.getAnnotation(JcrProperty.class);
 		String name = field.getName();
-		if ( !jcrProperty.name().equals("fieldName") ) {
+		if ( !jcrProperty.name().equals(DEFAULT_FIELDNAME) ) {
 			name = jcrProperty.name();
 		}
 		
@@ -707,49 +709,47 @@ class Mapper {
 				
 			} else if ( type.isArray() && type.getComponentType() != byte.class ) {
 				// multi-value property array
-				if ( propertyValue != null ) {
-					Value[] values = null;
-					if ( type.getComponentType() == int.class ) {
-						int[] ints = (int[]) propertyValue;
-						values = new Value[ints.length];
-						for ( int i = 0; i < ints.length; i++ ) {
-							values[i] = createValue(int.class, ints[i], valueFactory);
-						}
-					} else if ( type.getComponentType() == long.class ) {
-						long[] longs = (long[]) propertyValue;
-						values = new Value[longs.length];
-						for ( int i = 0; i < longs.length; i++ ) {
-							values[i] = createValue(long.class, longs[i], valueFactory);
-						}
-					} else if ( type.getComponentType() == double.class ) {
-						double[] doubles = (double[]) propertyValue;
-						values = new Value[doubles.length];
-						for ( int i = 0; i < doubles.length; i++ ) {
-							values[i] = createValue(double.class, doubles[i], valueFactory);
-						}
-					} else if ( type.getComponentType() == boolean.class ) {
-						boolean[] booleans = (boolean[]) propertyValue;
-						values = new Value[booleans.length];
-						for ( int i = 0; i < booleans.length; i++ ) {
-							values[i] = createValue(boolean.class, booleans[i], valueFactory);
-						}
-					} else if ( type.getComponentType() == Locale.class ) {
-						Locale[] locales = (Locale[]) propertyValue;
-						values = new Value[locales.length];
-						for ( int i = 0; i < locales.length; i++ ) {
-							values[i] = createValue(Locale.class, locales[i], valueFactory);
-						}
-					} else {
-						// Object
-						Object[] objects = (Object[]) propertyValue;
-						values = new Value[objects.length];
-						for ( int i = 0; i < objects.length; i++ ) {
-							values[i] = createValue(type.getComponentType(), objects[i], valueFactory);
-						}
-						
+				Value[] values;
+				if ( type.getComponentType() == int.class ) {
+					int[] ints = (int[]) propertyValue;
+					values = new Value[ints.length];
+					for ( int i = 0; i < ints.length; i++ ) {
+						values[i] = createValue(int.class, ints[i], valueFactory);
 					}
-					node.setProperty(propertyName, values);
+				} else if ( type.getComponentType() == long.class ) {
+					long[] longs = (long[]) propertyValue;
+					values = new Value[longs.length];
+					for ( int i = 0; i < longs.length; i++ ) {
+						values[i] = createValue(long.class, longs[i], valueFactory);
+					}
+				} else if ( type.getComponentType() == double.class ) {
+					double[] doubles = (double[]) propertyValue;
+					values = new Value[doubles.length];
+					for ( int i = 0; i < doubles.length; i++ ) {
+						values[i] = createValue(double.class, doubles[i], valueFactory);
+					}
+				} else if ( type.getComponentType() == boolean.class ) {
+					boolean[] booleans = (boolean[]) propertyValue;
+					values = new Value[booleans.length];
+					for ( int i = 0; i < booleans.length; i++ ) {
+						values[i] = createValue(boolean.class, booleans[i], valueFactory);
+					}
+				} else if ( type.getComponentType() == Locale.class ) {
+					Locale[] locales = (Locale[]) propertyValue;
+					values = new Value[locales.length];
+					for ( int i = 0; i < locales.length; i++ ) {
+						values[i] = createValue(Locale.class, locales[i], valueFactory);
+					}
+				} else {
+					// Object
+					Object[] objects = (Object[]) propertyValue;
+					values = new Value[objects.length];
+					for ( int i = 0; i < objects.length; i++ ) {
+						values[i] = createValue(type.getComponentType(), objects[i], valueFactory);
+					}
+
 				}
+				node.setProperty(propertyName, values);
 
 			} else {
 				// single-value property
@@ -838,7 +838,7 @@ class Mapper {
 					&& ( maxDepth < 0 || depth < maxDepth ) ) {
 				JcrChildNode jcrChildNode = field.getAnnotation(JcrChildNode.class);
 				String name = field.getName();
-				if ( !jcrChildNode.name().equals("fieldName") ) {
+				if ( !jcrChildNode.name().equals(DEFAULT_FIELDNAME) ) {
 					name = jcrChildNode.name();
 				}
 				
@@ -876,7 +876,7 @@ class Mapper {
 			} else if ( field.isAnnotationPresent(JcrReference.class) ) {
 				JcrReference jcrReference = field.getAnnotation(JcrReference.class);
 				String name = field.getName();
-				if ( !jcrReference.name().equals("fieldName") ) {
+				if ( !jcrReference.name().equals(DEFAULT_FIELDNAME) ) {
 					name = jcrReference.name();
 				}
 				if ( node.hasProperty(name) ) {
@@ -895,7 +895,7 @@ class Mapper {
 					&& ( maxDepth < 0 || depth < maxDepth ) ) {
 				JcrFileNode jcrFileNode = field.getAnnotation(JcrFileNode.class);
 				String name = field.getName();
-				if ( !jcrFileNode.name().equals("fieldName") ) {
+				if ( !jcrFileNode.name().equals(DEFAULT_FIELDNAME) ) {
 					name = jcrFileNode.name();
 				}
 				
@@ -988,7 +988,7 @@ class Mapper {
 	private void mapSerializedPropertyToField( Object obj, Field field, Node node ) throws Exception {
 		JcrSerializedProperty jcrProperty = field.getAnnotation(JcrSerializedProperty.class);
 		String propertyName = field.getName();
-		if ( !jcrProperty.name().equals("fieldName") ) {
+		if ( !jcrProperty.name().equals(DEFAULT_FIELDNAME) ) {
 			propertyName = jcrProperty.name();
 		}
 		if ( node.hasProperty(propertyName) ) {
@@ -1000,7 +1000,7 @@ class Mapper {
 	private void mapPropertyToField( Object obj, Field field, Node node ) throws Exception {
 		JcrProperty jcrProperty = field.getAnnotation(JcrProperty.class);
 		String name = field.getName();
-		if ( !jcrProperty.name().equals("fieldName") ) {
+		if ( !jcrProperty.name().equals(DEFAULT_FIELDNAME) ) {
 			name = jcrProperty.name();
 		}
 		if ( node.hasProperty(name) ) {

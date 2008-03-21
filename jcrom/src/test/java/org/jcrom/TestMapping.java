@@ -306,7 +306,7 @@ public class TestMapping {
 		String[] mixinTypes = {"mix:referenceable"};
 		
 		Node rootNode = session.getRootNode().addNode("referenceTest");
-		Node referenceNode = jcrom.addNode(rootNode, reference, mixinTypes);
+		jcrom.addNode(rootNode, reference, mixinTypes);
 		session.save();
 		
 		Parent parent = createParent("Bobby");
