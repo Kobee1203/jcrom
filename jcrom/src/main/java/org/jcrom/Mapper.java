@@ -219,6 +219,12 @@ class Mapper {
 			setNodePath(obj, node.getPath());
 		}
 		
+		// map the class name to a property
+		JcrNode jcrNode = getJcrNodeAnnotation(objClass);
+		if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
+			node.setProperty(jcrNode.classNameProperty(), objClass.getName());
+		}
+		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
 			field.setAccessible(true);
 		
@@ -400,10 +406,10 @@ class Mapper {
 								}
 							} else {
 								// no children exist, we add
-								JcrNode jcrNode = getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field));
-								Node fileContainer = createFileFolderNode(jcrNode, name, node);
+								JcrNode fileJcrNode = getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field));
+								Node fileContainer = createFileFolderNode(fileJcrNode, name, node);
 								for ( int i = 0; i < children.size(); i++ ) {
-									addFileNode(jcrNode, fileContainer, (JcrFile)children.get(i));
+									addFileNode(fileJcrNode, fileContainer, (JcrFile)children.get(i));
 								}
 							}
 						} else {
@@ -417,9 +423,9 @@ class Mapper {
 						// single child
 						if ( !node.hasNode(name) ) {
 							if ( field.get(obj) != null ) {
-								JcrNode jcrNode = getJcrNodeAnnotation(field.getType());
-								Node fileContainer = createFileFolderNode(jcrNode, name, node);
-								addFileNode(jcrNode, fileContainer, (JcrFile)field.get(obj));
+								JcrNode fileJcrNode = getJcrNodeAnnotation(field.getType());
+								Node fileContainer = createFileFolderNode(fileJcrNode, name, node);
+								addFileNode(fileJcrNode, fileContainer, (JcrFile)field.get(obj));
 							}
 						} else {
 							if ( field.get(obj) != null ) {
@@ -495,9 +501,9 @@ class Mapper {
 		
 		// create the child node
 		Node node;
+		JcrNode jcrNode = getJcrNodeAnnotation(objClass);
 		if ( createNode ) {
 			// check if we should use a specific node type
-			JcrNode jcrNode = getJcrNodeAnnotation(objClass);
 			if ( jcrNode == null || jcrNode.nodeType().equals("nt:unstructured") ) {
 				node = parentNode.addNode(getCleanName(getNodeName(entity)));
 			} else {
@@ -521,6 +527,11 @@ class Mapper {
 			
 		} else {
 			node = parentNode;
+		}
+		
+		// map the class name to a property
+		if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
+			node.setProperty(jcrNode.classNameProperty(), objClass.getName());
 		}
 		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
@@ -603,16 +614,16 @@ class Mapper {
 						// we can expect more than one child object here
 						List children = (List)field.get(entity);
 						if ( !children.isEmpty() ) {
-							JcrNode jcrNode = getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field));
-							Node fileContainer = createFileFolderNode(jcrNode, name, node);
+							JcrNode fileJcrNode = getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field));
+							Node fileContainer = createFileFolderNode(fileJcrNode, name, node);
 							for ( int i = 0; i < children.size(); i++ ) {
-								addFileNode(jcrNode, fileContainer, (JcrFile)children.get(i));
+								addFileNode(fileJcrNode, fileContainer, (JcrFile)children.get(i));
 							}
 						}
 					} else {
-						JcrNode jcrNode = getJcrNodeAnnotation(field.getType());
-						Node fileContainer = createFileFolderNode(jcrNode, name, node);
-						addFileNode(jcrNode, fileContainer, (JcrFile)field.get(entity));
+						JcrNode fileJcrNode = getJcrNodeAnnotation(field.getType());
+						Node fileContainer = createFileFolderNode(fileJcrNode, name, node);
+						addFileNode(fileJcrNode, fileContainer, (JcrFile)field.get(entity));
 					}
 				}
 			}

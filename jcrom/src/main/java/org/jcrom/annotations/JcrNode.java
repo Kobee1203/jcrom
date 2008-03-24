@@ -38,4 +38,12 @@ public @interface JcrNode {
 	 * @return the node type to use when creating a JCR node for this object
 	 */
 	String nodeType() default "nt:unstructured";
+	
+	/**
+	 * Name of a JCR property to store the full name of the class being mapped.
+	 * Value of "none" will lead to the class name not being stored.
+	 * 
+	 * @return name of a property to store the class name in
+	 */
+	String classNameProperty() default "none";
 }
