@@ -18,10 +18,8 @@ package org.jcrom;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.jcr.Node;
 
 /**
@@ -35,34 +33,26 @@ import javax.jcr.Node;
  * @author Olafur Gauti Gudmundsson
  */
 public class Jcrom {
-
-	private final ConcurrentMap<Class, Mapper> mappers = new ConcurrentHashMap<Class, Mapper>();
-	private final boolean cleanNames;
+	
+	private final CopyOnWriteArraySet<Class> mappedClasses = new CopyOnWriteArraySet<Class>();
+	private final Mapper mapper;
 	
 	/**
-	 * Create a new Jcrom instance that cleans node names.
+	 * Create a new Jcrom instance that cleans node names, but with dynamic
+	 * instantiation turned off.
 	 */
 	public Jcrom() {
 		this(true);
 	}
 
 	/**
-	 * Create a new Jcrom instance.
+	 * Create a new Jcrom instance with dynamic instantiation turned off.
 	 * 
 	 * @param cleanNames specifies whether to clean names of new nodes, that is,
 	 * replace illegal characters and spaces automatically
 	 */
 	public Jcrom( boolean cleanNames ) {
-		this(cleanNames, new HashSet<Class>());
-	}
-
-	/**
-	 * Create a new Jcrom instance.
-	 * 
-	 * @param mappedClasses a set of classes to map by this instance
-	 */
-	public Jcrom( Set<Class> mappedClasses ) {
-		this(true, mappedClasses);
+		this(cleanNames, false);
 	}
 	
 	/**
@@ -70,10 +60,47 @@ public class Jcrom {
 	 * 
 	 * @param cleanNames specifies whether to clean names of new nodes, that is,
 	 * replace illegal characters and spaces automatically
+	 * @param dynamicInstantiation if set to true, then Jcrom will try to retrieve
+	 * the name of the class to instantiate from a node property
+	 * (see @JcrNode(classNameProperty)).
+	 */
+	public Jcrom( boolean cleanNames, boolean dynamicInstantiation ) {
+		this(cleanNames, dynamicInstantiation, new HashSet<Class>());
+	}
+
+	/**
+	 * Create a new Jcrom instance with name cleaning set to true,
+	 * and dynamic instantiation off.
+	 * 
+	 * @param mappedClasses a set of classes to map by this instance
+	 */
+	public Jcrom( Set<Class> mappedClasses ) {
+		this(true, false, mappedClasses);
+	}
+	
+	/**
+	 * Create a new Jcrom instance with dynamic instantiation turned off.
+	 * 
+	 * @param cleanNames specifies whether to clean names of new nodes, that is,
+	 * replace illegal characters and spaces automatically
 	 * @param mappedClasses a set of classes to map by this instance
 	 */
 	public Jcrom( boolean cleanNames, Set<Class> mappedClasses ) {
-		this.cleanNames = cleanNames;
+		this(cleanNames, false, mappedClasses);
+	}
+	
+	/**
+	 * Create a new Jcrom instance.
+	 * 
+	 * @param cleanNames specifies whether to clean names of new nodes, that is,
+	 * replace illegal characters and spaces automatically
+	 * @param dynamicInstantiation if set to true, then Jcrom will try to retrieve
+	 * the name of the class to instantiate from a node property
+	 * (see @JcrNode(classNameProperty)).
+	 * @param mappedClasses a set of classes to map by this instance
+	 */
+	public Jcrom( boolean cleanNames, boolean dynamicInstantiation, Set<Class> mappedClasses ) {
+		this.mapper = new Mapper(cleanNames, dynamicInstantiation);
 		for ( Class c : mappedClasses ) {
 			map(c);
 		}
@@ -88,10 +115,10 @@ public class Jcrom {
 	 * @return the Jcrom instance
 	 */
 	public synchronized Jcrom map( Class entityClass ) {
-		if ( !isMapped(entityClass) ) {
-			Map<Class,Mapper> validMappers = Validator.validate(entityClass, cleanNames);
-			for ( Map.Entry<Class,Mapper> entry : validMappers.entrySet() ) {
-				mappers.putIfAbsent(entry.getKey(), entry.getValue());
+		if ( !mappedClasses.contains(entityClass) ) {
+			Set<Class> validClasses = Validator.validate(entityClass);
+			for ( Class c : validClasses ) {
+				mappedClasses.add(c);
 			}
 		}
 		return this;
@@ -103,11 +130,7 @@ public class Jcrom {
 	 * @return all classes that are mapped by this instance
 	 */
 	public synchronized Set<Class> getMappedClasses() {
-		return Collections.unmodifiableSet(mappers.keySet());
-	}
-	
-	private synchronized Mapper getMapper( Class c ) {
-		return mappers.get(c);
+		return Collections.unmodifiableSet(mappedClasses);
 	}
 	
 	/**
@@ -117,19 +140,19 @@ public class Jcrom {
 	 * @return true if the class is mapped, else false
 	 */
 	public synchronized boolean isMapped( Class entityClass ) {
-		return mappers.containsKey(entityClass);
+		return mappedClasses.contains(entityClass);
 	}
 	
 	public String getName( Object object ) throws Exception {
-		return getMapper(object.getClass()).getNodeName(object);
+		return mapper.getNodeName(object);
 	}
 	
 	public String getPath( Object object ) throws Exception {
-		return getMapper(object.getClass()).getNodePath(object);
+		return mapper.getNodePath(object);
 	}
 	
 	public void setBaseVersionInfo( Object object, String name, Calendar created ) throws Exception {
-		getMapper(object.getClass()).setBaseVersionInfo(object, name, created);
+		mapper.setBaseVersionInfo(object, name, created);
 	}
 	
 	/**
@@ -142,7 +165,7 @@ public class Jcrom {
 	 * @throws java.lang.Exception
 	 */
 	public <T> T fromNode( Class<T> entityClass, Node node ) throws Exception {
-		return (T)getMapper(entityClass).fromNode(node, "*", -1);
+		return (T)mapper.fromNode(entityClass, node, "*", -1);
 	}
 	
 	/**
@@ -158,7 +181,7 @@ public class Jcrom {
 	 * @throws java.lang.Exception
 	 */
 	public <T> T fromNode( Class entityClass, Node node, String childNodeFilter, int maxDepth ) throws Exception {
-		return (T)getMapper(entityClass).fromNode(node, childNodeFilter, maxDepth);
+		return (T)mapper.fromNode(entityClass, node, childNodeFilter, maxDepth);
 	}
 	
 	/**
@@ -185,7 +208,7 @@ public class Jcrom {
 	 * @throws java.lang.Exception
 	 */
 	public Node addNode( Node parentNode, Object entity, String[] mixinTypes ) throws Exception {
-		return getMapper(entity.getClass()).addNode(parentNode, entity, mixinTypes);
+		return mapper.addNode(parentNode, entity, mixinTypes);
 	}
 	
 	/**
@@ -213,6 +236,6 @@ public class Jcrom {
 	 * @throws java.lang.Exception
 	 */
 	public String updateNode( Node node, Object entity, String childNodeFilter, int maxDepth ) throws Exception {
-		return getMapper(entity.getClass()).updateNode(node, entity, childNodeFilter, maxDepth);
+		return mapper.updateNode(node, entity, childNodeFilter, maxDepth);
 	}
 }

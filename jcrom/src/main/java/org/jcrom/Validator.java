@@ -17,9 +17,10 @@ package org.jcrom;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.jcrom.annotations.JcrBaseVersionCreated;
 import org.jcrom.annotations.JcrBaseVersionName;
 import org.jcrom.annotations.JcrCheckedout;
@@ -58,26 +59,25 @@ class Validator {
 	 * @return a Set of the input class and referenced classes, validated
 	 * and ready for mapping
 	 */
-	static Map<Class,Mapper> validate( Class c, boolean cleanNames ) {
-		Map<Class,Mapper> validClasses = new HashMap<Class,Mapper>();
-		validateInternal(c, validClasses, cleanNames);
+	static Set validate( Class c ) {
+		Set<Class> validClasses = new HashSet<Class>();
+		validateInternal(c, validClasses);
 		return validClasses;
 	}
 	
-	private static void validateInternal( Class c, Map<Class,Mapper> validClasses, boolean cleanNames ) {
-		if ( validClasses.keySet().contains(c) ) {
-			return;
+	private static void validateInternal( Class c, Set<Class> validClasses ) {
+		if ( !validClasses.contains(c) ) {
+			if ( logger.isDebugEnabled() ) {
+				logger.debug("Processing class: " + c.getName());
+			}
+
+			validClasses.add(c);
+			validateFields(c, ReflectionUtils.getDeclaredAndInheritedFields(c), validClasses);
 		}
-		if ( logger.isDebugEnabled() ) {
-			logger.debug("Processing class: " + c.getName());
-		}
-		
-		validClasses.put(c, new Mapper(c, cleanNames));
-		validateFields(c, ReflectionUtils.getDeclaredAndInheritedFields(c), validClasses, cleanNames);
 	}
 	
 	
-	private static void validateFields( Class c, Field[] fields, Map<Class,Mapper> validClasses, boolean cleanNames ) {
+	private static void validateFields( Class c, Field[] fields, Set<Class> validClasses ) {
 		boolean foundNameField = false;
 		boolean foundPathField = false;
 		for ( Field field : fields ) {
@@ -155,14 +155,14 @@ class Validator {
 				
 			} else if ( field.isAnnotationPresent(JcrParentNode.class) ) {
 				// make sure that the parent node type is a valid JCR class
-				validateInternal(field.getType(), validClasses, cleanNames);
+				validateInternal(field.getType(), validClasses);
 				
 			} else if ( field.isAnnotationPresent(JcrChildNode.class) ) {
 				// make sure that the child node type are valid JCR classes
 				if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 					Class paramClass = ReflectionUtils.getParameterizedClass(field);
 					if ( paramClass != null ) {
-						validateInternal(ReflectionUtils.getParameterizedClass(field), validClasses, cleanNames);
+						validateInternal(ReflectionUtils.getParameterizedClass(field), validClasses);
 					} else {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.List that is not parameterised with a valid class type.");
 					}
@@ -181,7 +181,7 @@ class Validator {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.Map that is not parameterised with a valid value property type.");
 					}
 				} else {
-					validateInternal(field.getType(), validClasses, cleanNames);
+					validateInternal(field.getType(), validClasses);
 				}
 				
 			} else if ( field.isAnnotationPresent(JcrFileNode.class) ) {
@@ -208,7 +208,7 @@ class Validator {
 					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is of type that has no @JcrUUID: " + field.getType().getName());
 				}
 				// validate the class
-				validateInternal(field.getType(), validClasses, cleanNames);
+				validateInternal(field.getType(), validClasses);
 			}
 		}
 		if ( !foundNameField ) {

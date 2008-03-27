@@ -71,23 +71,19 @@ class Mapper {
 	
 	private static final String DEFAULT_FIELDNAME = "fieldName";
 	
-	/** The Class that this instance maps to/from */
-	private final Class entityClass;
-	
+	/** Specifies whether to clean up the node names */
 	private final boolean cleanNames;
+	/** Specifies whether to retrieve mapped class name from node property */
+	private final boolean dynamicInstantiation;
 	
 	/**
 	 * Create a Mapper for a specific class.
 	 * 
 	 * @param entityClass the class that we will me mapping to/from
 	 */
-	Mapper( Class entityClass, boolean cleanNames ) {
-		this.entityClass = entityClass;
+	Mapper( boolean cleanNames, boolean dynamicInstantiation ) {
 		this.cleanNames = cleanNames;
-	}
-	
-	Class getEntityClass() {
-		return entityClass;
+		this.dynamicInstantiation = dynamicInstantiation;
 	}
 	
 	private String getCleanName( String name ) {
@@ -163,6 +159,28 @@ class Mapper {
 			uuidField.set(object, uuid);
 		}
 	}
+	
+	private Object createInstanceForNode( Class objClass, Node node ) throws Exception {
+		if ( dynamicInstantiation ) {
+			// first we try to locate the class name from node property
+			String classNameProperty = "className";
+			JcrNode jcrNode = getJcrNodeAnnotation(objClass);
+			if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
+				classNameProperty = jcrNode.classNameProperty();
+			}
+			
+			if ( node.hasProperty(classNameProperty) ) {
+				String className = node.getProperty(classNameProperty).getString();
+				return Class.forName(className).newInstance();
+			} else {
+				// use default class
+				return objClass.newInstance();
+			}
+		} else {
+			// use default class
+			return objClass.newInstance();
+		}
+	}
 
 	/**
 	 * Transforms the node supplied to an instance of the entity class
@@ -176,9 +194,9 @@ class Mapper {
 	 * @return an instance of the JCR entity class, mapped from the node
 	 * @throws java.lang.Exception
 	 */
-	Object fromNode( Node node, String childNodeFilter, int maxDepth ) throws Exception {
-		Object obj = entityClass.newInstance();
-		mapNodeToClass(obj, entityClass, node, new NameFilter(childNodeFilter), maxDepth, null, 0);
+	Object fromNode( Class entityClass, Node node, String childNodeFilter, int maxDepth ) throws Exception {
+		Object obj = createInstanceForNode(entityClass, node);
+		mapNodeToClass(obj, obj.getClass(), node, new NameFilter(childNodeFilter), maxDepth, null, 0);
 		return obj;
 	}
 	
@@ -191,11 +209,7 @@ class Mapper {
 	 * @throws java.lang.Exception
 	 */
 	String updateNode( Node node, Object entity, String childNodeFilter, int maxDepth ) throws Exception {
-		if ( entity.getClass() != entityClass ) {
-			throw new JcrMappingException("This mapper was constructed for [" + entityClass.getName() + "] and cannot handle [" + entity.getClass().getName() + "]");
-		}
-		
-		return updateNode(node, entity, entityClass, new NameFilter(childNodeFilter), maxDepth, 0);
+		return updateNode(node, entity, entity.getClass(), new NameFilter(childNodeFilter), maxDepth, 0);
 	}
 	
 	private Object findEntityByName( List entities, String name ) throws Exception {
@@ -487,10 +501,7 @@ class Mapper {
 	 * @throws java.lang.Exception
 	 */
 	Node addNode( Node parentNode, Object entity, String[] mixinTypes ) throws Exception {
-		if ( entity.getClass() != entityClass ) {
-			throw new JcrMappingException("This mapper was constructed for [" + entityClass.getName() + "] and cannot handle [" + entity.getClass().getName() + "]");
-		}
-		return addNode(parentNode, entity, entityClass, mixinTypes);
+		return addNode(parentNode, entity, entity.getClass(), mixinTypes);
 	}
 	
 	private Node addNode( Node parentNode, Object entity, Class objClass, String[] mixinTypes ) throws Exception {
@@ -864,8 +875,9 @@ class Mapper {
 						NodeIterator iterator = childrenContainer.getNodes();
 						while ( iterator.hasNext() ) {
 							Class childObjClass = (Class)ptype.getActualTypeArguments()[0];
-							Object childObj = childObjClass.newInstance();
-							mapNodeToClass(childObj, childObjClass, iterator.nextNode(), nameFilter, maxDepth, obj, depth+1);
+							Node childNode = iterator.nextNode();
+							Object childObj = createInstanceForNode(childObjClass, childNode);
+							mapNodeToClass(childObj, childObjClass, childNode, nameFilter, maxDepth, obj, depth+1);
 							children.add(childObj);
 						}
 						field.set(obj, children);
@@ -878,8 +890,10 @@ class Mapper {
 						
 					} else {
 						// instantiate the field class
-						Object childObj = field.getType().newInstance();
-						mapNodeToClass(childObj, field.getType(), childrenContainer.getNodes().nextNode(), nameFilter, maxDepth, obj, depth+1);
+						Class childObjClass = field.getType();
+						Node childNode = childrenContainer.getNodes().nextNode();
+						Object childObj = createInstanceForNode(childObjClass, childNode);
+						mapNodeToClass(childObj, field.getType(), childNode, nameFilter, maxDepth, obj, depth+1);
 						field.set(obj, childObj);
 					}
 				}
@@ -891,10 +905,12 @@ class Mapper {
 					name = jcrReference.name();
 				}
 				if ( node.hasProperty(name) ) {
-					Object referencedObject = field.getType().newInstance();
+					Node referencedNode = node.getProperty(name).getNode();
+					Class referenceObjClass = field.getType();
+					Object referencedObject = createInstanceForNode(referenceObjClass, referencedNode);
 					if ( nameFilter.isIncluded(field.getName()) && ( maxDepth < 0 || depth < maxDepth ) ) {
 						// load the object
-						mapNodeToClass(referencedObject, field.getType(), node.getProperty(name).getNode(), nameFilter, maxDepth, obj, depth+1);
+						mapNodeToClass(referencedObject, field.getType(), referencedNode, nameFilter, maxDepth, obj, depth+1);
 					} else {
 						// just load the UUID
 						setUUID(obj, node.getProperty(name).getString());
@@ -1200,21 +1216,5 @@ class Mapper {
 			in.close();
 		}
 	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if ( obj == null || !(obj instanceof Mapper) ) {
-			return false;
-		}
-		Mapper other = (Mapper) obj;
-		
-		return other.entityClass == entityClass;
-	}
-
-	@Override
-	public int hashCode() {
-		return entityClass.hashCode();
-	}
-	
 	
 }

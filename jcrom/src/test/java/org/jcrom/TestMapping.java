@@ -293,6 +293,31 @@ public class TestMapping {
 	}
 	
 	@Test
+	public void dynamicInstantiation() throws Exception {
+		
+		Jcrom jcrom = new Jcrom(true, true);
+		jcrom.map(Circle.class)
+				.map(Rectangle.class);
+		
+		Shape circle = new Circle(5);
+		circle.setName("circle");
+		
+		Shape rectangle = new Rectangle(5,5);
+		rectangle.setName("rectangle");
+		
+		Node rootNode = session.getRootNode().addNode("dynamicInstTest");
+		Node circleNode = jcrom.addNode(rootNode, circle);
+		Node rectangleNode = jcrom.addNode(rootNode, rectangle);
+		session.save();
+		
+		Shape circleFromNode = jcrom.fromNode(Shape.class, circleNode);
+		Shape rectangleFromNode = jcrom.fromNode(Shape.class, rectangleNode);
+		
+		assertTrue( circleFromNode.getArea() == circle.getArea() );
+		assertTrue( rectangleFromNode.getArea() == rectangle.getArea() );
+	}
+	
+	@Test
 	public void references() throws Exception {
 		
 		Jcrom jcrom = new Jcrom();
