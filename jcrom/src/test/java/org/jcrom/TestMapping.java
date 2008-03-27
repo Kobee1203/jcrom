@@ -328,16 +328,17 @@ public class TestMapping {
 		reference.setName("myReference");
 		reference.setBody("myBody");
 		
-		String[] mixinTypes = {"mix:referenceable"};
-		
 		Node rootNode = session.getRootNode().addNode("referenceTest");
-		jcrom.addNode(rootNode, reference, mixinTypes);
+		jcrom.addNode(rootNode, reference);
 		session.save();
+		
+		// note that the Parent and ReferencedEntity classes both have
+		// mixin types defined in their @JcrNode annotation
 		
 		Parent parent = createParent("Bobby");
 		parent.setReference(reference);
 		
-		Node parentNode = jcrom.addNode(rootNode, parent, mixinTypes);
+		Node parentNode = jcrom.addNode(rootNode, parent);
 		
 		Parent fromNode = jcrom.fromNode(Parent.class, parentNode);
 		

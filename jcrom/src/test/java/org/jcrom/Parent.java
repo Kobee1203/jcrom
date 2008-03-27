@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrFileNode;
+import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrReference;
 import org.jcrom.annotations.JcrUUID;
@@ -28,6 +29,9 @@ import org.jcrom.annotations.JcrUUID;
  *
  * @author Olafur Gauti Gudmundsson
  */
+@JcrNode(
+	mixinTypes= {"mix:referenceable"}
+)
 public class Parent extends AbstractEntity implements Serializable {
 	
 	@JcrUUID String uuid;

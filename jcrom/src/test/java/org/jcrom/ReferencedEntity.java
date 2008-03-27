@@ -1,6 +1,7 @@
 package org.jcrom;
 
 import org.jcrom.annotations.JcrName;
+import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrUUID;
@@ -9,6 +10,9 @@ import org.jcrom.annotations.JcrUUID;
  *
  * @author Olafur Gauti Gudmundsson
  */
+@JcrNode(
+	mixinTypes= {"mix:referenceable"}
+)
 public class ReferencedEntity {
 
 	@JcrName private String name;

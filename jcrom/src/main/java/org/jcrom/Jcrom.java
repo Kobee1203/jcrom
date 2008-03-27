@@ -72,10 +72,10 @@ public class Jcrom {
 	 * Create a new Jcrom instance with name cleaning set to true,
 	 * and dynamic instantiation off.
 	 * 
-	 * @param mappedClasses a set of classes to map by this instance
+	 * @param classesToMap a set of classes to map by this instance
 	 */
-	public Jcrom( Set<Class> mappedClasses ) {
-		this(true, false, mappedClasses);
+	public Jcrom( Set<Class> classesToMap ) {
+		this(true, false, classesToMap);
 	}
 	
 	/**
@@ -83,10 +83,10 @@ public class Jcrom {
 	 * 
 	 * @param cleanNames specifies whether to clean names of new nodes, that is,
 	 * replace illegal characters and spaces automatically
-	 * @param mappedClasses a set of classes to map by this instance
+	 * @param classesToMap a set of classes to map by this instance
 	 */
-	public Jcrom( boolean cleanNames, Set<Class> mappedClasses ) {
-		this(cleanNames, false, mappedClasses);
+	public Jcrom( boolean cleanNames, Set<Class> classesToMap ) {
+		this(cleanNames, false, classesToMap);
 	}
 	
 	/**
@@ -97,11 +97,11 @@ public class Jcrom {
 	 * @param dynamicInstantiation if set to true, then Jcrom will try to retrieve
 	 * the name of the class to instantiate from a node property
 	 * (see @JcrNode(classNameProperty)).
-	 * @param mappedClasses a set of classes to map by this instance
+	 * @param classesToMap a set of classes to map by this instance
 	 */
-	public Jcrom( boolean cleanNames, boolean dynamicInstantiation, Set<Class> mappedClasses ) {
+	public Jcrom( boolean cleanNames, boolean dynamicInstantiation, Set<Class> classesToMap ) {
 		this.mapper = new Mapper(cleanNames, dynamicInstantiation);
-		for ( Class c : mappedClasses ) {
+		for ( Class c : classesToMap ) {
 			map(c);
 		}
 	}

@@ -59,7 +59,7 @@ class Validator {
 	 * @return a Set of the input class and referenced classes, validated
 	 * and ready for mapping
 	 */
-	static Set validate( Class c ) {
+	static Set<Class> validate( Class c ) {
 		Set<Class> validClasses = new HashSet<Class>();
 		validateInternal(c, validClasses);
 		return validClasses;

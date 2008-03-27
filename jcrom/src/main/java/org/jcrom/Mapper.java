@@ -528,6 +528,14 @@ class Mapper {
 					}
 				}
 			}
+			// add annotated mixin types
+			if ( jcrNode != null && jcrNode.mixinTypes() != null ) {
+				for ( String mixinType : jcrNode.mixinTypes() ) {
+					if ( node.canAddMixin(mixinType) ) {
+						node.addMixin(mixinType);
+					}
+				}
+			}
 			
 			// update the object name and path
 			setNodeName(entity, node.getName());
