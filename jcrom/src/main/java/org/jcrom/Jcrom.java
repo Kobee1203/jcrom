@@ -129,7 +129,7 @@ public class Jcrom {
 	 *
 	 * @return all classes that are mapped by this instance
 	 */
-	public synchronized Set<Class> getMappedClasses() {
+	public Set<Class> getMappedClasses() {
 		return Collections.unmodifiableSet(mappedClasses);
 	}
 	
@@ -139,20 +139,32 @@ public class Jcrom {
 	 * @param entityClass the class we want to check
 	 * @return true if the class is mapped, else false
 	 */
-	public synchronized boolean isMapped( Class entityClass ) {
+	public boolean isMapped( Class entityClass ) {
 		return mappedClasses.contains(entityClass);
 	}
 	
-	public String getName( Object object ) throws Exception {
-		return mapper.getNodeName(object);
+	public String getName( Object object ) throws JcrMappingException {
+		try {
+			return mapper.getNodeName(object);
+		} catch ( Exception e ) {
+			throw new JcrMappingException("Could not get node name from object", e);
+		}
 	}
 	
-	public String getPath( Object object ) throws Exception {
-		return mapper.getNodePath(object);
+	public String getPath( Object object ) throws JcrMappingException {
+		try {
+			return mapper.getNodePath(object);
+		} catch ( Exception e ) {
+			throw new JcrMappingException("Could not get node path from object", e);
+		}
 	}
 	
-	public void setBaseVersionInfo( Object object, String name, Calendar created ) throws Exception {
-		mapper.setBaseVersionInfo(object, name, created);
+	public void setBaseVersionInfo( Object object, String name, Calendar created ) throws JcrMappingException {
+		try {
+			mapper.setBaseVersionInfo(object, name, created);
+		} catch ( Exception e ) {
+			throw new JcrMappingException("Could not set base version info on object", e);
+		}
 	}
 	
 	/**
@@ -164,8 +176,8 @@ public class Jcrom {
 	 * @return an instance of the JCR entity class, mapped from the node
 	 * @throws java.lang.Exception
 	 */
-	public <T> T fromNode( Class<T> entityClass, Node node ) throws Exception {
-		return (T)mapper.fromNode(entityClass, node, "*", -1);
+	public <T> T fromNode( Class<T> entityClass, Node node ) throws JcrMappingException {
+		return (T) fromNode(entityClass, node, "*", -1);
 	}
 	
 	/**
@@ -180,8 +192,12 @@ public class Jcrom {
 	 * @return an instance of the JCR entity class, mapped from the node
 	 * @throws java.lang.Exception
 	 */
-	public <T> T fromNode( Class entityClass, Node node, String childNodeFilter, int maxDepth ) throws Exception {
-		return (T)mapper.fromNode(entityClass, node, childNodeFilter, maxDepth);
+	public <T> T fromNode( Class<T> entityClass, Node node, String childNodeFilter, int maxDepth ) throws JcrMappingException {
+		try {
+			return (T)mapper.fromNode(entityClass, node, childNodeFilter, maxDepth);
+		} catch ( Exception e ) {
+			throw new JcrMappingException("Could not map from node", e);
+		}
 	}
 	
 	/**
@@ -193,7 +209,7 @@ public class Jcrom {
 	 * @return the newly created JCR node
 	 * @throws java.lang.Exception
 	 */
-	public Node addNode( Node parentNode, Object entity ) throws Exception {
+	public Node addNode( Node parentNode, Object entity ) throws JcrMappingException {
 		return addNode(parentNode, entity, null);
 	}
 	
@@ -207,8 +223,12 @@ public class Jcrom {
 	 * @return the newly created JCR node
 	 * @throws java.lang.Exception
 	 */
-	public Node addNode( Node parentNode, Object entity, String[] mixinTypes ) throws Exception {
-		return mapper.addNode(parentNode, entity, mixinTypes);
+	public Node addNode( Node parentNode, Object entity, String[] mixinTypes ) throws JcrMappingException {
+		try {
+			return mapper.addNode(parentNode, entity, mixinTypes);
+		} catch ( Exception e ) {
+			throw new JcrMappingException("Could not create node from object", e);
+		}
 	}
 	
 	/**
@@ -219,7 +239,7 @@ public class Jcrom {
 	 * @return the name of the updated node
 	 * @throws java.lang.Exception
 	 */
-	public String updateNode( Node node, Object entity ) throws Exception {
+	public String updateNode( Node node, Object entity ) throws JcrMappingException {
 		return updateNode(node, entity, "*", -1);
 	}
 	
@@ -235,7 +255,11 @@ public class Jcrom {
 	 * @return the name of the updated node
 	 * @throws java.lang.Exception
 	 */
-	public String updateNode( Node node, Object entity, String childNodeFilter, int maxDepth ) throws Exception {
-		return mapper.updateNode(node, entity, childNodeFilter, maxDepth);
+	public String updateNode( Node node, Object entity, String childNodeFilter, int maxDepth ) throws JcrMappingException {
+		try {
+			return mapper.updateNode(node, entity, childNodeFilter, maxDepth);
+		} catch ( Exception e ) {
+			throw new JcrMappingException("Could not update node from object", e);
+		}
 	}
 }

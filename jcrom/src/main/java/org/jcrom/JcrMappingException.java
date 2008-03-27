@@ -25,4 +25,8 @@ public class JcrMappingException extends RuntimeException {
 	public JcrMappingException( String message ) {
 		super(message);
 	}
+	
+	public JcrMappingException( String message, Throwable cause ) {
+		super(message, cause);
+	}
 }
