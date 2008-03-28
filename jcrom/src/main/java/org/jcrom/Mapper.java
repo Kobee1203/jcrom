@@ -264,7 +264,7 @@ class Mapper {
 		// map the class name to a property
 		JcrNode jcrNode = getJcrNodeAnnotation(objClass);
 		if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
-			node.setProperty(jcrNode.classNameProperty(), objClass.getName());
+			node.setProperty(jcrNode.classNameProperty(), objClass.getCanonicalName());
 		}
 		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
@@ -578,7 +578,7 @@ class Mapper {
 		
 		// map the class name to a property
 		if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
-			node.setProperty(jcrNode.classNameProperty(), objClass.getName());
+			node.setProperty(jcrNode.classNameProperty(), objClass.getCanonicalName());
 		}
 		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
