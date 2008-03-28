@@ -224,7 +224,7 @@ class Mapper {
 	 */
 	Object fromNode( Class entityClass, Node node, String childNodeFilter, int maxDepth ) throws Exception {
 		Object obj = createInstanceForNode(entityClass, node);
-		mapNodeToClass(obj, obj.getClass(), node, new NameFilter(childNodeFilter), maxDepth, null, 0);
+		mapNodeToClass(obj, node, new NameFilter(childNodeFilter), maxDepth, null, 0);
 		return obj;
 	}
 	
@@ -264,7 +264,7 @@ class Mapper {
 		// map the class name to a property
 		JcrNode jcrNode = getJcrNodeAnnotation(objClass);
 		if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
-			node.setProperty(jcrNode.classNameProperty(), objClass.getCanonicalName());
+			node.setProperty(jcrNode.classNameProperty(), obj.getClass().getCanonicalName());
 		}
 		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
@@ -313,14 +313,14 @@ class Mapper {
 								for ( int i = 0; i < children.size(); i++ ) {
 									Object child = children.get(i);
 									if ( !childContainer.hasNode(getCleanName(getNodeName(child))) ) {
-										addNode(childContainer, child, paramClass, null);
+										addNode(childContainer, child, null);
 									}
 								}
 							} else {
 								// no children exist, we add
 								Node childContainer = node.addNode(getCleanName(name));
 								for ( int i = 0; i < children.size(); i++ ) {
-									addNode(childContainer, children.get(i), paramClass, null);
+									addNode(childContainer, children.get(i), null);
 								}
 							}
 						} else {
@@ -353,7 +353,7 @@ class Mapper {
 							if ( field.get(obj) != null ) {
 								// add the node if it does not exist
 								Node childContainer = node.addNode(getCleanName(name));
-								addNode(childContainer, field.get(obj), field.getType(), null);
+								addNode(childContainer, field.get(obj), null);
 							}
 						} else {
 							if ( field.get(obj) != null ) {
@@ -443,7 +443,7 @@ class Mapper {
 								for ( int i = 0; i < children.size(); i++ ) {
 									Object child = children.get(i);
 									if ( !childContainer.hasNode(getCleanName(getNodeName(child))) ) {
-										addNode(childContainer, child, paramClass, null);
+										addNode(childContainer, child, null);
 									}
 								}
 							} else {
@@ -529,18 +529,14 @@ class Mapper {
 	 * @throws java.lang.Exception
 	 */
 	Node addNode( Node parentNode, Object entity, String[] mixinTypes ) throws Exception {
-		return addNode(parentNode, entity, entity.getClass(), mixinTypes);
+		return addNode(parentNode, entity, mixinTypes, true);
 	}
 	
-	private Node addNode( Node parentNode, Object entity, Class objClass, String[] mixinTypes ) throws Exception {
-		return addNode(parentNode, entity, objClass, mixinTypes, true);
-	}
-	
-	private Node addNode( Node parentNode, Object entity, Class objClass, String[] mixinTypes, boolean createNode ) throws Exception {
+	private Node addNode( Node parentNode, Object entity, String[] mixinTypes, boolean createNode ) throws Exception {
 		
 		// create the child node
 		Node node;
-		JcrNode jcrNode = getJcrNodeAnnotation(objClass);
+		JcrNode jcrNode = getJcrNodeAnnotation(entity.getClass());
 		if ( createNode ) {
 			// check if we should use a specific node type
 			if ( jcrNode == null || jcrNode.nodeType().equals("nt:unstructured") ) {
@@ -578,10 +574,10 @@ class Mapper {
 		
 		// map the class name to a property
 		if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
-			node.setProperty(jcrNode.classNameProperty(), objClass.getCanonicalName());
+			node.setProperty(jcrNode.classNameProperty(), entity.getClass().getCanonicalName());
 		}
 		
-		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
+		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(entity.getClass()) ) {
 			field.setAccessible(true);
 			
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {
@@ -603,7 +599,7 @@ class Mapper {
 					List children = (List)field.get(entity);
 					if ( children != null && !children.isEmpty() ) {
 						for ( int i = 0; i < children.size(); i++ ) {
-							addNode(childContainer, children.get(i), ReflectionUtils.getParameterizedClass(field), null);
+							addNode(childContainer, children.get(i), null);
 						}
 					}
 					
@@ -628,7 +624,7 @@ class Mapper {
 					// make sure that the field value is not null
 					if ( field.get(entity) != null ) {
 						Node childContainer = node.addNode(getCleanName(name), jcrChildNode.containerNodeType());
-						addNode(childContainer, field.get(entity), field.getType(), null);
+						addNode(childContainer, field.get(entity), null);
 					}
 				}
 				
@@ -696,7 +692,7 @@ class Mapper {
 		Node contentNode = fileNode.addNode("jcr:content", "nt:resource");
 		setFileNodeProperties(contentNode, file);
 		
-		addNode(fileNode, file, file.getClass(), null, false);
+		addNode(fileNode, file, null, false);
 	}
 	
 	private <T extends JcrFile> void setFileNodeProperties( Node contentNode, T file ) throws Exception {
@@ -831,14 +827,14 @@ class Mapper {
 		return false;
 	}
 		
-	private void mapNodeToClass( Object obj, Class objClass, Node node, NameFilter nameFilter, int maxDepth, Object parentObject, int depth ) throws Exception {
+	private void mapNodeToClass( Object obj, Node node, NameFilter nameFilter, int maxDepth, Object parentObject, int depth ) throws Exception {
 		
-		if ( !ReflectionUtils.extendsClass(objClass, JcrFile.class) ) {
+		if ( !ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class) ) {
 			// this does not apply for JcrFile extensions
 			setNodeName(obj, node.getName());
 		}
 		
-		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
+		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
 			field.setAccessible(true);
 			
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {
@@ -913,7 +909,7 @@ class Mapper {
 							Class childObjClass = (Class)ptype.getActualTypeArguments()[0];
 							Node childNode = iterator.nextNode();
 							Object childObj = createInstanceForNode(childObjClass, childNode);
-							mapNodeToClass(childObj, childObjClass, childNode, nameFilter, maxDepth, obj, depth+1);
+							mapNodeToClass(childObj, childNode, nameFilter, maxDepth, obj, depth+1);
 							children.add(childObj);
 						}
 						field.set(obj, children);
@@ -929,7 +925,7 @@ class Mapper {
 						Class childObjClass = field.getType();
 						Node childNode = childrenContainer.getNodes().nextNode();
 						Object childObj = createInstanceForNode(childObjClass, childNode);
-						mapNodeToClass(childObj, field.getType(), childNode, nameFilter, maxDepth, obj, depth+1);
+						mapNodeToClass(childObj, childNode, nameFilter, maxDepth, obj, depth+1);
 						field.set(obj, childObj);
 					}
 				}
@@ -946,7 +942,7 @@ class Mapper {
 					Object referencedObject = createInstanceForNode(referenceObjClass, referencedNode);
 					if ( nameFilter.isIncluded(field.getName()) && ( maxDepth < 0 || depth < maxDepth ) ) {
 						// load the object
-						mapNodeToClass(referencedObject, field.getType(), referencedNode, nameFilter, maxDepth, obj, depth+1);
+						mapNodeToClass(referencedObject, referencedNode, nameFilter, maxDepth, obj, depth+1);
 					} else {
 						// just load the UUID
 						setUUID(obj, node.getProperty(name).getString());
@@ -1015,7 +1011,7 @@ class Mapper {
 		
 		// if this is a JcrFile subclass, it may contain custom properties and 
 		// child nodes that need to be mapped
-		mapNodeToClass(fileObj, fileObj.getClass(), fileNode, nameFilter, maxDepth, parentObject, depth+1);
+		mapNodeToClass(fileObj, fileNode, nameFilter, maxDepth, parentObject, depth+1);
 	}
 	
 	private void mapPropertiesToMap( Object obj, Field field, Class valueType, PropertyIterator propIterator ) throws Exception {

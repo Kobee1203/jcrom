@@ -297,7 +297,8 @@ public class TestMapping {
 		
 		Jcrom jcrom = new Jcrom(true, true);
 		jcrom.map(Circle.class)
-				.map(Rectangle.class);
+				.map(Rectangle.class)
+				.map(ShapeParent.class);
 		
 		Shape circle = new Circle(5);
 		circle.setName("circle");
@@ -315,6 +316,30 @@ public class TestMapping {
 		
 		assertTrue( circleFromNode.getArea() == circle.getArea() );
 		assertTrue( rectangleFromNode.getArea() == rectangle.getArea() );
+		
+		// now try it with a parent with interface based child nodes
+		Shape circle1 = new Circle(1);
+		circle1.setName("circle1");
+		Shape circle2 = new Circle(2);
+		circle2.setName("circle2");
+		Shape rectangle1 = new Rectangle(2,2);
+		rectangle1.setName("rectangle");
+		
+		ShapeParent shapeParent = new ShapeParent();
+		shapeParent.setName("ShapeParent");
+		shapeParent.addShape(circle1);
+		shapeParent.addShape(rectangle1);
+		shapeParent.setMainShape(circle2);
+		
+		Node shapeParentNode = jcrom.addNode(rootNode, shapeParent);
+		session.save();
+		
+		ShapeParent fromNode = jcrom.fromNode(ShapeParent.class, shapeParentNode);
+		
+		assertTrue( fromNode.getMainShape().getArea() == shapeParent.getMainShape().getArea() );
+		assertTrue( fromNode.getShapes().size() == shapeParent.getShapes().size() );
+		assertTrue( fromNode.getShapes().get(0).getArea() == shapeParent.getShapes().get(0).getArea() );
+		assertTrue( fromNode.getShapes().get(1).getArea() == shapeParent.getShapes().get(1).getArea() );
 	}
 	
 	@Test

@@ -56,28 +56,34 @@ class Validator {
 	 * Throws a JcrMappingException if invalid mapping is found.
 	 * 
 	 * @param c the Class to be validated
+	 * @param dynamicInstantiation when dynamic instantiation is on, we allow 
+	 * interfaces
 	 * @return a Set of the input class and referenced classes, validated
 	 * and ready for mapping
 	 */
-	static Set<Class> validate( Class c ) {
+	static Set<Class> validate( Class c, boolean dynamicInstantiation ) {
 		Set<Class> validClasses = new HashSet<Class>();
-		validateInternal(c, validClasses);
+		validateInternal(c, validClasses, dynamicInstantiation);
 		return validClasses;
 	}
 	
-	private static void validateInternal( Class c, Set<Class> validClasses ) {
+	private static void validateInternal( Class c, Set<Class> validClasses, boolean dynamicInstantiation ) {
 		if ( !validClasses.contains(c) ) {
 			if ( logger.isDebugEnabled() ) {
 				logger.debug("Processing class: " + c.getName());
 			}
 
 			validClasses.add(c);
-			validateFields(c, ReflectionUtils.getDeclaredAndInheritedFields(c), validClasses);
+			
+			// when dynamic instantiation is turned on, we ignore interfaces
+			if ( !(c.isInterface() && dynamicInstantiation) ) {
+				validateFields(c, ReflectionUtils.getDeclaredAndInheritedFields(c), validClasses, dynamicInstantiation);
+			}
 		}
 	}
 	
 	
-	private static void validateFields( Class c, Field[] fields, Set<Class> validClasses ) {
+	private static void validateFields( Class c, Field[] fields, Set<Class> validClasses, boolean dynamicInstantiation ) {
 		boolean foundNameField = false;
 		boolean foundPathField = false;
 		for ( Field field : fields ) {
@@ -155,14 +161,14 @@ class Validator {
 				
 			} else if ( field.isAnnotationPresent(JcrParentNode.class) ) {
 				// make sure that the parent node type is a valid JCR class
-				validateInternal(field.getType(), validClasses);
+				validateInternal(field.getType(), validClasses, dynamicInstantiation);
 				
 			} else if ( field.isAnnotationPresent(JcrChildNode.class) ) {
 				// make sure that the child node type are valid JCR classes
 				if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 					Class paramClass = ReflectionUtils.getParameterizedClass(field);
 					if ( paramClass != null ) {
-						validateInternal(ReflectionUtils.getParameterizedClass(field), validClasses);
+						validateInternal(ReflectionUtils.getParameterizedClass(field), validClasses, dynamicInstantiation);
 					} else {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.List that is not parameterised with a valid class type.");
 					}
@@ -181,7 +187,7 @@ class Validator {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.Map that is not parameterised with a valid value property type.");
 					}
 				} else {
-					validateInternal(field.getType(), validClasses);
+					validateInternal(field.getType(), validClasses, dynamicInstantiation);
 				}
 				
 			} else if ( field.isAnnotationPresent(JcrFileNode.class) ) {
@@ -208,7 +214,7 @@ class Validator {
 					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is of type that has no @JcrUUID: " + field.getType().getName());
 				}
 				// validate the class
-				validateInternal(field.getType(), validClasses);
+				validateInternal(field.getType(), validClasses, dynamicInstantiation);
 			}
 		}
 		if ( !foundNameField ) {

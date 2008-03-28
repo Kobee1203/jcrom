@@ -114,7 +114,7 @@ public class Jcrom {
 	 */
 	public synchronized Jcrom map(Class entityClass) {
 		if ( !mapper.isMapped(entityClass) ) {
-			Set<Class> validClasses = Validator.validate(entityClass);
+			Set<Class> validClasses = Validator.validate(entityClass, mapper.isDynamicInstantiation());
 			for (Class c : validClasses) {
 				mapper.addMappedClass(c);
 			}
