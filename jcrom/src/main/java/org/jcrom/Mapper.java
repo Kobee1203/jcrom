@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
@@ -71,6 +72,8 @@ class Mapper {
 	
 	private static final String DEFAULT_FIELDNAME = "fieldName";
 	
+	/** Set of classes that have been validated for mapping by this mapper */
+	private final CopyOnWriteArraySet<Class> mappedClasses = new CopyOnWriteArraySet<Class>();
 	/** Specifies whether to clean up the node names */
 	private final boolean cleanNames;
 	/** Specifies whether to retrieve mapped class name from node property */
@@ -84,6 +87,26 @@ class Mapper {
 	Mapper( boolean cleanNames, boolean dynamicInstantiation ) {
 		this.cleanNames = cleanNames;
 		this.dynamicInstantiation = dynamicInstantiation;
+	}
+	
+	boolean isMapped( Class c ) {
+		return mappedClasses.contains(c);
+	}
+	
+	void addMappedClass( Class c ) {
+		mappedClasses.add(c);
+	}
+	
+	CopyOnWriteArraySet<Class> getMappedClasses() {
+		return mappedClasses;
+	}
+
+	boolean isCleanNames() {
+		return cleanNames;
+	}
+
+	boolean isDynamicInstantiation() {
+		return dynamicInstantiation;
 	}
 	
 	private String getCleanName( String name ) {
@@ -171,7 +194,12 @@ class Mapper {
 			
 			if ( node.hasProperty(classNameProperty) ) {
 				String className = node.getProperty(classNameProperty).getString();
-				return Class.forName(className).newInstance();
+				Class c = Class.forName(className);
+				if ( isMapped(c) ) {
+					return c.newInstance();
+				} else {
+					throw new JcrMappingException("Trying to instantiate unmapped class: " + c.getName());
+				}
 			} else {
 				// use default class
 				return objClass.newInstance();
