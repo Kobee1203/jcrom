@@ -21,6 +21,12 @@
 		<connection>http://jcrom.googlecode.com/svn/trunk/</connection>
 	</scm>
 	
+	<developers>
+		<developer>
+			<id>oli.gauti</id>
+			<name>Olafur Gauti Gudmundsson</name>
+		</developer>
+	</developers>
 	
 	<dependencies>
 		<!-- Test dependencies -->
