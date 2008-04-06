@@ -487,7 +487,7 @@ class Mapper {
 		return node.getName();
 	}
 	
-	private JcrNode getJcrNodeAnnotation( Class c ) throws Exception {
+	private JcrNode getJcrNodeAnnotation( Class c ) {
 		
 		if ( c.isAnnotationPresent(JcrNode.class) ) {
 			return (JcrNode) c.getAnnotation(JcrNode.class);

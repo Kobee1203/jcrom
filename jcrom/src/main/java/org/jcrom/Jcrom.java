@@ -170,6 +170,8 @@ public class Jcrom {
 	 * child nodes, to infinite depth.
 	 * 
 	 * @param entityClass the class of the entity to be instantiated from the node
+	 * (in the case of dynamic instantiation, the instance class may be read from
+	 * the document, but will be cast to this class)
 	 * @param node the JCR node from which to create the object
 	 * @return an instance of the JCR entity class, mapped from the node
 	 * @throws java.lang.Exception
@@ -182,6 +184,8 @@ public class Jcrom {
 	 * Maps the node supplied to an instance of the entity class.
 	 * 
 	 * @param entityClass the class of the entity to be instantiated from the node
+	 * (in the case of dynamic instantiation, the instance class may be read from
+	 * the document, but will be cast to this class)
 	 * @param node the JCR node from which to create the object
 	 * @param childNodeFilter comma separated list of names of child nodes to load 
 	 * ("*" loads all, while "none" loads no children)
