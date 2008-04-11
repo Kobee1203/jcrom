@@ -435,7 +435,7 @@ public class TestMapping {
 		dad.setDrivingLicense(false);
 		dad.setPath(rootNode.getPath());
 		Parent mom = createParent("Jane");
-		mom.setPath(rootNode.getPath());
+		mom.setPath(rootNode.getPath()); // mom is created directly under root
 		assertFalse(parentDao.exists(dad.getPath() + "/" + dad.getName()));
 
 		parentDao.create(dad);
@@ -465,6 +465,14 @@ public class TestMapping {
 		
 		parentDao.delete(loadedMom.getPath());
 		assertFalse(parentDao.exists(mom.getPath()));
+		
+		// test a root level node
+		Parent rootDad = createParent("John Smith");
+		rootDad.setPath("/");
+		parentDao.create(rootDad);
+		
+		assertTrue( rootDad.getPath().equals("/"+rootDad.getName()) );
+		
 	}
 	
 	/*

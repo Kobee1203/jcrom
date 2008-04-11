@@ -107,7 +107,13 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 			throw new JcrMappingException("The parent path of the entity being created is empty!");
 		}
 		
-		Node parentNode = session.getRootNode().getNode(relativePath(parentPath));
+		Node parentNode;
+		if ( parentPath.equals("/") ) {
+			// special case, add directly to the root node
+			parentNode = session.getRootNode();
+		} else {
+			parentNode = session.getRootNode().getNode(relativePath(parentPath));
+		}
 		Node newNode = jcrom.addNode(parentNode, entity, mixinTypes);
 		session.save();
 		if ( isVersionable ) {
