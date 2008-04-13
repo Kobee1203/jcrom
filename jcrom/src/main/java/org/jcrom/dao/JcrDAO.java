@@ -34,10 +34,10 @@ public interface JcrDAO<T> {
 	 * Creates a new JCR Node from the object supplied.
 	 * 
 	 * @param entity the object to be mapped to a JCR node
-	 * @return the newly created Node
+	 * @return the newly created Object
 	 * @throws java.lang.Exception
 	 */
-	public Node create( T entity ) throws Exception;
+	public T create( T entity ) throws Exception;
 	
 	/**
 	 * Updates an existing JCR Node with the values extracted

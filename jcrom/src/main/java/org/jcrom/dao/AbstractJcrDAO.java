@@ -97,7 +97,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 		 }
 	 }
 	
-	public Node create( T entity ) throws Exception {
+	public T create( T entity ) throws Exception {
 		String entityName = jcrom.getName(entity);
 		if ( entityName == null || entityName.equals("") ) {
 			throw new JcrMappingException("The name of the entity being created is empty!");
@@ -119,7 +119,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 		if ( isVersionable ) {
 			newNode.checkin();
 		}
-		return newNode;
+		return (T)jcrom.fromNode(entityClass, newNode);
 	}
 	
 	public String update( T entity ) throws Exception {
