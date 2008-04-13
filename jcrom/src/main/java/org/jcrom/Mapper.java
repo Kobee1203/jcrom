@@ -254,7 +254,12 @@ class Mapper {
 		
 		// if name is different, then we move the node
 		if ( !node.getName().equals(getCleanName(getNodeName(obj))) ) {
-			node.getSession().move(node.getPath(), node.getParent().getPath() + "/" + getCleanName(getNodeName(obj)));
+			if ( node.getParent().getPath().equals("/") ) {
+				// special case: moving a root node
+				node.getSession().move(node.getPath(), node.getParent().getPath() + getCleanName(getNodeName(obj)));
+			} else {
+				node.getSession().move(node.getPath(), node.getParent().getPath() + "/" + getCleanName(getNodeName(obj)));node.getSession().move(node.getPath(), node.getParent().getPath() + "/" + getCleanName(getNodeName(obj)));
+			}
 			
 			// update the object name and path
 			setNodeName(obj, node.getName());

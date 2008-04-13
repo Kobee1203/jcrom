@@ -485,6 +485,10 @@ public class TestMapping {
 		
 		assertTrue( rootDad.getPath().equals("/"+rootDad.getName()) );
 		
+		// rename a root level node
+		rootDad.setName("John Smythe");
+		parentDao.update(rootDad);
+		
 	}
 	
 	/*
