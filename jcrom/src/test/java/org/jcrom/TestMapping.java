@@ -346,30 +346,42 @@ public class TestMapping {
 	public void references() throws Exception {
 		
 		Jcrom jcrom = new Jcrom();
-		jcrom.map(Parent.class);
+		jcrom.map(ReferenceContainer.class);
 		
 		// create the entity we will reference
 		ReferencedEntity reference = new ReferencedEntity();
 		reference.setName("myReference");
 		reference.setBody("myBody");
 		
+		ReferencedEntity reference2 = new ReferencedEntity();
+		reference2.setName("Reference2");
+		reference2.setBody("Body of ref 2.");
+		
 		Node rootNode = session.getRootNode().addNode("referenceTest");
 		jcrom.addNode(rootNode, reference);
+		jcrom.addNode(rootNode, reference2);
 		session.save();
 		
-		// note that the Parent and ReferencedEntity classes both have
+		// note that the ReferenceContainer and ReferencedEntity classes both have
 		// mixin types defined in their @JcrNode annotation
 		
-		Parent parent = createParent("Bobby");
-		parent.setReference(reference);
+		ReferenceContainer refContainer = new ReferenceContainer();
+		refContainer.setName("refContainer");
+		refContainer.setReference(reference);
+		refContainer.addReference(reference);
+		refContainer.addReference(reference2);
 		
-		Node parentNode = jcrom.addNode(rootNode, parent);
+		Node refNode = jcrom.addNode(rootNode, refContainer);
 		
-		Parent fromNode = jcrom.fromNode(Parent.class, parentNode);
+		ReferenceContainer fromNode = jcrom.fromNode(ReferenceContainer.class, refNode);
 		
 		assertTrue(fromNode.getReference() != null);
 		assertTrue(fromNode.getReference().getName().equals(reference.getName()));
 		assertTrue(fromNode.getReference().getBody().equals(reference.getBody()));
+		
+		assertTrue(fromNode.getReferences().size() == 2);
+		assertTrue(fromNode.getReferences().get(1).getName().equals(reference2.getName()));
+		assertTrue(fromNode.getReferences().get(1).getBody().equals(reference2.getBody()));
 	}
 
 	@Test

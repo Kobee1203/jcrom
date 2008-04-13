@@ -22,7 +22,6 @@ import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrProperty;
-import org.jcrom.annotations.JcrReference;
 import org.jcrom.annotations.JcrUUID;
 
 /**
@@ -50,20 +49,10 @@ public class Parent extends AbstractEntity implements Serializable {
 	@JcrFileNode(loadType = JcrFileNode.LoadType.BYTES)
 	private List<JcrFile> files;
 	
-	@JcrReference private ReferencedEntity reference;
-	
 	public Parent() {
 		tags = new ArrayList<String>();
 		children = new ArrayList<Child>();
 		files = new ArrayList<JcrFile>();
-	}
-
-	public ReferencedEntity getReference() {
-		return reference;
-	}
-
-	public void setReference(ReferencedEntity reference) {
-		this.reference = reference;
 	}
 
 	public String getUuid() {

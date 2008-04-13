@@ -381,27 +381,53 @@ class Mapper {
 				
 				// make sure that the reference should be updated
 				if ( childNameFilter.isIncluded(field.getName()) ) {
-					if ( !node.hasProperty(name) ) {
-						Object referencedObject = field.get(obj);
-						String referencedUUID = referencedObject == null ? null : getNodeUUID(referencedObject);
-						if ( referencedObject != null && referencedUUID != null && !referencedUUID.equals("") ) {
-							// load the node and add a reference
-							Node referencedNode = node.getSession().getNodeByUUID(referencedUUID);
-							node.setProperty(name, referencedNode);
+					if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
+						// can expect multiple children
+						boolean nullOrEmpty = field.get(obj) == null || ((List)field.get(obj)).isEmpty();
+						if ( !nullOrEmpty ) {
+							List references = (List)field.get(obj);
+							if ( references != null && !references.isEmpty() ) {
+								List<Value> refValues = new ArrayList<Value>();
+								for ( int i = 0; i < references.size(); i++ ) {
+									String referenceUUID = getNodeUUID(references.get(i));
+									if ( referenceUUID != null && !referenceUUID.equals("") ) {
+										Node referencedNode = node.getSession().getNodeByUUID(referenceUUID);
+										refValues.add( node.getSession().getValueFactory().createValue(referencedNode) );
+									}
+								}
+								if ( !refValues.isEmpty() ) {
+									node.setProperty(name, (Value[])refValues.toArray(new Value[refValues.size()]));
+								} else {
+									node.setProperty(name, (Value)null);
+								}
+							} else {
+								node.setProperty(name, (Value)null);
+							}
 						}
 					} else {
-						// this reference already exists
-						Object referencedObject = field.get(obj);
-						String referencedUUID = referencedObject == null ? null : getNodeUUID(referencedObject);
-						if ( referencedObject != null && referencedUUID != null && !referencedUUID.equals("") ) {
-							// update the reference, but only if it changed
-							if ( !node.getProperty(name).getString().equals(referencedUUID) ) {
+						// single reference
+						if ( !node.hasProperty(name) ) {
+							Object referencedObject = field.get(obj);
+							String referencedUUID = referencedObject == null ? null : getNodeUUID(referencedObject);
+							if ( referencedObject != null && referencedUUID != null && !referencedUUID.equals("") ) {
+								// load the node and add a reference
 								Node referencedNode = node.getSession().getNodeByUUID(referencedUUID);
 								node.setProperty(name, referencedNode);
 							}
 						} else {
-							// remove the reference
-							node.setProperty(name, (Value)null);
+							// this reference already exists
+							Object referencedObject = field.get(obj);
+							String referencedUUID = referencedObject == null ? null : getNodeUUID(referencedObject);
+							if ( referencedObject != null && referencedUUID != null && !referencedUUID.equals("") ) {
+								// update the reference, but only if it changed
+								if ( !node.getProperty(name).getString().equals(referencedUUID) ) {
+									Node referencedNode = node.getSession().getNodeByUUID(referencedUUID);
+									node.setProperty(name, referencedNode);
+								}
+							} else {
+								// remove the reference
+								node.setProperty(name, (Value)null);
+							}
 						}
 					}
 				}
@@ -634,14 +660,32 @@ class Mapper {
 				if ( !jcrReference.name().equals(DEFAULT_FIELDNAME) ) {
 					name = jcrReference.name();
 				}
-				// extract the UUID from the object, load the node, and
-				// add a reference to it
-				Object referenceObject = field.get(entity);
-				if ( referenceObject != null ) {
-					String referenceUUID = getNodeUUID(referenceObject);
-					if ( referenceUUID != null && !referenceUUID.equals("") ) {
-						Node referencedNode = node.getSession().getNodeByUUID(referenceUUID);
-						node.setProperty(name, referencedNode);
+				if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
+					// multiple references in a list
+					List references = (List)field.get(entity);
+					if ( references != null && !references.isEmpty() ) {
+						List<Value> refValues = new ArrayList<Value>();
+						for ( int i = 0; i < references.size(); i++ ) {
+							String referenceUUID = getNodeUUID(references.get(i));
+							if ( referenceUUID != null && !referenceUUID.equals("") ) {
+								Node referencedNode = node.getSession().getNodeByUUID(referenceUUID);
+								refValues.add( node.getSession().getValueFactory().createValue(referencedNode) );
+							}
+						}
+						if ( !refValues.isEmpty() ) {
+							node.setProperty(name, (Value[])refValues.toArray(new Value[refValues.size()]));
+						}
+					}
+				} else {
+					// extract the UUID from the object, load the node, and
+					// add a reference to it
+					Object referenceObject = field.get(entity);
+					if ( referenceObject != null ) {
+						String referenceUUID = getNodeUUID(referenceObject);
+						if ( referenceUUID != null && !referenceUUID.equals("") ) {
+							Node referencedNode = node.getSession().getNodeByUUID(referenceUUID);
+							node.setProperty(name, referencedNode);
+						}
 					}
 				}
 			
@@ -902,11 +946,10 @@ class Mapper {
 					if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 						// we can expect more than one child object here
 						List children = new ArrayList();
-						ParameterizedType ptype = (ParameterizedType) field.getGenericType();
+						Class childObjClass = ReflectionUtils.getParameterizedClass(field);
 						
 						NodeIterator iterator = childrenContainer.getNodes();
 						while ( iterator.hasNext() ) {
-							Class childObjClass = (Class)ptype.getActualTypeArguments()[0];
 							Node childNode = iterator.nextNode();
 							Object childObj = createInstanceForNode(childObjClass, childNode);
 							mapNodeToClass(childObj, childNode, nameFilter, maxDepth, obj, depth+1);
@@ -937,17 +980,37 @@ class Mapper {
 					name = jcrReference.name();
 				}
 				if ( node.hasProperty(name) ) {
-					Node referencedNode = node.getProperty(name).getNode();
-					Class referenceObjClass = field.getType();
-					Object referencedObject = createInstanceForNode(referenceObjClass, referencedNode);
-					if ( nameFilter.isIncluded(field.getName()) && ( maxDepth < 0 || depth < maxDepth ) ) {
-						// load the object
-						mapNodeToClass(referencedObject, referencedNode, nameFilter, maxDepth, obj, depth+1);
+					if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
+						// multiple references
+						List references = new ArrayList();
+						Class referenceObjClass = ReflectionUtils.getParameterizedClass(field);
+						Value[] refValues = node.getProperty(name).getValues();
+						for ( Value value : refValues ) {
+							Node referencedNode = node.getSession().getNodeByUUID(value.getString());
+							Object referencedObject = createInstanceForNode(referenceObjClass, referencedNode);
+							if ( nameFilter.isIncluded(field.getName()) && ( maxDepth < 0 || depth < maxDepth ) ) {
+								// load and map the object
+								mapNodeToClass(referencedObject, referencedNode, nameFilter, maxDepth, obj, depth+1);
+							} else {
+								// just store the UUID
+								setUUID(referencedObject, value.getString());
+							}
+							references.add(referencedObject);
+						}
+						field.set(obj, references);
 					} else {
-						// just load the UUID
-						setUUID(obj, node.getProperty(name).getString());
+						Node referencedNode = node.getProperty(name).getNode();
+						Class referenceObjClass = field.getType();
+						Object referencedObject = createInstanceForNode(referenceObjClass, referencedNode);
+						if ( nameFilter.isIncluded(field.getName()) && ( maxDepth < 0 || depth < maxDepth ) ) {
+							// load and map the object
+							mapNodeToClass(referencedObject, referencedNode, nameFilter, maxDepth, obj, depth+1);
+						} else {
+							// just load the UUID
+							setUUID(obj, node.getProperty(name).getString());
+						}
+						field.set(obj, referencedObject);
 					}
-					field.set(obj, referencedObject);
 				}
 				
 			} else if ( field.isAnnotationPresent(JcrFileNode.class) 
@@ -964,11 +1027,10 @@ class Mapper {
 					if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 						// we can expect more than one child object here
 						List children = new ArrayList();
-						ParameterizedType ptype = (ParameterizedType) field.getGenericType();
+						Class childObjClass = ReflectionUtils.getParameterizedClass(field);
 						
 						NodeIterator iterator = fileContainer.getNodes();
 						while ( iterator.hasNext() ) {
-							Class childObjClass = (Class)ptype.getActualTypeArguments()[0];
 							JcrFile fileObj = (JcrFile)childObjClass.newInstance();
 							mapNodeToFileObject(jcrFileNode, fileObj, iterator.nextNode(), nameFilter, maxDepth, obj, depth);
 							children.add(fileObj);

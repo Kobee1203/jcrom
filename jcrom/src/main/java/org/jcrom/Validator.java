@@ -203,9 +203,15 @@ class Validator {
 				}
 				
 			} else if ( field.isAnnotationPresent(JcrReference.class) ) {
+				Class fieldType;
+				if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
+					fieldType = ReflectionUtils.getParameterizedClass(field);
+				} else {
+					fieldType = field.getType();
+				}
 				// make sure the class has a @JcrUUID
 				boolean foundUUID = false;
-				for ( Field refField : ReflectionUtils.getDeclaredAndInheritedFields(field.getType()) ) {
+				for ( Field refField : ReflectionUtils.getDeclaredAndInheritedFields(fieldType) ) {
 					if ( refField.isAnnotationPresent(JcrUUID.class) ) {
 						foundUUID = true;
 					}
@@ -214,7 +220,7 @@ class Validator {
 					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is of type that has no @JcrUUID: " + field.getType().getName());
 				}
 				// validate the class
-				validateInternal(field.getType(), validClasses, dynamicInstantiation);
+				validateInternal(fieldType, validClasses, dynamicInstantiation);
 			}
 		}
 		if ( !foundNameField ) {
