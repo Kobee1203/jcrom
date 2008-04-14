@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
@@ -41,6 +42,9 @@ import org.jcrom.Jcrom;
  * session. The constructor also takes a Jcrom instance that can be shared
  * across multiple DAOs.
  * <br/><br/>
+ * 
+ * This implementation encapsulates exceptions in JcrMappingException, which
+ * is a RuntimeException.
  *
  * @author Olafur Gauti Gudmundsson
  */
@@ -97,235 +101,370 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 		 }
 	 }
 	
-	public T create( T entity ) throws Exception {
-		String entityName = jcrom.getName(entity);
-		if ( entityName == null || entityName.equals("") ) {
-			throw new JcrMappingException("The name of the entity being created is empty!");
+	public T create( T entity ) {
+		return create(jcrom.getPath(entity), entity);
+	}
+
+	public T create(String parentNodePath, T entity) {
+		try {
+			String entityName = jcrom.getName(entity);
+			if ( entityName == null || entityName.equals("") ) {
+				throw new JcrMappingException("The name of the entity being created is empty!");
+			}
+			if ( parentNodePath == null || parentNodePath.equals("") ) {
+				throw new JcrMappingException("The parent path of the entity being created is empty!");
+			}
+
+			Node parentNode;
+			if ( parentNodePath.equals("/") ) {
+				// special case, add directly to the root node
+				parentNode = session.getRootNode();
+			} else {
+				parentNode = session.getRootNode().getNode(relativePath(parentNodePath));
+			}
+			Node newNode = jcrom.addNode(parentNode, entity, mixinTypes);
+			session.save();
+			if ( isVersionable ) {
+				newNode.checkin();
+			}
+			return (T)jcrom.fromNode(entityClass, newNode);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not create node", e);
 		}
-		String parentPath = jcrom.getPath(entity);
-		if ( parentPath == null || parentPath.equals("") ) {
-			throw new JcrMappingException("The parent path of the entity being created is empty!");
-		}
-		
-		Node parentNode;
-		if ( parentPath.equals("/") ) {
-			// special case, add directly to the root node
-			parentNode = session.getRootNode();
-		} else {
-			parentNode = session.getRootNode().getNode(relativePath(parentPath));
-		}
-		Node newNode = jcrom.addNode(parentNode, entity, mixinTypes);
-		session.save();
-		if ( isVersionable ) {
-			newNode.checkin();
-		}
-		return (T)jcrom.fromNode(entityClass, newNode);
 	}
 	
-	public String update( T entity ) throws Exception {
+	public String update( T entity ) {
 		return update(entity, "*", -1);
 	}
 	
-	public String update( T entity, String childNodeFilter, int maxDepth ) throws Exception {
-		Node node = session.getRootNode().getNode(relativePath(jcrom.getPath(entity)));
+	public String update( T entity, String childNodeFilter, int maxDepth ) {
+		Node node;
+		try {
+			node = session.getRootNode().getNode(relativePath(jcrom.getPath(entity)));
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not update node", e);
+		}
 		return update(node, entity, childNodeFilter, maxDepth);
 	}
 	
-	public String updateByUUID( T entity, String uuid ) throws Exception {
+	public String updateByUUID( T entity, String uuid ) {
 		return updateByUUID(entity, uuid, "*", -1);
 	}
 	
-	public String updateByUUID( T entity, String uuid, String childNodeFilter, int maxDepth ) throws Exception {
-		Node node = session.getNodeByUUID(uuid);
+	public String updateByUUID( T entity, String uuid, String childNodeFilter, int maxDepth ) {
+		Node node;
+		try {
+			node = session.getNodeByUUID(uuid);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not update node", e);
+		}
 		return update(node, entity, childNodeFilter, maxDepth);
 	}
 	
-	protected String update( Node node, T entity, String childNodeFilter, int maxDepth ) throws Exception {
-		if ( isVersionable ) {
-			node.checkout();
+	protected String update( Node node, T entity, String childNodeFilter, int maxDepth ) {
+		try {
+			if ( isVersionable ) {
+				node.checkout();
+			}
+			String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
+			session.save();
+			if ( isVersionable ) {
+				node.checkin();
+			}
+			return name;
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not update node", e);
 		}
-		String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
-		session.save();
-		if ( isVersionable ) {
-			node.checkin();
+	}
+	
+	public void delete( String path ) {
+		try {
+			session.getRootNode().getNode(relativePath(path)).remove();
+			session.save();
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not delete node", e);
 		}
-		return name;
 	}
 	
-	public void delete( String path ) throws Exception {
-		session.getRootNode().getNode(relativePath(path)).remove();
-		session.save();
+	public void deleteByUUID( String uuid ) {
+		try {
+			session.getNodeByUUID(uuid).remove();
+			session.save();
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not delete node", e);
+		}
 	}
 	
-	public void deleteByUUID( String uuid ) throws Exception {
-		session.getNodeByUUID(uuid).remove();
-		session.save();
+	public boolean exists( String path ) {
+		try {
+			return session.getRootNode().hasNode(relativePath(path));
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not check if node exists", e);
+		}
 	}
 	
-	public boolean exists( String path ) throws Exception {
-		return session.getRootNode().hasNode(relativePath(path));
-	}
-	
-	public T get( String path ) throws Exception {
+	public T get( String path ) {
 		return get(path, "*", -1);
 	}
 	
-	public T get( String path, String childNodeFilter, int maxDepth ) throws Exception {
+	public T get( String path, String childNodeFilter, int maxDepth ) {
 		if ( exists(path) ) {
-			Node node = session.getRootNode().getNode(relativePath(path));
+			Node node;
+			try {
+				node = session.getRootNode().getNode(relativePath(path));
+			} catch ( RepositoryException e ) {
+				throw new JcrMappingException("Could not get node", e);
+			}
 			return (T)jcrom.fromNode(entityClass, node, childNodeFilter, maxDepth);
 		} else {
 			return null;
 		}
 	}
 	
-	public T loadByUUID( String uuid ) throws Exception {
+	public T loadByUUID( String uuid ) {
 		return loadByUUID(uuid, "*", -1);
 	}
 	
-	public T loadByUUID( String uuid, String childNodeFilter, int maxDepth ) throws Exception {
-		Node node = session.getNodeByUUID(uuid);
+	public T loadByUUID( String uuid, String childNodeFilter, int maxDepth ) {
+		Node node;
+		try {
+			node = session.getNodeByUUID(uuid);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not load node", e);
+		}
 		return (T)jcrom.fromNode(entityClass, node, childNodeFilter, maxDepth);
 	}
 	
-	public T getVersion( String path, String versionName ) throws Exception {
+	public T getVersion( String path, String versionName ) {
 		return getVersion(path, versionName, "*", -1);
 	}
-	public T getVersion( String path, String versionName, String childNodeFilter, int maxDepth ) throws Exception {
-		return getVersion(session.getRootNode().getNode(relativePath(path)), versionName, childNodeFilter, maxDepth);
+	public T getVersion( String path, String versionName, String childNodeFilter, int maxDepth ) {
+		try {
+			return getVersion(session.getRootNode().getNode(relativePath(path)), versionName, childNodeFilter, maxDepth);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version", e);
+		}
 	}
 	
-	public T getVersionByUUID( String uuid, String versionName ) throws Exception {
+	public T getVersionByUUID( String uuid, String versionName ) {
 		return getVersionByUUID(uuid, versionName, "*", -1);
 	}
-	public T getVersionByUUID( String uuid, String versionName, String childNodeFilter, int maxDepth ) throws Exception {
-		return getVersion(session.getNodeByUUID(uuid), versionName, childNodeFilter, maxDepth);
-	}
-	
-	protected T getVersion( Node node, String versionName, String childNodeFilter, int maxDepth ) throws Exception {
-		VersionHistory versionHistory = node.getVersionHistory();
-		Version version = versionHistory.getVersion(versionName);
-		return (T)jcrom.fromNode(entityClass, version.getNodes().nextNode(), childNodeFilter, maxDepth);
-	}
-	
-	public void restoreVersion( String path, String versionName ) throws Exception {
-		restoreVersion(session.getRootNode().getNode(relativePath(path)), versionName);
-	}
-	public void restoreVersionByUUID( String uuid, String versionName ) throws Exception {
-		restoreVersion(session.getNodeByUUID(uuid), versionName);
-	}
-	protected void restoreVersion( Node node, String versionName ) throws Exception {
-		node.checkout();
-		node.restore(versionName, true);
-	}
-	
-	public void removeVersion( String path, String versionName ) throws Exception {
-		removeVersion(session.getRootNode().getNode(relativePath(path)), versionName);
-	}
-	public void removeVersionByUUID( String uuid, String versionName ) throws Exception {
-		removeVersion(session.getNodeByUUID(uuid), versionName);
-	}
-	protected void removeVersion( Node node, String versionName ) throws Exception {
-		node.getVersionHistory().removeVersion(versionName);
-	}
-	
-	public long getVersionSize( String path ) throws Exception {
-		return getVersionSize(session.getRootNode().getNode(relativePath(path)));
-	}
-	
-	public long getVersionSizeByUUID( String uuid ) throws Exception {
-		return getVersionSize(session.getNodeByUUID(uuid));
-	}
-	
-	protected long getVersionSize( Node node ) throws Exception {
-		VersionHistory versionHistory = node.getVersionHistory();
-		return versionHistory.getAllVersions().getSize()-1;
-	}
-	
-	public List<T> getVersionList( String path ) throws Exception {
-		return getVersionList(session.getRootNode().getNode(relativePath(path)), "*", -1);
-	}
-	
-	public List<T> getVersionList( String path, String childNameFilter, int maxDepth ) throws Exception {
-		return getVersionList(session.getRootNode().getNode(relativePath(path)), childNameFilter, maxDepth);
-	}
-	
-	public List<T> getVersionList( String path, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception {
-		return getVersionList(session.getRootNode().getNode(relativePath(path)), childNameFilter, maxDepth, startIndex, resultSize);
-	}
-	
-	public List<T> getVersionListByUUID( String uuid ) throws Exception {
-		return getVersionList(session.getNodeByUUID(uuid), "*", -1);
-	}
-	
-	public List<T> getVersionListByUUID( String uuid, String childNameFilter, int maxDepth ) throws Exception {
-		return getVersionList(session.getNodeByUUID(uuid), childNameFilter, maxDepth);
-	}
-	
-	public List<T> getVersionListByUUID( String uuid, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception {
-		return getVersionList(session.getNodeByUUID(uuid), childNameFilter, maxDepth, startIndex, resultSize);
-	}
-	
-	protected List<T> getVersionList( Node node, String childNameFilter, int maxDepth ) throws Exception {
-		List<T> versionList = new ArrayList<T>();
-		VersionHistory versionHistory = node.getVersionHistory();
-		VersionIterator versionIterator = versionHistory.getAllVersions();
-		versionIterator.skip(1);
-		while ( versionIterator.hasNext() ) {
-			Version version = versionIterator.nextVersion();
-			NodeIterator nodeIterator = version.getNodes();
-			while ( nodeIterator.hasNext() ) {
-				T entityVersion = (T)jcrom.fromNode(entityClass, nodeIterator.nextNode(), childNameFilter, maxDepth);
-				jcrom.setBaseVersionInfo(entityVersion, node.getBaseVersion().getName(), node.getBaseVersion().getCreated());
-				versionList.add(entityVersion);
-			}
+	public T getVersionByUUID( String uuid, String versionName, String childNodeFilter, int maxDepth ) {
+		try {
+			return getVersion(session.getNodeByUUID(uuid), versionName, childNodeFilter, maxDepth);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version", e);
 		}
-		return versionList;
 	}
 	
-	protected List<T> getVersionList( Node node, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception {
-		List<T> versionList = new ArrayList<T>();
-		VersionHistory versionHistory = node.getVersionHistory();
-		VersionIterator versionIterator = versionHistory.getAllVersions();
-		versionIterator.skip(1 + startIndex);
-		
-		long counter = 0;
-		while ( versionIterator.hasNext() ) {
-			if ( counter == resultSize ) {
-				break;
-			}
-			Version version = versionIterator.nextVersion();
-			NodeIterator nodeIterator = version.getNodes();
-			while ( nodeIterator.hasNext() ) {
-				versionList.add((T)jcrom.fromNode(entityClass, nodeIterator.nextNode(), childNameFilter, maxDepth));
-			}
-			counter++;
+	protected T getVersion( Node node, String versionName, String childNodeFilter, int maxDepth ) {
+		try {
+			VersionHistory versionHistory = node.getVersionHistory();
+			Version version = versionHistory.getVersion(versionName);
+			return (T)jcrom.fromNode(entityClass, version.getNodes().nextNode(), childNodeFilter, maxDepth);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version", e);
 		}
-		return versionList;
+	}
+	
+	public void restoreVersion( String path, String versionName ) {
+		try {
+			restoreVersion(session.getRootNode().getNode(relativePath(path)), versionName);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not restore version", e);
+		}
+	}
+	public void restoreVersionByUUID( String uuid, String versionName ) {
+		try {
+			restoreVersion(session.getNodeByUUID(uuid), versionName);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not restore version", e);
+		}
+	}
+	protected void restoreVersion( Node node, String versionName ) {
+		try {
+			node.checkout();
+			node.restore(versionName, true);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not restore version", e);
+		}
+	}
+	
+	public void removeVersion( String path, String versionName ) {
+		try {
+			removeVersion(session.getRootNode().getNode(relativePath(path)), versionName);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not remove version", e);
+		}
+	}
+	public void removeVersionByUUID( String uuid, String versionName ) {
+		try {
+			removeVersion(session.getNodeByUUID(uuid), versionName);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not remove version", e);
+		} 
+	}
+	protected void removeVersion( Node node, String versionName ) {
+		try {
+			node.getVersionHistory().removeVersion(versionName);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not remove version", e);
+		}
+	}
+	
+	public long getVersionSize( String path ) {
+		try {
+			return getVersionSize(session.getRootNode().getNode(relativePath(path)));
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version history size", e);
+		}
+	}
+	
+	public long getVersionSizeByUUID( String uuid ) {
+		try {
+			return getVersionSize(session.getNodeByUUID(uuid));
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version history size", e);
+		}
+	}
+	
+	protected long getVersionSize( Node node ) {
+		try {
+			VersionHistory versionHistory = node.getVersionHistory();
+			return versionHistory.getAllVersions().getSize()-1;
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version history size", e);
+		}
+	}
+	
+	public List<T> getVersionList( String path ) {
+		try {
+			return getVersionList(session.getRootNode().getNode(relativePath(path)), "*", -1);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version list", e);
+		}
+	}
+	
+	public List<T> getVersionList( String path, String childNameFilter, int maxDepth ) {
+		try {
+			return getVersionList(session.getRootNode().getNode(relativePath(path)), childNameFilter, maxDepth);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version list", e);
+		}
+	}
+	
+	public List<T> getVersionList( String path, String childNameFilter, int maxDepth, long startIndex, long resultSize ) {
+		try {
+			return getVersionList(session.getRootNode().getNode(relativePath(path)), childNameFilter, maxDepth, startIndex, resultSize);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version list", e);
+		}
+	}
+	
+	public List<T> getVersionListByUUID( String uuid ) {
+		try {
+			return getVersionList(session.getNodeByUUID(uuid), "*", -1);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version list", e);
+		}
+	}
+	
+	public List<T> getVersionListByUUID( String uuid, String childNameFilter, int maxDepth ) {
+		try {
+			return getVersionList(session.getNodeByUUID(uuid), childNameFilter, maxDepth);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version list", e);
+		}
+	}
+	
+	public List<T> getVersionListByUUID( String uuid, String childNameFilter, int maxDepth, long startIndex, long resultSize ) {
+		try {
+			return getVersionList(session.getNodeByUUID(uuid), childNameFilter, maxDepth, startIndex, resultSize);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version list", e);
+		}
+	}
+	
+	protected List<T> getVersionList( Node node, String childNameFilter, int maxDepth ) {
+		try {
+			List<T> versionList = new ArrayList<T>();
+			VersionHistory versionHistory = node.getVersionHistory();
+			VersionIterator versionIterator = versionHistory.getAllVersions();
+			versionIterator.skip(1);
+			while ( versionIterator.hasNext() ) {
+				Version version = versionIterator.nextVersion();
+				NodeIterator nodeIterator = version.getNodes();
+				while ( nodeIterator.hasNext() ) {
+					T entityVersion = (T)jcrom.fromNode(entityClass, nodeIterator.nextNode(), childNameFilter, maxDepth);
+					jcrom.setBaseVersionInfo(entityVersion, node.getBaseVersion().getName(), node.getBaseVersion().getCreated());
+					versionList.add(entityVersion);
+				}
+			}
+			return versionList;
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version list", e);
+		}
+	}
+	
+	protected List<T> getVersionList( Node node, String childNameFilter, int maxDepth, long startIndex, long resultSize ) {
+		try {
+			List<T> versionList = new ArrayList<T>();
+			VersionHistory versionHistory = node.getVersionHistory();
+			VersionIterator versionIterator = versionHistory.getAllVersions();
+			versionIterator.skip(1 + startIndex);
+
+			long counter = 0;
+			while ( versionIterator.hasNext() ) {
+				if ( counter == resultSize ) {
+					break;
+				}
+				Version version = versionIterator.nextVersion();
+				NodeIterator nodeIterator = version.getNodes();
+				while ( nodeIterator.hasNext() ) {
+					versionList.add((T)jcrom.fromNode(entityClass, nodeIterator.nextNode(), childNameFilter, maxDepth));
+				}
+				counter++;
+			}
+			return versionList;
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get version list", e);
+		}
 	}
 	
 	
-	public long getSize( String rootPath ) throws Exception {
-		NodeIterator nodeIterator = session.getRootNode().getNode(relativePath(rootPath)).getNodes();
-		return nodeIterator.getSize();
+	public long getSize( String rootPath ) {
+		try {
+			NodeIterator nodeIterator = session.getRootNode().getNode(relativePath(rootPath)).getNodes();
+			return nodeIterator.getSize();
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not get list size", e);
+		}
 	}
 	
-	public List<T> findAll( String rootPath ) throws Exception {
+	public List<T> findAll( String rootPath ) {
 		return findAll(rootPath, "*", -1);
 	}
 	
-	public List<T> findAll( String rootPath, long startIndex, long resultSize ) throws Exception {
+	public List<T> findAll( String rootPath, long startIndex, long resultSize ) {
 		return findAll(rootPath, "*", -1, startIndex, resultSize);
 	}
 	
-	public List<T> findAll( String rootPath, String childNameFilter, int maxDepth ) throws Exception {
-		return toList(session.getRootNode().getNode(relativePath(rootPath)).getNodes(), childNameFilter, maxDepth);
+	public List<T> findAll( String rootPath, String childNameFilter, int maxDepth ) {
+		try {
+			return toList(session.getRootNode().getNode(relativePath(rootPath)).getNodes(), childNameFilter, maxDepth);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not find nodes", e);
+		}
 	}
 	
-	public List<T> findAll( String rootPath, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception {
-		NodeIterator nodeIterator = session.getRootNode().getNode(relativePath(rootPath)).getNodes();
-		nodeIterator.skip(startIndex);
-		return toList(nodeIterator, childNameFilter, maxDepth, resultSize);
+	public List<T> findAll( String rootPath, String childNameFilter, int maxDepth, long startIndex, long resultSize ) {
+		try {
+			NodeIterator nodeIterator = session.getRootNode().getNode(relativePath(rootPath)).getNodes();
+			nodeIterator.skip(startIndex);
+			return toList(nodeIterator, childNameFilter, maxDepth, resultSize);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not find nodes", e);
+		}
 	}
 	
 	
@@ -342,15 +481,18 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	 * @param startIndex the zero based index of the first item to return
 	 * @param resultSize the number of items to return
 	 * @return a list of all objects found
-	 * @throws java.lang.Exception
 	 */
-	protected List<T> findByXPath( String xpath, String childNameFilter, int maxDepth, long startIndex, long resultSize ) throws Exception {
-		QueryManager queryManager = session.getWorkspace().getQueryManager();
-		Query query = queryManager.createQuery(xpath, Query.XPATH);
-		QueryResult result = query.execute();
-		NodeIterator nodeIterator = result.getNodes();
-		nodeIterator.skip(startIndex);
-		return toList(nodeIterator, childNameFilter, maxDepth, resultSize);
+	protected List<T> findByXPath( String xpath, String childNameFilter, int maxDepth, long startIndex, long resultSize ) {
+		try {
+			QueryManager queryManager = session.getWorkspace().getQueryManager();
+			Query query = queryManager.createQuery(xpath, Query.XPATH);
+			QueryResult result = query.execute();
+			NodeIterator nodeIterator = result.getNodes();
+			nodeIterator.skip(startIndex);
+			return toList(nodeIterator, childNameFilter, maxDepth, resultSize);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not find nodes by XPath", e);
+		}
 	}
 	
 	/**
@@ -364,13 +506,16 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	 * child nodes are loaded, while a negative value means that no 
 	 * restrictions are set on the depth).
 	 * @return a list of all objects found
-	 * @throws java.lang.Exception
 	 */
-	protected List<T> findByXPath( String xpath, String childNameFilter, int maxDepth ) throws Exception {
-		QueryManager queryManager = session.getWorkspace().getQueryManager();
-		Query query = queryManager.createQuery(xpath, Query.XPATH);
-		QueryResult result = query.execute();
-		return toList(result.getNodes(), childNameFilter, maxDepth);
+	protected List<T> findByXPath( String xpath, String childNameFilter, int maxDepth ) {
+		try {
+			QueryManager queryManager = session.getWorkspace().getQueryManager();
+			Query query = queryManager.createQuery(xpath, Query.XPATH);
+			QueryResult result = query.execute();
+			return toList(result.getNodes(), childNameFilter, maxDepth);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not find nodes by XPath", e);
+		}
 	}
 	
 	/**
@@ -384,9 +529,8 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	 * child nodes are loaded, while a negative value means that no 
 	 * restrictions are set on the depth).
 	 * @return a list of objects mapped from the nodes
-	 * @throws java.lang.Exception
 	 */
-	protected List<T> toList( NodeIterator nodeIterator, String childNameFilter, int maxDepth ) throws Exception {
+	protected List<T> toList( NodeIterator nodeIterator, String childNameFilter, int maxDepth ) {
 		List<T> objects = new ArrayList<T>();
 		while ( nodeIterator.hasNext() ) {
 			objects.add( (T)jcrom.fromNode(entityClass, nodeIterator.nextNode(), childNameFilter, maxDepth) );
@@ -406,9 +550,8 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	 * restrictions are set on the depth).
 	 * @param resultSize the number of items to retrieve from the iterator
 	 * @return a list of objects mapped from the nodes
-	 * @throws java.lang.Exception
 	 */
-	protected List<T> toList( NodeIterator nodeIterator, String childNameFilter, int maxDepth, long resultSize ) throws Exception {
+	protected List<T> toList( NodeIterator nodeIterator, String childNameFilter, int maxDepth, long resultSize ) {
 		List<T> objects = new ArrayList<T>();
 		long counter = 0;
 		while ( nodeIterator.hasNext() ) {

@@ -480,8 +480,7 @@ public class TestMapping {
 		
 		// test a root level node
 		Parent rootDad = createParent("John Smith");
-		rootDad.setPath("/");
-		parentDao.create(rootDad);
+		parentDao.create("/", rootDad);
 		
 		assertTrue( rootDad.getPath().equals("/"+rootDad.getName()) );
 		
