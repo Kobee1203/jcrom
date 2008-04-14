@@ -15,11 +15,13 @@
  */
 package org.jcrom;
 
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import javax.jcr.Node;
+import javax.jcr.RepositoryException;
 
 /**
  * This is the main entry class for JCROM.
@@ -143,24 +145,24 @@ public class Jcrom {
 
 	public String getName(Object object) throws JcrMappingException {
 		try {
-			return mapper.getNodeName(object);
-		} catch (Exception e) {
+			return Mapper.getNodeName(object);
+		} catch (IllegalAccessException e) {
 			throw new JcrMappingException("Could not get node name from object", e);
 		}
 	}
 
 	public String getPath(Object object) throws JcrMappingException {
 		try {
-			return mapper.getNodePath(object);
-		} catch (Exception e) {
+			return Mapper.getNodePath(object);
+		} catch (IllegalAccessException e) {
 			throw new JcrMappingException("Could not get node path from object", e);
 		}
 	}
 
 	public void setBaseVersionInfo(Object object, String name, Calendar created) throws JcrMappingException {
 		try {
-			mapper.setBaseVersionInfo(object, name, created);
-		} catch (Exception e) {
+			Mapper.setBaseVersionInfo(object, name, created);
+		} catch (IllegalAccessException e) {
 			throw new JcrMappingException("Could not set base version info on object", e);
 		}
 	}
@@ -200,8 +202,16 @@ public class Jcrom {
 		}
 		try {
 			return (T) mapper.fromNode(entityClass, node, childNodeFilter, maxDepth);
-		} catch (Exception e) {
-			throw new JcrMappingException("Could not map from node", e);
+		} catch (ClassNotFoundException e) {
+			throw new JcrMappingException("Could not map Object from node", e);
+		} catch (InstantiationException e) {
+			throw new JcrMappingException("Could not map Object from node", e);
+		} catch (RepositoryException e) {
+			throw new JcrMappingException("Could not map Object from node", e);
+		} catch (IllegalAccessException e) {
+			throw new JcrMappingException("Could not map Object from node", e);
+		} catch (IOException e) {
+			throw new JcrMappingException("Could not map Object from node", e);
 		}
 	}
 
@@ -234,7 +244,11 @@ public class Jcrom {
 		}
 		try {
 			return mapper.addNode(parentNode, entity, mixinTypes);
-		} catch (Exception e) {
+		} catch (RepositoryException e) {
+			throw new JcrMappingException("Could not create node from object", e);
+		} catch (IllegalAccessException e) {
+			throw new JcrMappingException("Could not create node from object", e);
+		} catch (IOException e) {
 			throw new JcrMappingException("Could not create node from object", e);
 		}
 	}
@@ -269,7 +283,11 @@ public class Jcrom {
 		}
 		try {
 			return mapper.updateNode(node, entity, childNodeFilter, maxDepth);
-		} catch (Exception e) {
+		} catch (RepositoryException e) {
+			throw new JcrMappingException("Could not update node from object", e);
+		} catch (IllegalAccessException e) {
+			throw new JcrMappingException("Could not update node from object", e);
+		} catch (IOException e) {
 			throw new JcrMappingException("Could not update node from object", e);
 		}
 	}

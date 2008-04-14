@@ -1,0 +1,159 @@
+/**
+ * Copyright (C) Olafur Gauti Gudmundsson
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jcrom;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import org.jcrom.annotations.JcrReference;
+import org.jcrom.util.NameFilter;
+import org.jcrom.util.ReflectionUtils;
+
+/**
+ * This class handles mappings of type @JcrReference
+ * 
+ * @author Olafur Gauti Gudmundsson
+ */
+class ReferenceMapper {
+	
+	private static String getPropertyName(Field field) {
+		JcrReference jcrReference = field.getAnnotation(JcrReference.class);
+		String name = field.getName();
+		if (!jcrReference.name().equals(Mapper.DEFAULT_FIELDNAME)) {
+			name = jcrReference.name();
+		}
+		return name;
+	}
+	
+	private static List<Value> getReferenceValues( List references, Session session ) 
+			throws IllegalAccessException, RepositoryException {
+		List<Value> refValues = new ArrayList<Value>();
+		for (int i = 0; i < references.size(); i++) {
+			String referenceUUID = Mapper.getNodeUUID(references.get(i));
+			if (referenceUUID != null && !referenceUUID.equals("")) {
+				Node referencedNode = session.getNodeByUUID(referenceUUID);
+				refValues.add(session.getValueFactory().createValue(referencedNode));
+			}
+		}
+		return refValues;
+	}
+	
+	private static void addSingleReferenceToNode( Field field, Object obj, String propertyName, Node node ) 
+			throws IllegalAccessException, RepositoryException {
+		// extract the UUID from the object, load the node, and
+		// add a reference to it
+		Object referenceObject = field.get(obj);
+		if (referenceObject != null) {
+			String referenceUUID = Mapper.getNodeUUID(referenceObject);
+			if (referenceUUID != null && !referenceUUID.equals("")) {
+				Node referencedNode = node.getSession().getNodeByUUID(referenceUUID);
+				node.setProperty(propertyName, referencedNode);
+			} else {
+				// remove the reference
+				node.setProperty(propertyName, (Value) null);
+			}
+		} else {
+			// remove the reference
+			node.setProperty(propertyName, (Value) null);
+		}
+	}
+	
+	private static void addMultipleReferencesToNode( Field field, Object obj, String propertyName, Node node ) 
+			throws IllegalAccessException, RepositoryException {
+		List references = (List) field.get(obj);
+		if (references != null && !references.isEmpty()) {
+			List<Value> refValues = getReferenceValues(references, node.getSession());
+			if (!refValues.isEmpty()) {
+				node.setProperty(propertyName, (Value[]) refValues.toArray(new Value[refValues.size()]));
+			} else {
+				node.setProperty(propertyName, (Value) null);
+			}
+		} else {
+			node.setProperty(propertyName, (Value) null);
+		}
+	}
+	
+	private static void setReferenceProperties( Field field, Object obj, Node node, NameFilter nameFilter )
+			throws IllegalAccessException, RepositoryException {
+
+		String propertyName = getPropertyName(field);
+
+		// make sure that the reference should be updated
+		if ( nameFilter == null || nameFilter.isIncluded(field.getName()) ) {
+			if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
+				// multiple references in a List
+				addMultipleReferencesToNode(field, obj, propertyName, node);
+			} else {
+				// single reference object
+				addSingleReferenceToNode(field, obj, propertyName, node);
+			}
+		}
+	}
+
+	static void addReferences( Field field, Object obj, Node node )
+			throws IllegalAccessException, RepositoryException {
+		setReferenceProperties(field, obj, node, null);
+	}
+
+	static void updateReferences( Field field, Object obj, Node node, NameFilter nameFilter ) 
+			throws IllegalAccessException, RepositoryException {
+		setReferenceProperties(field, obj, node, nameFilter);
+	}
+	
+	private static Object createReferencedObject( Field field, Value value, Object obj, Session session, Class referenceObjClass, 
+			int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 
+			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
+		Node referencedNode = session.getNodeByUUID(value.getString());
+		Object referencedObject = mapper.createInstanceForNode(referenceObjClass, referencedNode);
+		if ( nameFilter.isIncluded(field.getName()) && ( maxDepth < 0 || depth < maxDepth ) ) {
+			// load and map the object
+			mapper.mapNodeToClass(referencedObject, referencedNode, nameFilter, maxDepth, obj, depth+1);
+		} else {
+			// just store the UUID
+			Mapper.setUUID(referencedObject, value.getString());
+		}
+		return referencedObject;
+	}
+	
+	static void getReferencesFromNode( Field field, Node node, Object obj, int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 
+			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
+		String propertyName = getPropertyName(field);
+		
+		if ( node.hasProperty(propertyName) ) {
+			if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
+				// multiple references
+				List references = new ArrayList();
+				Class referenceObjClass = ReflectionUtils.getParameterizedClass(field);
+				Value[] refValues = node.getProperty(propertyName).getValues();
+				for ( Value value : refValues ) {
+					Object referencedObject = createReferencedObject(field, value, obj, node.getSession(), referenceObjClass, depth, maxDepth, nameFilter, mapper);
+					references.add(referencedObject);
+				}
+				field.set(obj, references);
+			} else {
+				// single reference
+				Class referenceObjClass = field.getType();
+				Object referencedObject = createReferencedObject(field, node.getProperty(propertyName).getValue(), obj, node.getSession(), referenceObjClass, depth, maxDepth, nameFilter, mapper);
+				field.set(obj, referencedObject);
+			}
+		}
+	}
+}
