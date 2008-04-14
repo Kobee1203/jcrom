@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
@@ -190,7 +191,15 @@ class PropertyMapper {
 	static void mapPropertyToField( Object obj, Field field, Node node ) 
 			throws RepositoryException, IllegalAccessException, IOException {
 		String name = getPropertyName(field);
-		if ( node.hasProperty(name) ) {
+		
+		if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
+				// map of properties
+				Class valueType = ReflectionUtils.getParameterizedClass(field, 1);
+				Node childrenContainer = node.getNode(name);
+				PropertyIterator propIterator = childrenContainer.getProperties();
+				mapPropertiesToMap(obj, field, valueType, propIterator);
+		
+		} else if ( node.hasProperty(name) ) {
 			Property p = node.getProperty(name);
 			
 			if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
@@ -261,12 +270,37 @@ class PropertyMapper {
 		}
 	}
 	
-	static void mapFieldToProperty( Field field, Object obj, Node node ) 
+	private static void addChildMap(Field field, Object obj, Node node, String nodeName, Mapper mapper) 
+			throws RepositoryException, IllegalAccessException {
+		
+		Map<String,Object> map = (Map<String,Object>)field.get(obj);
+		boolean nullOrEmpty = map == null || map.isEmpty();
+		// remove the child node
+		NodeIterator nodeIterator = node.getNodes(nodeName);
+		while ( nodeIterator.hasNext() ) {
+			nodeIterator.nextNode().remove();
+		}
+		// add the map as a child node
+		Node childContainer = node.addNode(mapper.getCleanName(nodeName));
+		if ( !nullOrEmpty ) {
+			for ( Map.Entry<String,Object> entry : map.entrySet() ) {
+				mapToProperty(entry.getKey(), ReflectionUtils.getParameterizedClass(field, 1), null, entry.getValue(), childContainer);
+			}
+		}
+	}
+	
+	static void mapFieldToProperty( Field field, Object obj, Node node, Mapper mapper ) 
 			throws RepositoryException, IllegalAccessException {
 		
 		String name = getPropertyName(field);
-		Class paramClass = ReflectionUtils.implementsInterface(field.getType(), List.class) ? ReflectionUtils.getParameterizedClass(field) : null;
-		mapToProperty(name, field.getType(), paramClass, field.get(obj), node);
+		if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
+			// this is a Map child, where we map the key/value pairs as properties
+			addChildMap(field, obj, node, name, mapper);
+		} else {
+			// normal property
+			Class paramClass = ReflectionUtils.implementsInterface(field.getType(), List.class) ? ReflectionUtils.getParameterizedClass(field) : null;
+			mapToProperty(name, field.getType(), paramClass, field.get(obj), node);
+		}
 	}
 	
 	static void mapToProperty( String propertyName, Class type, Class paramClass, Object propertyValue, Node node ) 

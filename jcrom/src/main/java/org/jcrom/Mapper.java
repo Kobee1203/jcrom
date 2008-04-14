@@ -271,7 +271,7 @@ class Mapper {
 			field.setAccessible(true);
 		
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {
-				PropertyMapper.mapFieldToProperty(field, obj, node);
+				PropertyMapper.mapFieldToProperty(field, obj, node, this);
 				
 			} else if ( field.isAnnotationPresent(JcrSerializedProperty.class) ) {
 				PropertyMapper.mapSerializedFieldToProperty(field, obj, node);
@@ -357,7 +357,7 @@ class Mapper {
 			field.setAccessible(true);
 			
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {
-				PropertyMapper.mapFieldToProperty(field, entity, node);
+				PropertyMapper.mapFieldToProperty(field, entity, node, this);
 				
 			} else if ( field.isAnnotationPresent(JcrSerializedProperty.class) ) {
 				PropertyMapper.mapSerializedFieldToProperty(field, entity, node);

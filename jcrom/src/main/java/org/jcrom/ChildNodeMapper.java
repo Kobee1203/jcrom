@@ -112,25 +112,6 @@ class ChildNodeMapper {
 		}
 	}
 	
-	private static void addChildMap(Field field, JcrChildNode jcrChildNode, Object obj, Node node, String nodeName, Mapper mapper) 
-			throws RepositoryException, IllegalAccessException {
-		
-		Map<String,Object> map = (Map<String,Object>)field.get(obj);
-		boolean nullOrEmpty = map == null || map.isEmpty();
-		// remove the child node
-		NodeIterator nodeIterator = node.getNodes(nodeName);
-		while ( nodeIterator.hasNext() ) {
-			nodeIterator.nextNode().remove();
-		}
-		// add the map as a child node
-		if ( !nullOrEmpty ) {
-			Node childContainer = node.addNode(mapper.getCleanName(nodeName), jcrChildNode.containerNodeType());
-			for ( Map.Entry<String,Object> entry : map.entrySet() ) {
-				PropertyMapper.mapToProperty(entry.getKey(), ReflectionUtils.getParameterizedClass(field, 1), null, entry.getValue(), childContainer);
-			}
-		}
-	}
-	
 	private static void setChildren( Field field, Object obj, Node node, 
 			int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 
 			throws IllegalAccessException, RepositoryException, IOException {
@@ -143,11 +124,6 @@ class ChildNodeMapper {
 			if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 				// multiple children in a List
 				addMultipleChildrenToNode(field, jcrChildNode, obj, nodeName, node, mapper, depth, maxDepth, nameFilter);
-
-			} else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
-				// this is a Map child, where we map the key/value pairs as properties
-				addChildMap(field, jcrChildNode, obj, node, nodeName, mapper);
-				
 			} else {
 				// single child
 				addSingleChildToNode(field, jcrChildNode, obj, nodeName, node, mapper, depth, maxDepth, nameFilter);
@@ -210,12 +186,6 @@ class ChildNodeMapper {
 					children = getChildrenList(childObjClass, childrenContainer, obj, mapper, depth, maxDepth, nameFilter);
 				}
 				field.set(obj, children);
-
-			} else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
-				// map of properties
-				Class valueType = ReflectionUtils.getParameterizedClass(field, 1);
-				PropertyIterator propIterator = childrenContainer.getProperties();
-				PropertyMapper.mapPropertiesToMap(obj, field, valueType, propIterator);
 
 			} else {
 				// instantiate the field class

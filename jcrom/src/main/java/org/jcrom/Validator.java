@@ -99,6 +99,21 @@ class Validator {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is a List annotated as @JcrProperty is not parameterized with a property type.");
 					}
 					
+				} else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
+					// special case, mapping a Map to a child node, so we must
+					// make sure that it is properly parameterized:
+					// first parameter must be a String
+					Class keyParamClass = ReflectionUtils.getParameterizedClass(field, 0);
+					if ( keyParamClass == null || keyParamClass != String.class ) {
+						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProperty is a java.util.Map that is not parameterised with a java.lang.String key type.");
+					}
+					// the value class must be a valid property type, or an array
+					// of valid property types
+					Class valueParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+					if ( valueParamClass == null || !ReflectionUtils.isValidMapValueType(valueParamClass) ) {
+						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProperty is a java.util.Map that is not parameterised with a valid value property type.");
+					}
+					
 				} else if ( !ReflectionUtils.isPropertyType(field.getType()) ) {
 					throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProperty is not a valid JCR property (type is " + field.getType().getName() + ").");
 				}
@@ -171,20 +186,6 @@ class Validator {
 						validateInternal(ReflectionUtils.getParameterizedClass(field), validClasses, dynamicInstantiation);
 					} else {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.List that is not parameterised with a valid class type.");
-					}
-				} else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
-					// special case, mapping a Map to a child node, so we must
-					// make sure that it is properly parameterized:
-					// first parameter must be a String
-					Class keyParamClass = ReflectionUtils.getParameterizedClass(field, 0);
-					if ( keyParamClass == null || keyParamClass != String.class ) {
-						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.Map that is not parameterised with a java.lang.String key type.");
-					}
-					// the value class must be a valid property type, or an array
-					// of valid property types
-					Class valueParamClass = ReflectionUtils.getParameterizedClass(field, 1);
-					if ( valueParamClass == null || !ReflectionUtils.isValidMapValueType(valueParamClass) ) {
-						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.Map that is not parameterised with a valid value property type.");
 					}
 				} else {
 					validateInternal(field.getType(), validClasses, dynamicInstantiation);
