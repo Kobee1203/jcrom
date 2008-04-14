@@ -96,6 +96,9 @@ class Mapper {
 	}
 	
 	String getCleanName( String name ) {
+		if ( name == null ) {
+			throw new JcrMappingException("Node name is null");
+		}
 		if ( cleanNames ) {
 			return PathUtils.createValidName(name);
 		} else {
@@ -242,6 +245,8 @@ class Mapper {
 	String updateNode( Node node, Object obj, Class objClass, NameFilter childNameFilter, int maxDepth, int depth )
 			throws RepositoryException, IllegalAccessException, IOException {
 		
+		obj = clearCglib(obj);
+		
 		// if name is different, then we move the node
 		if ( !node.getName().equals(getCleanName(getNodeName(obj))) ) {
 			if ( node.getParent().getPath().equals("/") ) {
@@ -302,6 +307,8 @@ class Mapper {
 	
 	Node addNode( Node parentNode, Object entity, String[] mixinTypes, boolean createNode ) 
 			throws IllegalAccessException, RepositoryException, IOException {
+		
+		entity = clearCglib(entity);
 		
 		// create the child node
 		Node node;
@@ -496,6 +503,27 @@ class Mapper {
 	        out.close();
 		}
 		return out.toByteArray();
+	}
+	
+	/**
+	 * This is a temporary solution to enable lazy loading of 
+	 * single child nodes and single references.
+	 * The problem is that Jcrom uses direct field modification, but
+	 * CGLIB fails to cascade field changes between the enhanced
+	 * class and the lazy object.
+	 * 
+	 * @param obj
+	 * @return
+	 * @throws java.lang.IllegalAccessException
+	 */
+	private Object clearCglib( Object obj ) throws IllegalAccessException {
+		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
+			field.setAccessible(true);
+			if ( field.getName().equals("CGLIB$LAZY_LOADER_0") ) {
+				return field.get(obj);
+			}
+		}
+		return obj;
 	}
 	
 }

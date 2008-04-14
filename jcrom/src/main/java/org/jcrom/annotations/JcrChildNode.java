@@ -23,8 +23,8 @@ import java.lang.annotation.Target;
 /**
  * This annotation is used to mark fields that are to be mapped as
  * JCR child nodes.
- * It can be applied to fields whos type is a JcrEntity implementation, or
- * to a java.util.List that is parameterized with a JcrEntity implementation.
+ * It can be applied to fields whos type has been mapped to Jcrom, or
+ * to a java.util.List that is parameterized with a mapped implementation.
  * <br/><br/>
  * Note that JCROM creates a container node for all child nodes. The child
  * node is then created with the name retrieved via calling JcrEntity.getName()
@@ -53,4 +53,12 @@ public @interface JcrChildNode {
 	 * the children
 	 */
 	String containerNodeType() default "nt:unstructured";
+	
+	/**
+	 * Setting this to true will turn on lazy loading for this field.
+	 * The default is false.
+	 * 
+	 * @return whether to apply lazy loading to this field
+	 */
+	boolean lazy() default false;
 }

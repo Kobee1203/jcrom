@@ -22,7 +22,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ * This annotation is used to mark fields that are to be mapped as
+ * JCR reference properties.
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -36,4 +38,13 @@ public @interface JcrReference {
 	 * @return the name of the JCR reference property 
 	 */
 	String name() default "fieldName";
+	
+	/**
+	 * Setting this to true will turn on lazy loading for this field.
+	 * The default is false.
+	 * 
+	 * @return whether to apply lazy loading to this field
+	 */
+	boolean lazy() default false;
+	
 }

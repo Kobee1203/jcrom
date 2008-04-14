@@ -99,7 +99,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 		 } else {
 			 return absolutePath;
 		 }
-	 }
+	}
 	
 	public T create( T entity ) {
 		return create(jcrom.getPath(entity), entity);

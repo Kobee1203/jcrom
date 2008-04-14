@@ -36,11 +36,13 @@ import java.util.Set;
  */
 public class NameFilter {
 
+	private final String filterStr;
 	private final boolean exclusion;
 	private final boolean all;
 	private final Set<String> names;
 
 	public NameFilter( String filterStr ) {
+		this.filterStr = filterStr;
 		names = new HashSet<String>();
 		if ( filterStr == null ) {
 			exclusion = false;
@@ -68,6 +70,10 @@ public class NameFilter {
 				}
 			}
 		}
+	}
+
+	public String getFilterStr() {
+		return filterStr;
 	}
 
 	private void addToSet( String filterStr ) {
