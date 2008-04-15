@@ -19,11 +19,11 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -45,13 +45,24 @@ public class ReflectionUtils {
 	 */
 	public static Field[] getDeclaredAndInheritedFields( Class type ) {
 		List<Field> allFields = new ArrayList<Field>();
-		allFields.addAll(Arrays.asList(type.getDeclaredFields()));
+		allFields.addAll(getValidFields(type.getDeclaredFields()));
 		Class parent = type.getSuperclass();
 		while ( parent != null && parent != Object.class ) {
-			allFields.addAll(Arrays.asList(parent.getDeclaredFields()));
+			allFields.addAll(getValidFields(parent.getDeclaredFields()));
 			parent = parent.getSuperclass();
 		}
 		return allFields.toArray(new Field[allFields.size()]);
+	}
+	
+	public static List<Field> getValidFields( Field[] fields ) {
+		List<Field> validFields = new ArrayList<Field>();
+		// we ignore static and final fields
+		for ( Field field : fields ) {
+			if ( !Modifier.isStatic(field.getModifiers()) && !Modifier.isFinal(field.getModifiers()) ) {
+				validFields.add(field);
+			}
+		}
+		return validFields;
 	}
 
 	/**
