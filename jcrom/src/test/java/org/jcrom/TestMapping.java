@@ -199,6 +199,34 @@ public class TestMapping {
 			printNode(nodeIterator.nextNode(), indentation + "\t");
 		}
 	}
+    
+    @Test
+    public void testEnums() throws Exception {
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(EnumEntity.class);
+        
+        EnumEntity.Suit[] suitArray = new EnumEntity.Suit[2];
+        suitArray[0] = EnumEntity.Suit.HEARTS;
+        suitArray[1] = EnumEntity.Suit.CLUBS;
+        
+        EnumEntity enumEntity = new EnumEntity();
+        enumEntity.setName("MySuit");
+        enumEntity.setSuit(EnumEntity.Suit.DIAMONDS);
+        enumEntity.setSuitAsArray(suitArray);
+        enumEntity.addSuitToList(EnumEntity.Suit.SPADES);
+        
+        Node rootNode = session.getRootNode().addNode("enumTest");
+        Node newNode = jcrom.addNode(rootNode, enumEntity);
+        session.save();
+        
+        EnumEntity fromNode = jcrom.fromNode(EnumEntity.class, newNode);
+        
+        assertEquals(fromNode.getSuit(), enumEntity.getSuit());
+        assertTrue(fromNode.getSuitAsArray().length == enumEntity.getSuitAsArray().length);
+        assertTrue(fromNode.getSuitAsArray()[0].equals(enumEntity.getSuitAsArray()[0]));
+        assertTrue(fromNode.getSuitAsList().size() == enumEntity.getSuitAsList().size());
+        assertTrue(fromNode.getSuitAsList().get(0).equals(enumEntity.getSuitAsList().get(0)));
+    }
 	
 	@Test(expected = JcrMappingException.class)
 	public void mapInvalidObject() throws Exception {

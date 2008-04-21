@@ -133,6 +133,7 @@ public class ReflectionUtils {
 				|| type == Boolean.class || isArrayOfType(type, Boolean.class)
 				|| type == boolean.class || isArrayOfType(type, boolean.class)
 				|| type == Locale.class || isArrayOfType(type, Locale.class)
+                || type.isEnum() || (type.isArray() && type.getComponentType().isEnum())
 				;
 	}
 	

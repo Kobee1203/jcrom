@@ -138,6 +138,8 @@ class PropertyMapper {
 			return valueFactory.createValue((Boolean)fieldValue);
 		} else if ( c == Locale.class ) {
 			return valueFactory.createValue( ((Locale)fieldValue).toString() );
+        } else if ( c.isEnum() ) {
+            return valueFactory.createValue(fieldValue.toString());
 		}
 		return null;
 	}
@@ -166,6 +168,8 @@ class PropertyMapper {
 			return value.getBoolean();
 		} else if ( c == Locale.class ) {
 			return parseLocale(value.getString());
+        } else if ( c.isEnum() ) {
+            return Enum.valueOf(c, value.getString());
 		}
 		return null;
 	}
