@@ -28,6 +28,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import org.jcrom.annotations.JcrNode;
 
 /**
  * Various reflection utility methods, used mainly in the Mapper.
@@ -221,5 +222,30 @@ public class ReflectionUtils {
 			}
 		}
 		return false;
+	}
+    
+	public static JcrNode getJcrNodeAnnotation( Class c ) {
+		
+		if ( c.isAnnotationPresent(JcrNode.class) ) {
+			return (JcrNode) c.getAnnotation(JcrNode.class);
+		} else {
+			// need to check all superclasses
+			Class parent = c.getSuperclass();
+			while ( parent != null && parent != Object.class ) {
+				if ( parent.isAnnotationPresent(JcrNode.class) ) {
+					return (JcrNode) parent.getAnnotation(JcrNode.class);
+				}
+				parent = parent.getSuperclass();
+			}
+			
+			// ...and all implemented interfaces
+			for ( Class interfaceClass : c.getInterfaces() ) {
+				if ( interfaceClass.isAnnotationPresent(JcrNode.class) ) {
+					return (JcrNode) interfaceClass.getAnnotation(JcrNode.class);
+				}
+			}
+		}
+		// no annotation found, use the defaults
+		return null;
 	}
 }

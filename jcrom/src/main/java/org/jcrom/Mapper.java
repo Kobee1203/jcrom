@@ -187,7 +187,7 @@ class Mapper {
 		if ( dynamicInstantiation ) {
 			// first we try to locate the class name from node property
 			String classNameProperty = "className";
-			JcrNode jcrNode = getJcrNodeAnnotation(objClass);
+			JcrNode jcrNode = ReflectionUtils.getJcrNodeAnnotation(objClass);
 			if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
 				classNameProperty = jcrNode.classNameProperty();
 			}
@@ -262,7 +262,7 @@ class Mapper {
 		}
 		
 		// map the class name to a property
-		JcrNode jcrNode = getJcrNodeAnnotation(objClass);
+		JcrNode jcrNode = ReflectionUtils.getJcrNodeAnnotation(objClass);
 		if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
 			node.setProperty(jcrNode.classNameProperty(), obj.getClass().getCanonicalName());
 		}
@@ -312,7 +312,7 @@ class Mapper {
 		
 		// create the child node
 		Node node;
-		JcrNode jcrNode = getJcrNodeAnnotation(entity.getClass());
+		JcrNode jcrNode = ReflectionUtils.getJcrNodeAnnotation(entity.getClass());
 		if ( createNode ) {
 			// check if we should use a specific node type
 			if ( jcrNode == null || jcrNode.nodeType().equals("nt:unstructured") ) {
@@ -382,31 +382,6 @@ class Mapper {
 			}
 		}
 		return false;
-	}
-	
-	static JcrNode getJcrNodeAnnotation( Class c ) {
-		
-		if ( c.isAnnotationPresent(JcrNode.class) ) {
-			return (JcrNode) c.getAnnotation(JcrNode.class);
-		} else {
-			// need to check all superclasses
-			Class parent = c.getSuperclass();
-			while ( parent != null && parent != Object.class ) {
-				if ( parent.isAnnotationPresent(JcrNode.class) ) {
-					return (JcrNode) parent.getAnnotation(JcrNode.class);
-				}
-				parent = parent.getSuperclass();
-			}
-			
-			// ...and all implemented interfaces
-			for ( Class interfaceClass : c.getInterfaces() ) {
-				if ( interfaceClass.isAnnotationPresent(JcrNode.class) ) {
-					return (JcrNode) interfaceClass.getAnnotation(JcrNode.class);
-				}
-			}
-		}
-		// no annotation found, use the defaults
-		return null;
 	}
 		
 	void mapNodeToClass( Object obj, Node node, NameFilter nameFilter, int maxDepth, Object parentObject, int depth ) 

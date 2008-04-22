@@ -111,7 +111,7 @@ class FileNodeMapper {
 		
 		if ( !node.hasNode(nodeName) ) {
 			if ( field.get(obj) != null ) {
-				JcrNode fileJcrNode = Mapper.getJcrNodeAnnotation(field.getType());
+				JcrNode fileJcrNode = ReflectionUtils.getJcrNodeAnnotation(field.getType());
 				Node fileContainer = createFileFolderNode(fileJcrNode, nodeName, node, mapper);
 				addFileNode(fileJcrNode, fileContainer, (JcrFile)field.get(obj), mapper);
 			}
@@ -154,7 +154,7 @@ class FileNodeMapper {
 				}
 			} else {
 				// no children exist, we add
-				JcrNode fileJcrNode = Mapper.getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field));
+				JcrNode fileJcrNode = ReflectionUtils.getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field));
 				Node fileContainer = createFileFolderNode(fileJcrNode, nodeName, node, mapper);
 				for ( int i = 0; i < children.size(); i++ ) {
 					addFileNode(fileJcrNode, fileContainer, (JcrFile)children.get(i), mapper);

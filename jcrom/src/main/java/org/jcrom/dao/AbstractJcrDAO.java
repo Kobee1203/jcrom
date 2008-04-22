@@ -29,6 +29,8 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import org.jcrom.JcrMappingException;
 import org.jcrom.Jcrom;
+import org.jcrom.annotations.JcrNode;
+import org.jcrom.util.ReflectionUtils;
 
 /**
  * An abstract implementation of the JcrDAO interface. This should be extended
@@ -85,11 +87,21 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	}
 	
 	private boolean checkIfVersionable() {
+        // check mixin type array
 		for ( String mixinType : mixinTypes ) {
 			if ( mixinType.equals("mix:versionable") ) {
 				return true;
 			}
 		}
+        // check the class annotation
+        JcrNode jcrNode = ReflectionUtils.getJcrNodeAnnotation(entityClass);
+        if ( jcrNode != null && jcrNode.mixinTypes() != null ) {
+            for ( String mixinType : jcrNode.mixinTypes() ) {
+                if ( mixinType.equals("mix:versionable") ) {
+                    return true;
+                }
+            }
+        }
 		return false;
 	}
 	

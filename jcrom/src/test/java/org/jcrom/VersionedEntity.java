@@ -5,6 +5,7 @@ import org.jcrom.annotations.JcrBaseVersionCreated;
 import org.jcrom.annotations.JcrBaseVersionName;
 import org.jcrom.annotations.JcrCheckedout;
 import org.jcrom.annotations.JcrName;
+import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrVersionCreated;
@@ -14,6 +15,9 @@ import org.jcrom.annotations.JcrVersionName;
  *
  * @author Olafur Gauti Gudmundsson
  */
+@JcrNode(
+	mixinTypes= {"mix:versionable"}
+)
 public class VersionedEntity {
 
 	@JcrPath private String path;
