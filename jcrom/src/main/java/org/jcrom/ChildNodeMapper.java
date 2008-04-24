@@ -42,29 +42,39 @@ class ChildNodeMapper {
 		return name;
 	}
 	
-	private static void removeChildren( Node node, String childNodeName ) throws RepositoryException {
-		NodeIterator nodeIterator = node.getNodes(childNodeName);
+	private static void removeChildren( Node containerNode ) throws RepositoryException {
+		NodeIterator nodeIterator = containerNode.getNodes();
 		while ( nodeIterator.hasNext() ) {
 			nodeIterator.nextNode().remove();
 		}
 	}
+    
+    private static Node createChildNodeContainer( Node node, String containerName, JcrChildNode jcrChildNode, Mapper mapper ) 
+            throws RepositoryException {
+        
+        if ( !node.hasNode(containerName) ) {
+            return node.addNode(mapper.getCleanName(containerName), jcrChildNode.containerNodeType());
+        } else {
+            return node.getNode(containerName);
+        }
+    }
 	
 	private static void addSingleChildToNode( Field field, JcrChildNode jcrChildNode, Object obj, String nodeName, Node node, 
 			Mapper mapper, int depth, int maxDepth, NameFilter nameFilter ) 
 			throws IllegalAccessException, RepositoryException, IOException {
 		
-		if ( !node.hasNode(nodeName) ) {
+        Node childContainer = createChildNodeContainer(node, nodeName, jcrChildNode, mapper);
+		if ( !childContainer.hasNodes() ) {
 			if ( field.get(obj) != null ) {
 				// add the node if it does not exist
-				Node childContainer = node.addNode(mapper.getCleanName(nodeName), jcrChildNode.containerNodeType());
 				mapper.addNode(childContainer, field.get(obj), null);
 			}
 		} else {
 			if ( field.get(obj) != null ) {
-				mapper.updateNode(node.getNode(nodeName).getNodes().nextNode(), field.get(obj), field.getType(), nameFilter, maxDepth, depth+1);
+				mapper.updateNode(childContainer.getNodes().nextNode(), field.get(obj), field.getType(), nameFilter, maxDepth, depth+1);
 			} else {
 				// field is now null, so we remove the child node
-				removeChildren(node, nodeName);
+				removeChildren(childContainer);
 			}
 		}
 	}
@@ -73,12 +83,12 @@ class ChildNodeMapper {
 			Mapper mapper, int depth, int maxDepth, NameFilter nameFilter ) 
 			throws IllegalAccessException, RepositoryException, IOException {
 
+        Node childContainer = createChildNodeContainer(node, nodeName, jcrChildNode, mapper);
 		List children = (List)field.get(obj);
 		if ( children != null && !children.isEmpty() ) {
 			Class paramClass = ReflectionUtils.getParameterizedClass(field);
-			if ( node.hasNode(nodeName) ) {
+			if ( childContainer.hasNodes() ) {
 				// children exist, we must update
-				Node childContainer = node.getNode(nodeName);
 				NodeIterator childNodes = childContainer.getNodes();
 				while ( childNodes.hasNext() ) {
 					Node child = childNodes.nextNode();
@@ -99,14 +109,13 @@ class ChildNodeMapper {
 				}
 			} else {
 				// no children exist, we add
-				Node childContainer = node.addNode(mapper.getCleanName(nodeName), jcrChildNode.containerNodeType());
 				for ( int i = 0; i < children.size(); i++ ) {
 					mapper.addNode(childContainer, children.get(i), null);
 				}
 			}
 		} else {
 			// field list is now null (or empty), so we remove the child nodes
-			removeChildren(node, nodeName);
+			removeChildren(childContainer);
 		}
 	}
 	
@@ -168,9 +177,9 @@ class ChildNodeMapper {
 		String nodeName = getNodeName(field);
 		JcrChildNode jcrChildNode = field.getAnnotation(JcrChildNode.class);
 
-		if ( node.hasNode(nodeName) && nameFilter.isIncluded(field.getName()) ) {
+		if ( node.hasNode(nodeName) && node.getNode(nodeName).hasNodes() && nameFilter.isIncluded(field.getName()) ) {
 			// child nodes are always stored inside a container node
-			Node childrenContainer = node.getNode(nodeName);
+            Node childrenContainer = node.getNode(nodeName);
 			if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 				// we can expect more than one child object here
 				Class childObjClass = ReflectionUtils.getParameterizedClass(field);
