@@ -111,6 +111,7 @@ public class TestLazyLoading {
 		Tree modifiedFromNode = jcrom.fromNode(Tree.class, treeRootNode);
 		assertTrue( modifiedFromNode.getFavourites().size() == fromNode.getFavourites().size() );
 		assertTrue( modifiedFromNode.getStartNode().getName().equals(productsNode.getName()) );
+        assertTrue( modifiedFromNode.getStartNode().getChildren().size() == productsNode.getChildren().size() );
 	}
 
 }

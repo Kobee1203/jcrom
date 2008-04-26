@@ -42,16 +42,33 @@ class ReferenceMapper {
 		}
 		return name;
 	}
+    
+    private static String relativePath( String path ) {
+        if ( path.charAt(0) == '/' ) {
+            return path.substring(1);
+        } else {
+            return path;
+        }
+    }
 	
-	private static List<Value> getReferenceValues( List references, Session session ) 
+	private static List<Value> getReferenceValues( List references, Session session, JcrReference jcrReference ) 
 			throws IllegalAccessException, RepositoryException {
 		List<Value> refValues = new ArrayList<Value>();
 		for (int i = 0; i < references.size(); i++) {
-			String referenceUUID = Mapper.getNodeUUID(references.get(i));
-			if (referenceUUID != null && !referenceUUID.equals("")) {
-				Node referencedNode = session.getNodeByUUID(referenceUUID);
-				refValues.add(session.getValueFactory().createValue(referencedNode));
-			}
+            if ( jcrReference.byPath() ) {
+                String referencePath = Mapper.getNodePath(references.get(i));
+                if ( referencePath != null && !referencePath.equals("") ) {
+                    if ( session.getRootNode().hasNode(relativePath(referencePath)) ) {
+                        refValues.add(session.getValueFactory().createValue(referencePath));
+                    }
+                }
+            } else {
+                String referenceUUID = Mapper.getNodeUUID(references.get(i));
+                if (referenceUUID != null && !referenceUUID.equals("")) {
+                    Node referencedNode = session.getNodeByUUID(referenceUUID);
+                    refValues.add(session.getValueFactory().createValue(referencedNode));
+                }
+            }
 		}
 		return refValues;
 	}
@@ -60,16 +77,26 @@ class ReferenceMapper {
 			throws IllegalAccessException, RepositoryException {
 		// extract the UUID from the object, load the node, and
 		// add a reference to it
+        JcrReference jcrReference = field.getAnnotation(JcrReference.class);
 		Object referenceObject = field.get(obj);
 		if (referenceObject != null) {
-			String referenceUUID = Mapper.getNodeUUID(referenceObject);
-			if (referenceUUID != null && !referenceUUID.equals("")) {
-				Node referencedNode = node.getSession().getNodeByUUID(referenceUUID);
-				node.setProperty(propertyName, referencedNode);
-			} else {
-				// remove the reference
-				node.setProperty(propertyName, (Value) null);
-			}
+            if ( jcrReference.byPath() ) {
+                String referencePath = Mapper.getNodePath(referenceObject);
+                if ( referencePath != null && !referencePath.equals("") ) {
+                    if ( node.getSession().getRootNode().hasNode(relativePath(referencePath)) ) {
+                        node.setProperty(propertyName, node.getSession().getValueFactory().createValue(referencePath));
+                    }
+                }
+            } else {
+                String referenceUUID = Mapper.getNodeUUID(referenceObject);
+                if (referenceUUID != null && !referenceUUID.equals("")) {
+                    Node referencedNode = node.getSession().getNodeByUUID(referenceUUID);
+                    node.setProperty(propertyName, referencedNode);
+                } else {
+                    // remove the reference
+                    node.setProperty(propertyName, (Value) null);
+                }
+            }
 		} else {
 			// remove the reference
 			node.setProperty(propertyName, (Value) null);
@@ -78,9 +105,11 @@ class ReferenceMapper {
 	
 	private static void addMultipleReferencesToNode( Field field, Object obj, String propertyName, Node node ) 
 			throws IllegalAccessException, RepositoryException {
+        
+        JcrReference jcrReference = field.getAnnotation(JcrReference.class);
 		List references = (List) field.get(obj);
 		if (references != null && !references.isEmpty()) {
-			List<Value> refValues = getReferenceValues(references, node.getSession());
+			List<Value> refValues = getReferenceValues(references, node.getSession(), jcrReference);
 			if (!refValues.isEmpty()) {
 				node.setProperty(propertyName, (Value[]) refValues.toArray(new Value[refValues.size()]));
 			} else {
@@ -121,16 +150,36 @@ class ReferenceMapper {
 	static Object createReferencedObject( Field field, Value value, Object obj, Session session, Class referenceObjClass, 
 			int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
-		Node referencedNode = session.getNodeByUUID(value.getString());
-		Object referencedObject = mapper.createInstanceForNode(referenceObjClass, referencedNode);
-		if ( nameFilter.isIncluded(field.getName()) && ( maxDepth < 0 || depth < maxDepth ) ) {
-			// load and map the object
-			mapper.mapNodeToClass(referencedObject, referencedNode, nameFilter, maxDepth, obj, depth+1);
-		} else {
-			// just store the UUID
-			Mapper.setUUID(referencedObject, value.getString());
-		}
-		return referencedObject;
+		
+        JcrReference jcrReference = field.getAnnotation(JcrReference.class);
+        Node referencedNode = null;
+        
+        if ( jcrReference.byPath() ) {
+            if ( session.getRootNode().hasNode(relativePath(value.getString())) ) {
+                referencedNode = session.getRootNode().getNode(relativePath(value.getString()));
+            }
+        } else {
+            referencedNode = session.getNodeByUUID(value.getString());   
+        }
+        
+        if ( referencedNode != null ) {
+            Object referencedObject = mapper.createInstanceForNode(referenceObjClass, referencedNode);
+            if ( nameFilter.isIncluded(field.getName()) && ( maxDepth < 0 || depth < maxDepth ) ) {
+                // load and map the object
+                mapper.mapNodeToClass(referencedObject, referencedNode, nameFilter, maxDepth, obj, depth+1);
+            } else {
+                if ( jcrReference.byPath() ) {
+                    // just store the path
+                    Mapper.setNodePath(referencedObject, value.getString());
+                } else {
+                    // just store the UUID
+                    Mapper.setUUID(referencedObject, value.getString());
+                }
+            }
+            return referencedObject;
+        } else {
+            return null;
+        }
 	}
 	
 	static List getReferenceList( Field field, String propertyName, Class referenceObjClass, Node node, Object obj, 

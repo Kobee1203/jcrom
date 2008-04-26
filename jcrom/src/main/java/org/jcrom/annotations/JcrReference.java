@@ -31,20 +31,28 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface JcrReference {
 
-	/**
-	 * The name of the JCR reference property. 
-	 * Defaults to the name of the field being annotated.
-	 * 
-	 * @return the name of the JCR reference property 
-	 */
-	String name() default "fieldName";
-	
-	/**
-	 * Setting this to true will turn on lazy loading for this field.
-	 * The default is false.
-	 * 
-	 * @return whether to apply lazy loading to this field
-	 */
-	boolean lazy() default false;
-	
+    /**
+     * The name of the JCR reference property. 
+     * Defaults to the name of the field being annotated.
+     * 
+     * @return the name of the JCR reference property 
+     */
+    String name()  default "fieldName";
+
+    /**
+     * Setting this to true will turn on lazy loading for this field.
+     * The default is false.
+     * 
+     * @return whether to apply lazy loading to this field
+     */
+    boolean lazy()  default false;
+
+    /**
+     * Setting this to true will store the reference as the path to
+     * the referenced entity in a normal String property, rather than
+     * a reference property.
+     * 
+     * @return whether to use path-based references
+     */
+    boolean byPath()  default false;
 }

@@ -398,6 +398,10 @@ public class TestMapping {
 		refContainer.setReference(reference);
 		refContainer.addReference(reference);
 		refContainer.addReference(reference2);
+        
+        refContainer.setReferenceByPath(reference);
+        refContainer.addReferenceByPath(reference);
+        refContainer.addReferenceByPath(reference2);
 		
 		Node refNode = jcrom.addNode(rootNode, refContainer);
 		
@@ -410,6 +414,14 @@ public class TestMapping {
 		assertTrue(fromNode.getReferences().size() == 2);
 		assertTrue(fromNode.getReferences().get(1).getName().equals(reference2.getName()));
 		assertTrue(fromNode.getReferences().get(1).getBody().equals(reference2.getBody()));
+        
+		assertTrue(fromNode.getReferenceByPath() != null);
+		assertTrue(fromNode.getReferenceByPath().getName().equals(reference.getName()));
+		assertTrue(fromNode.getReferenceByPath().getBody().equals(reference.getBody()));
+        
+		assertTrue(fromNode.getReferencesByPath().size() == 2);
+		assertTrue(fromNode.getReferencesByPath().get(1).getName().equals(reference2.getName()));
+		assertTrue(fromNode.getReferencesByPath().get(1).getBody().equals(reference2.getBody()));
 	}
 
 	@Test
