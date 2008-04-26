@@ -637,7 +637,7 @@ public class TestMapping {
 
 		// check the file
 		File imageFileFromNode = new File("target/ogg_copy.jpg");
-		write(parentFromNode.getPassportPhoto().getDataProvider().getInputStream(), imageFileFromNode);
+		parentFromNode.getPassportPhoto().getDataProvider().writeToFile(imageFileFromNode);
 		
 		assertTrue(parentFromNode.getPassportPhoto().getFileBytes().length == photo.getFileBytes().length);
 
@@ -720,20 +720,5 @@ public class TestMapping {
 
 		assertTrue( rootNode.getNode(parent.getName()).getNode("adoptedChild").getNodes().nextNode().getProperty("nickName").getString().equals(adoptedChild.getNickName()) );
 	}
-	
-    void write(InputStream in, File dst) throws IOException {
-        OutputStream out = new FileOutputStream(dst);
-		try {
-			// Transfer bytes from in to out
-			byte[] buf = new byte[1024];
-			int len;
-			while ((len = in.read(buf)) > 0) {
-				out.write(buf, 0, len);
-			}
-		} finally {
-			in.close();
-	        out.close();
-		}
-    }
 
 }

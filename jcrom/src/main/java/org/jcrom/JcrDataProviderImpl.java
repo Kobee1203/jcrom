@@ -16,7 +16,11 @@
 package org.jcrom;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * A simple implementation of the JcrDataProvider interface.
@@ -70,4 +74,68 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 		return type;
 	}
 
+    public void writeToFile(File destination) throws IOException {
+        if ( type == TYPE.BYTES ) {
+            write(bytes, destination);
+        } else if ( type == TYPE.STREAM ) {
+            write(inputStream, destination);
+        } else if ( type == TYPE.FILE ) {
+            write(file, destination);
+        }
+    }
+    
+    protected static void write(InputStream in, File destination) throws IOException {
+		if ( !destination.exists() ) {
+			destination.createNewFile();
+		}
+        
+        OutputStream out = new FileOutputStream(destination);
+		try {
+			// Transfer bytes from in to out
+			byte[] buf = new byte[1024];
+			int len;
+			while ((len = in.read(buf)) > 0) {
+				out.write(buf, 0, len);
+			}
+		} finally {
+			in.close();
+	        out.close();
+		}
+    }
+    
+	protected static void write( byte[] bytes, File destination ) throws IOException {
+
+		if ( !destination.exists() ) {
+			destination.createNewFile();
+		}
+
+		FileOutputStream fileOutputStream = new FileOutputStream(destination);
+		try {
+			fileOutputStream.write(bytes);
+		} finally {
+			fileOutputStream.close();
+		}
+	}
+
+	protected static void write( File source, File destination ) throws IOException {
+
+		FileInputStream in = new FileInputStream(source);
+		FileOutputStream out = new FileOutputStream(destination);
+
+		int doneCnt = -1, bufSize = 32768;
+		byte buf[] = new byte[bufSize];
+
+		try {
+			while ((doneCnt = in.read(buf, 0, bufSize)) >= 0) {
+				if ( doneCnt == 0 )
+					Thread.yield();
+				else
+					out.write(buf, 0, doneCnt);
+			}
+			out.flush();
+		} finally {
+			in.close();
+			out.close();
+		}
+	}
 }

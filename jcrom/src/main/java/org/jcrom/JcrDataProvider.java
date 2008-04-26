@@ -16,6 +16,7 @@
 package org.jcrom;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -54,4 +55,11 @@ public interface JcrDataProvider {
 	 * @return input stream, or null if type is not JcrDataProvider.TYPE.STREAM
 	 */
 	public InputStream getInputStream();
+    
+    /**
+     * Write the content out to the File supplied.
+     * 
+     * @param file the file in question
+     */
+    public void writeToFile( File file ) throws IOException;
 }
