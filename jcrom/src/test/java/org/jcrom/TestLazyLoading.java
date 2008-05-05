@@ -97,11 +97,13 @@ public class TestLazyLoading {
 		assertTrue( fromNode.getLazyObject().getString().equals(lazyObject1.getString()) );
 		assertTrue( fromNode.getLazyObjects().size() == tree.getLazyObjects().size() );
 		assertTrue( fromNode.getLazyObjects().get(1).getString().equals(lazyObject2.getString()) );
+        
+        assertTrue( fromNode.getStartNode() == null );
 		
 		TreeNode homeFromNode = fromNode.getChildren().get(0);
 		assertTrue( homeFromNode.getChildren().size() == homeNode.getChildren().size() );
 		assertTrue( homeFromNode.getChildren().get(0).getName().equals(newsNode.getName()) );
-		
+        
 		// add references
 		fromNode.addFavourite(newsNode);
 		fromNode.setStartNode(productsNode);

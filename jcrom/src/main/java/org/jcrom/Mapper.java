@@ -115,6 +115,16 @@ class Mapper {
 		}
 		return null;
 	}
+    
+	static Object findEntityByPath( List entities, String path ) throws IllegalAccessException {
+		for ( int i = 0; i < entities.size(); i++ ) {
+			Object entity = (Object) entities.get(i);
+			if ( path.equals(getNodePath(entity)) ) {
+				return entity;
+			}
+		}
+		return null;
+	}
 	
 	static Field findAnnotatedField( Object obj, Class annotationClass ) {
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {

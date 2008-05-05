@@ -20,7 +20,7 @@ public class Tree extends AbstractJcrEntity {
 	@JcrChildNode(lazy=true) private TreeNode templateNode;
 	@JcrChildNode(lazy=true) private List<TreeNode> children;
 	
-	@JcrReference(lazy=true) private TreeNode startNode;
+	@JcrReference(lazy=true,byPath=true) private TreeNode startNode;
 	@JcrReference(lazy=true) private List<TreeNode> favourites;
 	
 	@JcrChildNode(lazy=true) private LazyInterface lazyObject;

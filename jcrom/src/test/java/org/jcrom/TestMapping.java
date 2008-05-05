@@ -18,10 +18,7 @@ package org.jcrom;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -30,9 +27,11 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
+import javax.jcr.PropertyType;
 import javax.jcr.Repository;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
+import javax.jcr.Value;
 import org.apache.jackrabbit.core.TransientRepository;
 import org.junit.After;
 import org.junit.Before;
@@ -189,8 +188,18 @@ public class TestMapping {
 		PropertyIterator propertyIterator = node.getProperties();
 		while ( propertyIterator.hasNext() ) {
 			Property p = propertyIterator.nextProperty();
-			if ( !p.getName().equals("jcr:data") && !p.getName().equals("jcr:mixinTypes") ) {
-				System.out.println(indentation + p.getName() + ": " + p.getString());
+			if ( !p.getName().equals("jcr:data") && !p.getName().equals("jcr:mixinTypes") && !p.getName().equals("fileBytes") ) {
+				System.out.print(indentation + p.getName() + ": ");
+                if ( p.getDefinition().getRequiredType() == PropertyType.BINARY ) {
+                    System.out.print( "binary, (length:" + p.getLength() + ") ");
+                } else if ( !p.getDefinition().isMultiple() ) {
+                    System.out.print(p.getString());
+                } else {
+                    for ( Value v : p.getValues() ) {
+                        System.out.print(v.getString() + ", ");
+                    }
+                }
+                System.out.println();
 			}
 		}
 	
@@ -703,6 +712,14 @@ public class TestMapping {
 		assertTrue( newNode.getProperty("hairs").getLong() == parent.getHairs() );
 		assertTrue( (int)newNode.getNode("adoptedChild").getNodes().nextNode().getProperty("fingers").getDouble() == parent.getAdoptedChild().getFingers() );
 		assertTrue( parentFromNode.getTags().equals(parent.getTags()) );
+        
+        parentFromNode.getFiles().remove(1);
+        parentFromNode.getFiles().add(1, createFile("jcr_image5.jpg"));
+        parentFromNode.addFile(createFile("jcr_image6.jpg"));
+        jcrom.updateNode(newNode, parentFromNode);
+        
+        Parent updatedParent = jcrom.fromNode(Parent.class, newNode);
+        assertTrue(updatedParent.getFiles().size() == parentFromNode.getFiles().size());
 		
 		// move the node
 		parent.setTitle("Mohammed");

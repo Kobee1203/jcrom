@@ -92,7 +92,7 @@ class ChildNodeMapper {
 				NodeIterator childNodes = childContainer.getNodes();
 				while ( childNodes.hasNext() ) {
 					Node child = childNodes.nextNode();
-					Object childEntity = mapper.findEntityByName(children, child.getName());
+					Object childEntity = Mapper.findEntityByPath(children, child.getPath());
 					if ( childEntity == null ) {
 						// this child was not found, so we remove it
 						child.remove();
@@ -103,7 +103,8 @@ class ChildNodeMapper {
 				// we must add new children, if any
 				for ( int i = 0; i < children.size(); i++ ) {
 					Object child = children.get(i);
-					if ( !childContainer.hasNode(mapper.getCleanName(Mapper.getNodeName(child))) ) {
+                    String childPath = Mapper.getNodePath(child);
+					if ( childPath == null || childPath.equals("") || !childContainer.hasNode(mapper.getCleanName(Mapper.getNodeName(child))) ) {
 						mapper.addNode(childContainer, child, null);
 					}
 				}

@@ -83,6 +83,11 @@ class FileNodeMapper {
 		} else {
 			fileNode = parentNode.addNode(mapper.getCleanName(file.getName()), jcrNode.nodeType());
 		}
+        file.setName(fileNode.getName());
+        file.setPath(fileNode.getPath());
+        if ( fileNode.hasProperty("jcr:uuid") ) {
+            Mapper.setUUID(file, fileNode.getUUID());
+        }
 		Node contentNode = fileNode.addNode("jcr:content", "nt:resource");
 		setFileNodeProperties(contentNode, file);
 		
@@ -129,6 +134,7 @@ class FileNodeMapper {
 			int depth, int maxDepth, NameFilter nameFilter ) 
 			throws IllegalAccessException, RepositoryException, IOException {
 		
+        JcrNode fileJcrNode = ReflectionUtils.getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field));
 		List children = (List)field.get(obj);
 		if ( children != null && !children.isEmpty() ) {
 			if ( node.hasNode(nodeName) ) {
@@ -137,7 +143,7 @@ class FileNodeMapper {
 				NodeIterator childNodes = childContainer.getNodes();
 				while ( childNodes.hasNext() ) {
 					Node child = childNodes.nextNode();
-					JcrFile childEntity = (JcrFile)mapper.findEntityByName(children, child.getName());
+					JcrFile childEntity = (JcrFile)Mapper.findEntityByPath(children, child.getPath());
 					if ( childEntity == null ) {
 						// this child was not found, so we remove it
 						child.remove();
@@ -148,13 +154,13 @@ class FileNodeMapper {
 				// we must add new children, if any
 				for ( int i = 0; i < children.size(); i++ ) {
 					Object child = children.get(i);
-					if ( !childContainer.hasNode(mapper.getCleanName(Mapper.getNodeName(child))) ) {
-						mapper.addNode(childContainer, child, null);
+                    String childPath = Mapper.getNodePath(child);
+					if ( childPath == null || childPath.equals("") || !childContainer.hasNode(mapper.getCleanName(Mapper.getNodeName(child))) ) {
+                        addFileNode(fileJcrNode, childContainer, (JcrFile)child, mapper);
 					}
 				}
 			} else {
 				// no children exist, we add
-				JcrNode fileJcrNode = ReflectionUtils.getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field));
 				Node fileContainer = createFileFolderNode(fileJcrNode, nodeName, node, mapper);
 				for ( int i = 0; i < children.size(); i++ ) {
 					addFileNode(fileJcrNode, fileContainer, (JcrFile)children.get(i), mapper);
