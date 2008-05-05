@@ -57,7 +57,6 @@ class ChildNodeLoader implements LazyLoader {
 			logger.debug("Lazy loading single child for " + containerPath);
 		}
 		Node childrenContainer = session.getRootNode().getNode(containerPath.substring(1));
-		Object obj = ChildNodeMapper.getSingleChild(objectClass, childrenContainer, parentObject, mapper, depth, maxDepth, nameFilter);
-		return obj;
+		return ChildNodeMapper.getSingleChild(objectClass, childrenContainer, parentObject, mapper, depth, maxDepth, nameFilter);
 	}
 }

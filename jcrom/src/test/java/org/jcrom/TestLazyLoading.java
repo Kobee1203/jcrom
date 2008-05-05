@@ -92,7 +92,6 @@ public class TestLazyLoading {
 
 		Tree fromNode = jcrom.fromNode(Tree.class, treeRootNode);		
 		assertTrue( fromNode.getChildren().size() == tree.getChildren().size() );
-		assertTrue( fromNode.getTemplateNode().getName().equals(templateNode.getName()) );
 		
 		assertTrue( fromNode.getLazyObject().getString().equals(lazyObject1.getString()) );
 		assertTrue( fromNode.getLazyObjects().size() == tree.getLazyObjects().size() );

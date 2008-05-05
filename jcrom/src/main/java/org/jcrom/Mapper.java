@@ -28,6 +28,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
+import net.sf.cglib.proxy.LazyLoader;
 import org.jcrom.annotations.JcrBaseVersionCreated;
 import org.jcrom.annotations.JcrBaseVersionName;
 import org.jcrom.annotations.JcrCheckedout;
@@ -104,16 +105,6 @@ class Mapper {
 		} else {
 			return name;
 		}
-	}
-	
-	Object findEntityByName( List entities, String name ) throws IllegalAccessException {
-		for ( int i = 0; i < entities.size(); i++ ) {
-			Object entity = (Object) entities.get(i);
-			if ( getCleanName(getNodeName(entity)).equals(name) ) {
-				return entity;
-			}
-		}
-		return null;
 	}
     
 	static Object findEntityByPath( List entities, String path ) throws IllegalAccessException {
@@ -505,10 +496,30 @@ class Mapper {
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
 			field.setAccessible(true);
 			if ( field.getName().equals("CGLIB$LAZY_LOADER_0") ) {
-				return field.get(obj);
+                if ( field.get(obj) != null ) {
+                    return field.get(obj);
+                } else {
+                    // lazy loading has not been triggered yet, so
+                    // we do it manually
+                    return triggerLazyLoading(obj);
+                }
 			}
 		}
 		return obj;
 	}
+    
+    private Object triggerLazyLoading( Object obj ) throws IllegalAccessException {
+		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
+			field.setAccessible(true);
+            if ( field.getName().equals("CGLIB$CALLBACK_0") ) {
+                try {
+                    return ((LazyLoader)field.get(obj)).loadObject();
+                } catch ( Exception e ) {
+                    throw new JcrMappingException("Could not trigger lazy loading", e);
+                }
+            }
+        }
+        return obj;
+    }
 	
 }
