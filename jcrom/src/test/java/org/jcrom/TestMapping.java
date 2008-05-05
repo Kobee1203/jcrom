@@ -521,10 +521,10 @@ public class TestMapping {
 		List<Parent> parentsWithLicense = parentDao.findByLicense();
 		assertTrue(parentsWithLicense.size() == 1);
 
-		parentDao.delete(dad.getPath());
+		parentDao.remove(dad.getPath());
 		assertFalse(parentDao.exists(dad.getPath()));
 		
-		parentDao.delete(loadedMom.getPath());
+		parentDao.remove(loadedMom.getPath());
 		assertFalse(parentDao.exists(mom.getPath()));
 		
 		// test a root level node

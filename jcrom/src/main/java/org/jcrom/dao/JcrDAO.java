@@ -105,19 +105,19 @@ public interface JcrDAO<T> {
 	public String updateByUUID( T entity, String uuid, String childNameFilter, int maxDepth );
 		
 	/**
-	 * Permanently delete the entity with the path supplied 
+	 * Permanently remove the entity with the path supplied 
 	 * (from a @JcrPath field).
 	 * 
 	 * @param path the full path of the entity
 	 */
-	public void delete( String path );
+	public void remove( String path );
 	
 	/**
-	 * Permanently delete the entity with the UUID supplied.
+	 * Permanently remove the entity with the UUID supplied.
 	 * 
 	 * @param uuid the JCR UUID of the entity
 	 */
-	public void deleteByUUID( String uuid );
+	public void removeByUUID( String uuid );
 
 	/**
 	 * Check whether an entity with the path supplied exists in JCR.

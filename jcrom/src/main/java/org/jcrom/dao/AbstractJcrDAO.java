@@ -206,21 +206,21 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 		}
 	}
 	
-	public void delete( String path ) {
+	public void remove( String path ) {
 		try {
 			getSession().getRootNode().getNode(relativePath(path)).remove();
 			getSession().save();
 		} catch ( RepositoryException e ) {
-			throw new JcrMappingException("Could not delete node", e);
+			throw new JcrMappingException("Could not remove node", e);
 		}
 	}
 	
-	public void deleteByUUID( String uuid ) {
+	public void removeByUUID( String uuid ) {
 		try {
 			getSession().getNodeByUUID(uuid).remove();
 			getSession().save();
 		} catch ( RepositoryException e ) {
-			throw new JcrMappingException("Could not delete node", e);
+			throw new JcrMappingException("Could not remove node", e);
 		}
 	}
 	
