@@ -22,6 +22,7 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -174,11 +175,29 @@ public class ReflectionUtils {
 				Class arrayType = (Class) ((GenericArrayType)paramType).getGenericComponentType();
 				return Array.newInstance(arrayType, 0).getClass();
 			} else {
-				return (Class) paramType;
+                if ( paramType instanceof ParameterizedType ) {
+                    ParameterizedType paramPType = (ParameterizedType)paramType;
+                    return (Class) paramPType.getRawType();
+                } else {
+                    return (Class) paramType;
+                }
 			}
 		}
 		return null;
 	}
+    
+    public static Class getParameterizedClass( Class c ) {
+        return getParameterizedClass(c, 0);
+    }
+    
+    public static Class getParameterizedClass( Class c, int index ) {
+        TypeVariable[] typeVars = c.getTypeParameters();
+        if ( typeVars.length > 0 ) {
+            return (Class)typeVars[index].getBounds()[0];
+        } else {
+            return null;
+        }
+    }
 	
 	/**
 	 * Check if a field is parameterized with a specific class.

@@ -1,6 +1,8 @@
 package org.jcrom;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.Session;
@@ -114,5 +116,79 @@ public class TestLazyLoading {
 		assertTrue( modifiedFromNode.getStartNode().getName().equals(productsNode.getName()) );
         assertTrue( modifiedFromNode.getStartNode().getChildren().size() == productsNode.getChildren().size() );
 	}
+    
+    @Test
+    public void testDynamicMaps() throws Exception {
+        
+        Jcrom jcrom = new Jcrom(true, true);
+        jcrom.map(DynamicObject.class).map(TreeNode.class);
+        
+        TreeNode node1 = new TreeNode("node1");
+        TreeNode node2 = new TreeNode("node2");
+        
+        List<Object> treeNodes = new ArrayList<Object>();
+        treeNodes.add(new TreeNode("multiNode1"));
+        treeNodes.add(new TreeNode("multiNode2"));
+        
+        DynamicObject dynamicObj = new DynamicObject();
+        dynamicObj.setName("dynamic");
+        dynamicObj.putSingleValueChild(node1.getName(), node1);
+        dynamicObj.putSingleValueChild(node2.getName(), node2);
+        dynamicObj.putMultiValueChild("many", treeNodes);
+        
+        Node newNode = jcrom.addNode(session.getRootNode(), dynamicObj);
+        
+        DynamicObject fromNode = jcrom.fromNode(DynamicObject.class, newNode);
+        
+        assertTrue( fromNode.getSingleValueChildren().size() == dynamicObj.getSingleValueChildren().size() );
+        assertTrue( fromNode.getMultiValueChildren().size() == dynamicObj.getMultiValueChildren().size() );
+        
+        TreeNode node1FromList = (TreeNode) fromNode.getMultiValueChildren().get("many").get(0);
+        assertTrue( node1FromList.getName().equals("multiNode1") );
+        
+        TreeNode node2FromList = (TreeNode) fromNode.getMultiValueChildren().get("many").get(1);
+        assertTrue( node2FromList.getName().equals("multiNode2") );
+        
+        TreeNode node1FromNode = (TreeNode) fromNode.getSingleValueChildren().get(node1.getName());
+        assertTrue( node1FromNode.getName().equals(node1.getName()) );
+        
+        TreeNode node2FromNode = (TreeNode) fromNode.getSingleValueChildren().get(node2.getName());
+        assertTrue( node2FromNode.getName().equals(node2.getName()) );
+        
+        TreeNode ref1 = new TreeNode("ref1");
+        TreeNode ref2 = new TreeNode("ref2");
+        
+        jcrom.addNode(session.getRootNode(), ref1);
+        jcrom.addNode(session.getRootNode(), ref2);
+        
+        List<Object> multiRefs = new ArrayList<Object>();
+        multiRefs.add(ref1);
+        multiRefs.add(ref2);
+        
+        fromNode.putSingleReference(ref1.getName(), ref1);
+        fromNode.putSingleReference(ref2.getName(), ref2);
+        fromNode.putMultiReference("manyRefs", multiRefs);
+        
+        jcrom.updateNode(newNode, fromNode);
+        
+        session.save();
+        
+        DynamicObject updatedNode = jcrom.fromNode(DynamicObject.class, newNode);
+
+        assertTrue( updatedNode.getSingleReferences().size() == fromNode.getSingleReferences().size() );
+        assertTrue( updatedNode.getMultiReferences().size() == fromNode.getMultiReferences().size() );
+        
+        TreeNode ref1FromList = (TreeNode) updatedNode.getMultiReferences().get("manyRefs").get(0);
+        assertTrue( ref1FromList.getName().equals(ref1.getName()) );
+        
+        TreeNode ref2FromList = (TreeNode) updatedNode.getMultiReferences().get("manyRefs").get(1);
+        assertTrue( ref2FromList.getName().equals(ref2.getName()) );
+        
+        TreeNode ref1FromNode = (TreeNode) updatedNode.getSingleReferences().get(ref1.getName());
+        assertTrue( ref1FromNode.getName().equals(ref1.getName()) );
+        
+        TreeNode ref2FromNode = (TreeNode) updatedNode.getSingleReferences().get(ref2.getName());
+        assertTrue( ref2FromNode.getName().equals(ref2.getName()) );
+    }
 
 }

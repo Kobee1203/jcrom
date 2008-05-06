@@ -29,8 +29,8 @@ import org.jcrom.util.NameFilter;
 public class ProxyFactory {
 
 	public static <T> T createChildNodeProxy( Class<T> c, Object parentObj, Session session, String containerPath, 
-			Mapper mapper, int depth, int maxDepth, NameFilter nameFilter ) {
-		ChildNodeLoader childNodeLoader = new ChildNodeLoader(c, parentObj, containerPath, session, mapper, depth, maxDepth, nameFilter);
+			Mapper mapper, int depth, int maxDepth, NameFilter nameFilter, boolean pathIsContainer ) {
+		ChildNodeLoader childNodeLoader = new ChildNodeLoader(c, parentObj, containerPath, session, mapper, depth, maxDepth, nameFilter, pathIsContainer);
 		return (T)Enhancer.create(c, childNodeLoader);
 	}
 	

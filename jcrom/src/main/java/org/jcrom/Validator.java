@@ -100,7 +100,7 @@ class Validator {
 					}
 					
 				} else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
-					// special case, mapping a Map to a child node, so we must
+					// special case, mapping a Map of properties, so we must
 					// make sure that it is properly parameterized:
 					// first parameter must be a String
 					Class keyParamClass = ReflectionUtils.getParameterizedClass(field, 0);
@@ -181,12 +181,31 @@ class Validator {
 			} else if ( field.isAnnotationPresent(JcrChildNode.class) ) {
 				// make sure that the child node type are valid JCR classes
 				if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
+                    // map a List of child nodes, here we must make sure that
+                    // the List is parameterized
 					Class paramClass = ReflectionUtils.getParameterizedClass(field);
 					if ( paramClass != null ) {
 						validateInternal(ReflectionUtils.getParameterizedClass(field), validClasses, dynamicInstantiation);
 					} else {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.List that is not parameterised with a valid class type.");
 					}
+                    
+				} else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
+					// special case, mapping a Map of child nodes, so we must
+					// make sure that it is properly parameterized:
+					// first parameter must be a String
+					Class keyParamClass = ReflectionUtils.getParameterizedClass(field, 0);
+					if ( keyParamClass == null || keyParamClass != String.class ) {
+						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.Map that is not parameterised with a java.lang.String key type.");
+					}
+					// the value class must be Object, or List of Objects
+					Class valueParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+					if ( valueParamClass == null || (valueParamClass != Object.class 
+                            && !(ReflectionUtils.implementsInterface(valueParamClass, List.class) 
+                            && (ReflectionUtils.getParameterizedClass(valueParamClass) != null && ReflectionUtils.getParameterizedClass(valueParamClass) == Object.class))) ) {
+						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.Map that is not parameterised with a valid value type (Object or List<Object>).");
+					}
+                    
 				} else {
 					validateInternal(field.getType(), validClasses, dynamicInstantiation);
 				}
@@ -207,24 +226,44 @@ class Validator {
 				Class fieldType;
 				if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 					fieldType = ReflectionUtils.getParameterizedClass(field);
+                    
+				} else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
+					// special case, mapping a Map of references, so we must
+					// make sure that it is properly parameterized:
+					// first parameter must be a String
+					Class keyParamClass = ReflectionUtils.getParameterizedClass(field, 0);
+					if ( keyParamClass == null || keyParamClass != String.class ) {
+						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is a java.util.Map that is not parameterised with a java.lang.String key type.");
+					}
+					// the value class must be Object, or List of Objects
+					Class valueParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+					if ( valueParamClass == null || (valueParamClass != Object.class 
+                            && !(ReflectionUtils.implementsInterface(valueParamClass, List.class) 
+                            && (ReflectionUtils.getParameterizedClass(valueParamClass) != null && ReflectionUtils.getParameterizedClass(valueParamClass) == Object.class))) ) {
+						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is a java.util.Map that is not parameterised with a valid value type (Object or List<Object>).");
+					}
+                    fieldType = null;
 				} else {
 					fieldType = field.getType();
 				}
-                JcrReference jcrReference = field.getAnnotation(JcrReference.class);
-                if ( !jcrReference.byPath() ) {
-                    // make sure the class has a @JcrUUID
-                    boolean foundUUID = false;
-                    for ( Field refField : ReflectionUtils.getDeclaredAndInheritedFields(fieldType) ) {
-                        if ( refField.isAnnotationPresent(JcrUUID.class) ) {
-                            foundUUID = true;
+                
+                if ( fieldType != null ) {
+                    JcrReference jcrReference = field.getAnnotation(JcrReference.class);
+                    if ( !jcrReference.byPath() ) {
+                        // make sure the class has a @JcrUUID
+                        boolean foundUUID = false;
+                        for ( Field refField : ReflectionUtils.getDeclaredAndInheritedFields(fieldType) ) {
+                            if ( refField.isAnnotationPresent(JcrUUID.class) ) {
+                                foundUUID = true;
+                            }
+                        }
+                        if ( !foundUUID ) {
+                            throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is of type that has no @JcrUUID: " + field.getType().getName());
                         }
                     }
-                    if ( !foundUUID ) {
-                        throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is of type that has no @JcrUUID: " + field.getType().getName());
-                    }
+                    // validate the class
+                    validateInternal(fieldType, validClasses, dynamicInstantiation);
                 }
-				// validate the class
-				validateInternal(fieldType, validClasses, dynamicInstantiation);
 			}
 		}
 		if ( !foundNameField ) {

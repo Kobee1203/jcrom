@@ -39,9 +39,16 @@ class ChildNodeLoader implements LazyLoader {
 	private final int depth;
 	private final int maxDepth;
 	private final NameFilter nameFilter;
+    private final boolean pathIsContainer;
 
 	ChildNodeLoader( Class objectClass, Object parentObject, String containerPath, Session session, Mapper mapper,
 			int depth, int maxDepth, NameFilter nameFilter ) {
+        
+        this(objectClass, parentObject, containerPath, session, mapper, depth, maxDepth, nameFilter, true);
+    }
+    
+	ChildNodeLoader( Class objectClass, Object parentObject, String containerPath, Session session, Mapper mapper,
+			int depth, int maxDepth, NameFilter nameFilter, boolean pathIsContainer ) {
 		this.objectClass = objectClass;
 		this.parentObject = parentObject;
 		this.containerPath = containerPath;
@@ -50,13 +57,19 @@ class ChildNodeLoader implements LazyLoader {
 		this.depth = depth;
 		this.maxDepth = maxDepth;
 		this.nameFilter = nameFilter;
+        this.pathIsContainer = pathIsContainer;
 	}
 
 	public Object loadObject() throws Exception {
 		if ( logger.isDebugEnabled() ) {
 			logger.debug("Lazy loading single child for " + containerPath);
 		}
-		Node childrenContainer = session.getRootNode().getNode(containerPath.substring(1));
-		return ChildNodeMapper.getSingleChild(objectClass, childrenContainer, parentObject, mapper, depth, maxDepth, nameFilter);
+        Node node;
+        if ( pathIsContainer ) {
+            node = session.getRootNode().getNode(containerPath.substring(1)).getNodes().nextNode();
+        } else {
+            node = session.getRootNode().getNode(containerPath.substring(1));
+        }
+		return ChildNodeMapper.getSingleChild(objectClass, node, parentObject, mapper, depth, maxDepth, nameFilter);
 	}
 }

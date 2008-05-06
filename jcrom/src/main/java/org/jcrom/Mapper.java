@@ -182,13 +182,13 @@ class Mapper {
 			uuidField.set(object, uuid);
 		}
 	}
-	
-	Object createInstanceForNode( Class objClass, Node node ) 
+    
+    Class findClassFromNode( Class defaultClass, Node node )
 			throws RepositoryException, IllegalAccessException, ClassNotFoundException, InstantiationException {
 		if ( dynamicInstantiation ) {
 			// first we try to locate the class name from node property
 			String classNameProperty = "className";
-			JcrNode jcrNode = ReflectionUtils.getJcrNodeAnnotation(objClass);
+			JcrNode jcrNode = ReflectionUtils.getJcrNodeAnnotation(defaultClass);
 			if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
 				classNameProperty = jcrNode.classNameProperty();
 			}
@@ -197,18 +197,24 @@ class Mapper {
 				String className = node.getProperty(classNameProperty).getString();
 				Class c = Class.forName(className);
 				if ( isMapped(c) ) {
-					return c.newInstance();
+					return c;
 				} else {
 					throw new JcrMappingException("Trying to instantiate unmapped class: " + c.getName());
 				}
 			} else {
 				// use default class
-				return objClass.newInstance();
+				return defaultClass;
 			}
 		} else {
 			// use default class
-			return objClass.newInstance();
+			return defaultClass;
 		}
+	}
+	
+	Object createInstanceForNode( Class objClass, Node node ) 
+			throws RepositoryException, IllegalAccessException, ClassNotFoundException, InstantiationException {
+        
+        return findClassFromNode(objClass, node).newInstance();
 	}
 
 	/**

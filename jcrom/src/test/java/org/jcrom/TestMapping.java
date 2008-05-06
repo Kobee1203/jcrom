@@ -179,7 +179,7 @@ public class TestMapping {
 		return out.toByteArray();
 	}
 	
-	private void printNode( Node node, String indentation ) throws Exception {
+	static void printNode( Node node, String indentation ) throws Exception {
 		System.out.println();
 		System.out.println(indentation + "------- NODE -------");
 		System.out.println(indentation + "Path: " + node.getPath());

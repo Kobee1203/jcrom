@@ -11,7 +11,8 @@ import org.jcrom.annotations.JcrUUID;
  * @author Olafur Gauti Gudmundsson
  */
 @JcrNode(
-	mixinTypes= {"mix:referenceable"}
+	mixinTypes= {"mix:referenceable"},
+    classNameProperty="className"
 )
 public class TreeNode extends AbstractJcrEntity {
 
@@ -19,7 +20,12 @@ public class TreeNode extends AbstractJcrEntity {
 	@JcrChildNode(lazy=true) private List<TreeNode> children;
 	
 	public TreeNode() {
+        this(null);
+    }
+    
+    public TreeNode( String name ) {
 		super();
+        this.name = name;
 		this.children = new ArrayList<TreeNode>();
 	}
 

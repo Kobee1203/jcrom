@@ -197,11 +197,11 @@ class PropertyMapper {
 		String name = getPropertyName(field);
 		
 		if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
-				// map of properties
-				Class valueType = ReflectionUtils.getParameterizedClass(field, 1);
-				Node childrenContainer = node.getNode(name);
-				PropertyIterator propIterator = childrenContainer.getProperties();
-				mapPropertiesToMap(obj, field, valueType, propIterator);
+            // map of properties
+            Class valueType = ReflectionUtils.getParameterizedClass(field, 1);
+            Node childrenContainer = node.getNode(name);
+            PropertyIterator propIterator = childrenContainer.getProperties();
+            mapPropertiesToMap(obj, field, valueType, propIterator);
 		
 		} else if ( node.hasProperty(name) ) {
 			Property p = node.getProperty(name);
