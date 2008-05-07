@@ -21,6 +21,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jcrom.annotations.JcrBaseVersionCreated;
 import org.jcrom.annotations.JcrBaseVersionName;
 import org.jcrom.annotations.JcrCheckedout;
@@ -36,8 +38,6 @@ import org.jcrom.annotations.JcrUUID;
 import org.jcrom.annotations.JcrVersionCreated;
 import org.jcrom.annotations.JcrVersionName;
 import org.jcrom.util.ReflectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class is used by Jcrom to validate that the classes being mapped
@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
  */
 class Validator {
 	
-	private static final Logger logger = LoggerFactory.getLogger(Validator.class);
+	private static final Logger logger = Logger.getLogger(Validator.class.getName());
 
 	/**
 	 * Takes a class, validates it, and adds it to a Set
@@ -69,8 +69,8 @@ class Validator {
 	
 	private static void validateInternal( Class c, Set<Class> validClasses, boolean dynamicInstantiation ) {
 		if ( !validClasses.contains(c) ) {
-			if ( logger.isDebugEnabled() ) {
-				logger.debug("Processing class: " + c.getName());
+			if ( logger.isLoggable(Level.FINE) ) {
+				logger.fine("Processing class: " + c.getName());
 			}
 
 			validClasses.add(c);
@@ -88,8 +88,8 @@ class Validator {
 		boolean foundPathField = false;
 		for ( Field field : fields ) {
 			field.setAccessible(true);
-			if ( logger.isDebugEnabled() ) {
-				logger.debug("In [" + c.getName() + "]: Processing field: " + field.getName());
+			if ( logger.isLoggable(Level.FINE) ) {
+				logger.fine("In [" + c.getName() + "]: Processing field: " + field.getName());
 			}
 			
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {

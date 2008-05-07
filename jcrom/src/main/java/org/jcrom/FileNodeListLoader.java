@@ -15,12 +15,12 @@
  */
 package org.jcrom;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.jcr.Node;
 import net.sf.cglib.proxy.LazyLoader;
 import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.util.NameFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handles lazy loading of file node lists.
@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  */
 class FileNodeListLoader implements LazyLoader {
 
-    private static final Logger logger = LoggerFactory.getLogger(FileNodeListLoader.class);
+    private static final Logger logger = Logger.getLogger(FileNodeListLoader.class.getName());
     
     private final Class objectClass;
     private final Node fileContainer;
@@ -52,8 +52,8 @@ class FileNodeListLoader implements LazyLoader {
     }
     
 	public Object loadObject() throws Exception {
-		if ( logger.isDebugEnabled() ) {
-			logger.debug("Lazy loading file list for " + fileContainer.getPath());
+		if ( logger.isLoggable(Level.FINE) ) {
+			logger.fine("Lazy loading file list for " + fileContainer.getPath());
 		}
         return FileNodeMapper.getFileList(objectClass, fileContainer, parentObject, jcrFileNode, depth, maxDepth, nameFilter, mapper);
     }

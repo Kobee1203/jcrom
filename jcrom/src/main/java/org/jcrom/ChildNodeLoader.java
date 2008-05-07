@@ -15,12 +15,12 @@
  */
 package org.jcrom;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.jcr.Node;
 import javax.jcr.Session;
 import net.sf.cglib.proxy.LazyLoader;
 import org.jcrom.util.NameFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handles lazy loading of single child node.
@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  */
 class ChildNodeLoader implements LazyLoader {
 	
-	private static final Logger logger = LoggerFactory.getLogger(ChildNodeLoader.class);
+	private static final Logger logger = Logger.getLogger(ChildNodeLoader.class.getName());
 	
 	private final Class objectClass;
 	private final Object parentObject;
@@ -61,8 +61,8 @@ class ChildNodeLoader implements LazyLoader {
 	}
 
 	public Object loadObject() throws Exception {
-		if ( logger.isDebugEnabled() ) {
-			logger.debug("Lazy loading single child for " + containerPath);
+		if ( logger.isLoggable(Level.FINE) ) {
+			logger.fine("Lazy loading single child for " + containerPath);
 		}
         Node node;
         if ( pathIsContainer ) {

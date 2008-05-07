@@ -15,12 +15,12 @@
  */
 package org.jcrom;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.jcr.Node;
 import javax.jcr.Session;
 import net.sf.cglib.proxy.LazyLoader;
 import org.jcrom.util.NameFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handles lazy loading of child node lists.
@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  */
 class ChildNodeListLoader implements LazyLoader {
 	
-	private static final Logger logger = LoggerFactory.getLogger(ChildNodeListLoader.class);
+	private static final Logger logger = Logger.getLogger(ChildNodeListLoader.class.getName());
 
 	private final Class objectClass;
 	private final Object parentObject;
@@ -53,8 +53,8 @@ class ChildNodeListLoader implements LazyLoader {
 	}
 	
 	public Object loadObject() throws Exception {
-		if ( logger.isDebugEnabled() ) {
-			logger.debug("Lazy loading children list for " + containerPath);
+		if ( logger.isLoggable(Level.FINE) ) {
+			logger.fine("Lazy loading children list for " + containerPath);
 		}
 		Node childrenContainer = session.getRootNode().getNode(containerPath.substring(1));
 		return ChildNodeMapper.getChildrenList(objectClass, childrenContainer, parentObject, mapper, depth, maxDepth, nameFilter);

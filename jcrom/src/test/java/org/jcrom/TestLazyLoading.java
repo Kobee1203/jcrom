@@ -1,8 +1,10 @@
 package org.jcrom;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.LogManager;
 import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.Session;
@@ -26,6 +28,13 @@ public class TestLazyLoading {
 	public void setUpRepository() throws Exception {
 		repo = (Repository) new TransientRepository();
 		session = repo.login(new SimpleCredentials("a", "b".toCharArray()));
+        
+		ClassLoader loader = TestMapping.class.getClassLoader();
+		URL url = loader.getResource("logger.properties");
+		if ( url == null ) {
+			url = loader.getResource("/logger.properties");
+		}
+        LogManager.getLogManager().readConfiguration(url.openStream());
 	}
 	
 	@After
