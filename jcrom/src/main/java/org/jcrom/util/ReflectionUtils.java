@@ -186,6 +186,23 @@ public class ReflectionUtils {
 		return null;
 	}
     
+    public static Class getTypeArgumentOfParameterizedClass( Field field, int index, int typeIndex ) {
+		if ( field.getGenericType() instanceof ParameterizedType ) {
+			ParameterizedType ptype = (ParameterizedType) field.getGenericType();
+			Type paramType = ptype.getActualTypeArguments()[index];
+			if ( !(paramType instanceof GenericArrayType) ) {
+                if ( paramType instanceof ParameterizedType ) {
+                    ParameterizedType paramPType = (ParameterizedType)paramType;
+                    Type paramParamType = paramPType.getActualTypeArguments()[typeIndex];
+                    if ( !(paramParamType instanceof ParameterizedType) ) {
+                        return (Class) paramParamType;
+                    }
+                }
+			}
+		}
+		return null;
+    }
+    
     public static Class getParameterizedClass( Class c ) {
         return getParameterizedClass(c, 0);
     }

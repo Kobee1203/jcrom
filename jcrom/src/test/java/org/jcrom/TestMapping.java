@@ -121,7 +121,7 @@ public class TestMapping {
 		return grandChild;
 	}
 	
-	private JcrFile createFile( String name ) {
+	static JcrFile createFile( String name ) {
 		JcrFile jcrFile = new JcrFile();
 		jcrFile.setName(name);
 		jcrFile.setMimeType("image/jpeg");

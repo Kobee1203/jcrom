@@ -54,4 +54,12 @@ public @interface JcrFileNode {
 	 * @return a value determining how to load the File from JCR
 	 */
 	LoadType loadType() default LoadType.STREAM;
+    
+	/**
+	 * Setting this to true will turn on lazy loading for this field.
+	 * The default is false.
+	 * 
+	 * @return whether to apply lazy loading to this field
+	 */
+	boolean lazy() default false;
 }

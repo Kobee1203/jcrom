@@ -129,12 +129,23 @@ public class TestLazyLoading {
         List<Object> treeNodes = new ArrayList<Object>();
         treeNodes.add(new TreeNode("multiNode1"));
         treeNodes.add(new TreeNode("multiNode2"));
+
+        JcrFile file1 = TestMapping.createFile("file1.jpg");
+        JcrFile file2 = TestMapping.createFile("file2.jpg");
+        
+        List<JcrFile> files = new ArrayList<JcrFile>();
+        files.add(TestMapping.createFile("multifile1.jpg"));
+        files.add(TestMapping.createFile("multifile2.jpg"));
         
         DynamicObject dynamicObj = new DynamicObject();
         dynamicObj.setName("dynamic");
         dynamicObj.putSingleValueChild(node1.getName(), node1);
         dynamicObj.putSingleValueChild(node2.getName(), node2);
         dynamicObj.putMultiValueChild("many", treeNodes);
+        
+        dynamicObj.putSingleFile(file1.getName(), file1);
+        dynamicObj.putSingleFile(file2.getName(), file2);
+        dynamicObj.putMultiFile("manyFiles", files);
         
         Node newNode = jcrom.addNode(session.getRootNode(), dynamicObj);
         
@@ -154,6 +165,13 @@ public class TestLazyLoading {
         
         TreeNode node2FromNode = (TreeNode) fromNode.getSingleValueChildren().get(node2.getName());
         assertTrue( node2FromNode.getName().equals(node2.getName()) );
+        
+        assertTrue( fromNode.getSingleFiles().size() == dynamicObj.getSingleFiles().size() );
+        assertTrue( fromNode.getMultiFiles().size() == dynamicObj.getMultiFiles().size() );
+        assertTrue( fromNode.getSingleFiles().get(file1.getName()).getMimeType().equals(file1.getMimeType()) );
+        assertTrue( fromNode.getSingleFiles().get(file2.getName()).getMimeType().equals(file2.getMimeType()) );
+        assertTrue( fromNode.getMultiFiles().get("manyFiles").get(0).getName().equals("multifile1.jpg") );
+        assertTrue( fromNode.getMultiFiles().get("manyFiles").get(1).getName().equals("multifile2.jpg") );
         
         TreeNode ref1 = new TreeNode("ref1");
         TreeNode ref2 = new TreeNode("ref2");

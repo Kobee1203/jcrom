@@ -55,10 +55,10 @@ class ChildNodeMapper {
     private static Node createChildNodeContainer( Node node, String containerName, JcrChildNode jcrChildNode, Mapper mapper ) 
             throws RepositoryException {
         
-        if ( !node.hasNode(containerName) ) {
+        if ( !node.hasNode(mapper.getCleanName(containerName)) ) {
             return node.addNode(mapper.getCleanName(containerName), jcrChildNode.containerNodeType());
         } else {
-            return node.getNode(containerName);
+            return node.getNode(mapper.getCleanName(containerName));
         }
     }
 	
@@ -81,7 +81,7 @@ class ChildNodeMapper {
 			}
 		}
 	}
-	
+
 	private static void addMultipleChildrenToNode( Field field, JcrChildNode jcrChildNode, Object obj, String nodeName, Node node, 
 			Mapper mapper, int depth, int maxDepth, NameFilter nameFilter ) 
 			throws IllegalAccessException, RepositoryException, IOException {
@@ -245,7 +245,7 @@ class ChildNodeMapper {
 		return children;
 	}
     
-    static Map getChildrenMap( Class mapParamClass, Node childrenContainer, Object parentObj, Mapper mapper, int depth, int maxDepth, NameFilter nameFilter, JcrChildNode jcrChildNode ) 
+    private static Map getChildrenMap( Class mapParamClass, Node childrenContainer, Object parentObj, Mapper mapper, int depth, int maxDepth, NameFilter nameFilter, JcrChildNode jcrChildNode ) 
             throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
         Map children = new HashMap();
@@ -318,15 +318,17 @@ class ChildNodeMapper {
             } else {
 				// instantiate the field class
 				Class childObjClass = field.getType();
-				if ( jcrChildNode.lazy() ) {
-					// lazy loading
-					field.set(obj, 
-							ProxyFactory.createChildNodeProxy(childObjClass, obj, node.getSession(), childrenContainer.getPath(), 
-							mapper, depth, maxDepth, nameFilter, true));
-				} else {
-					// eager loading
-					field.set(obj, getSingleChild(childObjClass, childrenContainer.getNodes().nextNode(), obj, mapper, depth, maxDepth, nameFilter));
-				}
+                if ( childrenContainer.hasNodes() ) {
+                    if ( jcrChildNode.lazy() ) {
+                        // lazy loading
+                        field.set(obj, 
+                                ProxyFactory.createChildNodeProxy(childObjClass, obj, node.getSession(), childrenContainer.getPath(), 
+                                mapper, depth, maxDepth, nameFilter, true));
+                    } else {
+                        // eager loading
+                        field.set(obj, getSingleChild(childObjClass, childrenContainer.getNodes().nextNode(), obj, mapper, depth, maxDepth, nameFilter));
+                    }
+                }
 			}
 		}
 	}

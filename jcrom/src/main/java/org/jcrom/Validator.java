@@ -200,9 +200,10 @@ class Validator {
 					}
 					// the value class must be Object, or List of Objects
 					Class valueParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+                    Class valueParamParamClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field, 1, 0);
 					if ( valueParamClass == null || (valueParamClass != Object.class 
                             && !(ReflectionUtils.implementsInterface(valueParamClass, List.class) 
-                            && (ReflectionUtils.getParameterizedClass(valueParamClass) != null && ReflectionUtils.getParameterizedClass(valueParamClass) == Object.class))) ) {
+                            && (valueParamParamClass != null && valueParamParamClass == Object.class))) ) {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.Map that is not parameterised with a valid value type (Object or List<Object>).");
 					}
                     
@@ -216,6 +217,24 @@ class Validator {
 					if ( !ReflectionUtils.extendsClass(ReflectionUtils.getParameterizedClass(field), JcrFile.class) ) {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is a List annotated as @JcrFileNode is not parameterized with a JcrFile implementation.");
 					}
+                    
+				} else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
+					// special case, mapping a Map of file nodes, so we must
+					// make sure that it is properly parameterized:
+					// first parameter must be a String
+					Class keyParamClass = ReflectionUtils.getParameterizedClass(field, 0);
+					if ( keyParamClass == null || keyParamClass != String.class ) {
+						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrFileNode is a java.util.Map that is not parameterised with a java.lang.String key type.");
+					}
+					// the value class must be JcrFile extension, or List of JcrFile extensions
+					Class valueParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+                    Class valueParamParamClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field, 1, 0);
+					if ( valueParamClass == null || (!ReflectionUtils.extendsClass(valueParamClass, JcrFile.class)
+                            && !(ReflectionUtils.implementsInterface(valueParamClass, List.class) 
+                            && (valueParamParamClass != null && ReflectionUtils.extendsClass(valueParamParamClass, JcrFile.class)))) ) {
+						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrFileNode is a java.util.Map that is not parameterised with a valid value type (JcrFile or List<JcrFile>).");
+					}
+                    
 				} else {
 					if ( !ReflectionUtils.extendsClass(field.getType(), JcrFile.class) ) {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrFileNode is of type that does not extend JcrFile: " + field.getType().getName());
@@ -237,9 +256,10 @@ class Validator {
 					}
 					// the value class must be Object, or List of Objects
 					Class valueParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+                    Class valueParamParamClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field, 1, 0);
 					if ( valueParamClass == null || (valueParamClass != Object.class 
                             && !(ReflectionUtils.implementsInterface(valueParamClass, List.class) 
-                            && (ReflectionUtils.getParameterizedClass(valueParamClass) != null && ReflectionUtils.getParameterizedClass(valueParamClass) == Object.class))) ) {
+                            && (valueParamParamClass != null && valueParamParamClass == Object.class))) ) {
 						throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is a java.util.Map that is not parameterised with a valid value type (Object or List<Object>).");
 					}
                     fieldType = null;

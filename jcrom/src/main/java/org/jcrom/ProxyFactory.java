@@ -17,8 +17,10 @@ package org.jcrom;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import javax.jcr.Node;
 import javax.jcr.Session;
 import net.sf.cglib.proxy.Enhancer;
+import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.util.NameFilter;
 
 /**
@@ -39,6 +41,16 @@ public class ProxyFactory {
 		ChildNodeListLoader childNodeListLoader = new ChildNodeListLoader(c, parentObj, containerPath, session, mapper, depth, maxDepth, nameFilter);
 		return (List)Enhancer.create(List.class, childNodeListLoader);
 	}
+    
+    public static <T> T createFileNodeProxy( Class<T> c, Node fileContainer, Object obj, JcrFileNode jcrFileNode, int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) {
+        FileNodeLoader fileNodeLoader = new FileNodeLoader(c, fileContainer, obj, jcrFileNode, depth, maxDepth, nameFilter, mapper);
+        return (T)Enhancer.create(c, fileNodeLoader);
+    }
+    
+    public static List createFileNodeListProxy( Class c, Node fileContainer, Object obj, JcrFileNode jcrFileNode, int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) {
+        FileNodeListLoader fileNodeListLoader = new FileNodeListLoader(c, fileContainer, obj, jcrFileNode, depth, maxDepth, nameFilter, mapper);
+        return (List)Enhancer.create(List.class, fileNodeListLoader);
+    }
 	
 	public static <T> T createReferenceProxy( Class<T> c, Object parentObject, String nodePath, String propertyName, 
 			Session session, Mapper mapper, int depth, int maxDepth, NameFilter nameFilter, Field field ) {
