@@ -104,6 +104,13 @@ public interface JcrDAO<T> {
 	 */
 	public String updateByUUID( T entity, String uuid, String childNameFilter, int maxDepth );
     
+    /**
+     * Move an entity to the parent with the path specified.
+     * Handles checkout and checkin for mix:versionable parents.
+     * 
+     * @param entity
+     * @param newParentPath
+     */
     public void move( T entity, String newParentPath );
 		
 	/**
