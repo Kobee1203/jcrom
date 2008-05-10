@@ -103,6 +103,8 @@ public interface JcrDAO<T> {
 	 * @return the name of the JCR Node that was updated
 	 */
 	public String updateByUUID( T entity, String uuid, String childNameFilter, int maxDepth );
+    
+    public void move( T entity, String newParentPath );
 		
 	/**
 	 * Permanently remove the entity with the path supplied 

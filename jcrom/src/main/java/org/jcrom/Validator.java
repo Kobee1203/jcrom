@@ -70,7 +70,7 @@ class Validator {
 	private static void validateInternal( Class c, Set<Class> validClasses, boolean dynamicInstantiation ) {
 		if ( !validClasses.contains(c) ) {
 			if ( logger.isLoggable(Level.FINE) ) {
-				logger.fine("Processing class: " + c.getName());
+				logger.finer("Processing class: " + c.getName());
 			}
 
 			validClasses.add(c);
@@ -89,7 +89,7 @@ class Validator {
 		for ( Field field : fields ) {
 			field.setAccessible(true);
 			if ( logger.isLoggable(Level.FINE) ) {
-				logger.fine("In [" + c.getName() + "]: Processing field: " + field.getName());
+				logger.finer("In [" + c.getName() + "]: Processing field: " + field.getName());
 			}
 			
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {

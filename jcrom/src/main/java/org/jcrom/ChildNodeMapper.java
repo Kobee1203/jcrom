@@ -56,7 +56,11 @@ class ChildNodeMapper {
             throws RepositoryException {
         
         if ( !node.hasNode(mapper.getCleanName(containerName)) ) {
-            return node.addNode(mapper.getCleanName(containerName), jcrChildNode.containerNodeType());
+            Node containerNode = node.addNode(mapper.getCleanName(containerName), jcrChildNode.containerNodeType());
+            if ( Mapper.hasMixinType(node, "mix:versionable") ) {
+                containerNode.addMixin("mix:versionable");
+            }
+            return containerNode;
         } else {
             return node.getNode(mapper.getCleanName(containerName));
         }

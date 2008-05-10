@@ -456,6 +456,17 @@ public class TestMapping {
 		entity.setTitle("MyEntity");
 		entity.setBody("First");
 		entity.setPath(rootNode.getPath());
+        
+        VersionedEntity child1 = new VersionedEntity();
+        child1.setName("child1");
+        child1.setBody("child1Body");
+        
+        VersionedEntity child2 = new VersionedEntity();
+        child2.setName("child2");
+        child2.setBody("child2Body");
+        
+        entity.addChild(child1);
+        entity.addChild(child2);
 		
 		versionedDao.create(entity);
 		
@@ -470,6 +481,7 @@ public class TestMapping {
 		
 		assertTrue(loadedEntity.getBaseVersionName().equals("1.1"));
 		assertTrue(loadedEntity.getVersionName().equals("1.1"));
+        assertTrue(loadedEntity.getChildren().size() == entity.getChildren().size());
 		assertTrue(versionedDao.getVersionList(entity.getPath()).size() == versionedDao.getVersionSize(entity.getPath()));
 				
 		// restore
@@ -489,6 +501,24 @@ public class TestMapping {
 		for ( VersionedEntity version : versions ) {
 			System.out.println("Version [" + version.getVersionName() + "] [" + version.getBody() + "], base [" + version.getBaseVersionName() + "] [" + version.getBaseVersionCreated() + "]");
 		}
+        
+        // move
+        VersionedEntity anotherEntity = new VersionedEntity();
+        anotherEntity.setName("anotherEntity");
+        anotherEntity.setBody("anotherBody");
+        
+        versionedDao.create(rootNode.getPath(), anotherEntity);
+        
+        VersionedEntity childEntity = loadedEntity.getChildren().get(0);
+        
+        versionedDao.move(childEntity, anotherEntity.getPath() + "/children");
+        
+        assertTrue( versionedDao.exists(anotherEntity.getPath() + "/children/" + childEntity.getName()));
+        
+        // remove child
+        versionedDao.remove(loadedEntity.getChildren().get(1).getPath());
+        
+        assertFalse( versionedDao.exists(loadedEntity.getChildren().get(1).getPath()) );
 	}
 	
 	@Test

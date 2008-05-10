@@ -21,6 +21,7 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -205,11 +206,79 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 			throw new JcrMappingException("Could not update node", e);
 		}
 	}
+    
+    protected boolean hasMixinType( Node node, String mixinType ) throws RepositoryException {
+        for ( NodeType nodeType : node.getMixinNodeTypes() ) {
+            if ( nodeType.getName().equals(mixinType) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void move( T entity, String newParentPath ) {
+        // if this is a versionable node, then we need to check out both
+        // the old parent and the new parent before moving the node
+        try {
+            String sourcePath = jcrom.getPath(entity);
+            String entityName = jcrom.getName(entity);
+            Node oldParent = null;
+            Node newParent = null;
+            if ( isVersionable ) {
+                oldParent = getSession().getRootNode().getNode(relativePath(sourcePath)).getParent();
+                newParent = newParentPath.equals("/") 
+                        ? getSession().getRootNode() 
+                        : getSession().getRootNode().getNode(relativePath(newParentPath));
+                
+                if ( hasMixinType(oldParent, "mix:versionable") ) {
+                    oldParent.checkout();
+                }
+                if ( hasMixinType(newParent, "mix:versionable") ) {
+                    newParent.checkout();
+                }
+            }
+            
+            if ( newParentPath.equals("/") ) {
+                // special case, moving to root
+                getSession().move(sourcePath, newParentPath + entityName);
+            } else {
+                getSession().move(sourcePath, newParentPath + "/" + entityName);
+            }
+            getSession().save();
+            
+            if ( isVersionable ) {
+                if ( oldParent.isCheckedOut() ) {
+                    oldParent.checkin();
+                }
+                if ( newParent.isCheckedOut() ) {
+                    newParent.checkin();
+                }
+            }
+            
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not move node", e);
+		}
+    }
 	
 	public void remove( String path ) {
 		try {
+            Node parent = null;
+            if ( isVersionable ) {
+                parent = getSession().getRootNode().getNode(relativePath(path)).getParent();
+                if ( hasMixinType(parent, "mix:versionable") ) {
+                    parent.checkout();
+                }
+            }
+            
 			getSession().getRootNode().getNode(relativePath(path)).remove();
 			getSession().save();
+            
+            if ( isVersionable ) {
+                if ( parent.isCheckedOut() ) {
+                    parent.checkin();
+                }
+            }
+            
 		} catch ( RepositoryException e ) {
 			throw new JcrMappingException("Could not remove node", e);
 		}
@@ -217,8 +286,25 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	
 	public void removeByUUID( String uuid ) {
 		try {
-			getSession().getNodeByUUID(uuid).remove();
+            Node node = getSession().getNodeByUUID(uuid);
+            
+            Node parent = null;
+            if ( isVersionable ) {
+                parent = node.getParent();
+                if ( hasMixinType(parent, "mix:versionable") ) {
+                    parent.checkout();
+                }
+            }
+                    
+            node.remove();
 			getSession().save();
+            
+            if ( isVersionable ) {
+                if ( parent.isCheckedOut() ) {
+                    parent.checkin();
+                }
+            }
+            
 		} catch ( RepositoryException e ) {
 			throw new JcrMappingException("Could not remove node", e);
 		}

@@ -150,6 +150,15 @@ class Mapper {
 	static String getNodeUUID( Object object ) throws IllegalAccessException {
 		return (String) findUUIDField(object).get(object);
 	}
+    
+    static boolean hasMixinType( Node node, String mixinType ) throws RepositoryException {
+        for ( NodeType nodeType : node.getMixinNodeTypes() ) {
+            if ( nodeType.getName().equals(mixinType) ) {
+                return true;
+            }
+        }
+        return false;
+    }
 	
 	static void setBaseVersionInfo( Object object, String name, Calendar created ) throws IllegalAccessException {
 		Field baseName = findAnnotatedField(object, JcrBaseVersionName.class);

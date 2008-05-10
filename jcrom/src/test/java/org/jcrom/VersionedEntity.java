@@ -1,9 +1,12 @@
 package org.jcrom;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import org.jcrom.annotations.JcrBaseVersionCreated;
 import org.jcrom.annotations.JcrBaseVersionName;
 import org.jcrom.annotations.JcrCheckedout;
+import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrPath;
@@ -31,6 +34,12 @@ public class VersionedEntity {
 	@JcrVersionCreated private Date versionCreated;
 	
 	@JcrCheckedout private boolean checkedOut;
+    
+    @JcrChildNode List<VersionedEntity> children;
+    
+    public VersionedEntity() {
+        this.children = new ArrayList<VersionedEntity>();
+    }
 
 	public Date getBaseVersionCreated() {
 		return baseVersionCreated;
@@ -104,6 +113,17 @@ public class VersionedEntity {
 	public void setBody(String body) {
 		this.body = body;
 	}
+
+    public List<VersionedEntity> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<VersionedEntity> children) {
+        this.children = children;
+    }
 	
+    public void addChild( VersionedEntity child ) {
+        children.add(child);
+    }
 	
 }
