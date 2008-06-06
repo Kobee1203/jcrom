@@ -21,7 +21,10 @@ import org.jcrom.annotations.JcrNode;
  *
  * @author Olafur Gauti Gudmundsson
  */
-@JcrNode(classNameProperty="className")
+@JcrNode(
+	mixinTypes= {"mix:referenceable"},
+    classNameProperty="className"
+)
 public interface Shape extends JcrEntity {
 
 	public double getArea();

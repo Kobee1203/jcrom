@@ -16,6 +16,7 @@
 package org.jcrom;
 
 import org.jcrom.annotations.JcrProperty;
+import org.jcrom.annotations.JcrUUID;
 
 /**
  *
@@ -23,6 +24,7 @@ import org.jcrom.annotations.JcrProperty;
  */
 public class Rectangle extends AbstractJcrEntity implements Shape {
 
+    @JcrUUID private String uuid;
 	@JcrProperty private double height;
 	@JcrProperty private double width;
 	
@@ -46,5 +48,13 @@ public class Rectangle extends AbstractJcrEntity implements Shape {
 	public double getWidth() {
 		return width;
 	}
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 	
 }

@@ -269,7 +269,8 @@ class Validator {
                 
                 if ( fieldType != null ) {
                     JcrReference jcrReference = field.getAnnotation(JcrReference.class);
-                    if ( !jcrReference.byPath() ) {
+                    // when dynamic instantiation is turned on, we ignore interfaces
+                    if ( !jcrReference.byPath() && !(fieldType.isInterface() && dynamicInstantiation) ) {
                         // make sure the class has a @JcrUUID
                         boolean foundUUID = false;
                         for ( Field refField : ReflectionUtils.getDeclaredAndInheritedFields(fieldType) ) {

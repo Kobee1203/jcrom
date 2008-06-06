@@ -391,8 +391,9 @@ public class TestMapping {
 	@Test
 	public void references() throws Exception {
 		
-		Jcrom jcrom = new Jcrom();
+		Jcrom jcrom = new Jcrom(true,true);
 		jcrom.map(ReferenceContainer.class);
+        jcrom.map(Rectangle.class);
 		
 		// create the entity we will reference
 		ReferencedEntity reference = new ReferencedEntity();
@@ -402,10 +403,14 @@ public class TestMapping {
 		ReferencedEntity reference2 = new ReferencedEntity();
 		reference2.setName("Reference2");
 		reference2.setBody("Body of ref 2.");
+        
+        Rectangle rectangle = new Rectangle(2, 3);
+        rectangle.setName("rectangle");
 		
 		Node rootNode = session.getRootNode().addNode("referenceTest");
 		jcrom.addNode(rootNode, reference);
 		jcrom.addNode(rootNode, reference2);
+        jcrom.addNode(rootNode, rectangle);
 		session.save();
 		
 		// note that the ReferenceContainer and ReferencedEntity classes both have
@@ -420,6 +425,8 @@ public class TestMapping {
         refContainer.setReferenceByPath(reference);
         refContainer.addReferenceByPath(reference);
         refContainer.addReferenceByPath(reference2);
+        
+        refContainer.setShape(rectangle);
 		
 		Node refNode = jcrom.addNode(rootNode, refContainer);
 		
@@ -440,6 +447,8 @@ public class TestMapping {
 		assertTrue(fromNode.getReferencesByPath().size() == 2);
 		assertTrue(fromNode.getReferencesByPath().get(1).getName().equals(reference2.getName()));
 		assertTrue(fromNode.getReferencesByPath().get(1).getBody().equals(reference2.getBody()));
+        
+        assertTrue(fromNode.getShape().getArea() == rectangle.getArea());
 	}
 
 	@Test

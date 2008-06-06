@@ -26,6 +26,8 @@ public class ReferenceContainer {
     
 	@JcrReference(byPath=true) private ReferencedEntity referenceByPath;
 	@JcrReference(byPath=true) private List<ReferencedEntity> referencesByPath;
+    
+    @JcrReference private Shape shape;
 
 	public ReferenceContainer() {
 		this.references = new ArrayList<ReferencedEntity>();
@@ -94,5 +96,13 @@ public class ReferenceContainer {
     
     public void addReferenceByPath( ReferencedEntity reference ) {
         referencesByPath.add(reference);
+    }
+
+    public Shape getShape() {
+        return shape;
+    }
+
+    public void setShape(Shape shape) {
+        this.shape = shape;
     }
 }
