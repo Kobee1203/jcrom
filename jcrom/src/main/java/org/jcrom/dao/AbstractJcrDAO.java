@@ -247,10 +247,10 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
             getSession().save();
             
             if ( isVersionable ) {
-                if ( oldParent.isCheckedOut() ) {
+                if ( hasMixinType(oldParent, "mix:versionable") && oldParent.isCheckedOut() ) {
                     oldParent.checkin();
                 }
-                if ( newParent.isCheckedOut() ) {
+                if ( hasMixinType(newParent, "mix:versionable") && newParent.isCheckedOut() ) {
                     newParent.checkin();
                 }
             }
@@ -274,7 +274,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 			getSession().save();
             
             if ( isVersionable ) {
-                if ( parent.isCheckedOut() ) {
+                if ( hasMixinType(parent, "mix:versionable") && parent.isCheckedOut() ) {
                     parent.checkin();
                 }
             }
@@ -300,7 +300,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 			getSession().save();
             
             if ( isVersionable ) {
-                if ( parent.isCheckedOut() ) {
+                if ( hasMixinType(parent, "mix:versionable") && parent.isCheckedOut() ) {
                     parent.checkin();
                 }
             }

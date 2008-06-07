@@ -528,6 +528,8 @@ public class TestMapping {
         versionedDao.remove(loadedEntity.getChildren().get(1).getPath());
         
         assertFalse( versionedDao.exists(loadedEntity.getChildren().get(1).getPath()) );
+        
+        versionedDao.remove(loadedEntity.getPath());
 	}
 	
 	@Test
