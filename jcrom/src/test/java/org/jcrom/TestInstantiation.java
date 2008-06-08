@@ -77,18 +77,18 @@ public class TestInstantiation {
     @Test
     public void test_dynamic_map_instantiation() throws Exception {
         Jcrom jcrom = new Jcrom(true, true);
-        jcrom.map(DynamicObject.class).map(Child.class);
+        jcrom.map(DynamicObject.class).map(ReferencedEntity.class);
 
         Node rootNode = session.getRootNode().addNode("test");
 
         DynamicObject dyna = new DynamicObject();
         dyna.setName("Dynamic");
 
-        Child child = new Child();
+        ReferencedEntity child = new ReferencedEntity();
         child.setName("Child");
 
-        dyna.putSingleReference("childOne", jcrom.fromNode(Child.class, jcrom.addNode(rootNode, child, new String[]{"mix:referenceable"})));
-        dyna.putSingleReference("childTwo", jcrom.fromNode(Child.class, jcrom.addNode(rootNode, child, new String[]{"mix:referenceable"})));
+        dyna.putSingleReference("childOne", jcrom.fromNode(ReferencedEntity.class, jcrom.addNode(rootNode, child, new String[]{"mix:referenceable"})));
+        dyna.putSingleReference("childTwo", jcrom.fromNode(ReferencedEntity.class, jcrom.addNode(rootNode, child, new String[]{"mix:referenceable"})));
 
         assertEquals(2, dyna.getSingleReferences().size());
         assertNotNull(dyna.getSingleReferences().get("childOne"));

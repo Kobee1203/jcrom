@@ -11,7 +11,8 @@ import org.jcrom.annotations.JcrUUID;
  * @author Olafur Gauti Gudmundsson
  */
 @JcrNode(
-	mixinTypes= {"mix:referenceable"}
+	mixinTypes= {"mix:referenceable"},
+    classNameProperty="className"
 )
 public class ReferencedEntity {
 
