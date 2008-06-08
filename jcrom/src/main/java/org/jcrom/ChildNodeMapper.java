@@ -198,6 +198,7 @@ class ChildNodeMapper {
                 mapper.addNode(listContainer, childList.get(i), null);
             }
         } else {
+            Mapper.setNodeName(childMap.get(key), cleanKey);
             mapper.addNode(childContainer, childMap.get(key), null);
         }
     }

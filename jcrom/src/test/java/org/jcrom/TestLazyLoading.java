@@ -164,10 +164,10 @@ public class TestLazyLoading {
         assertTrue( fromNode.getMultiValueChildren().size() == dynamicObj.getMultiValueChildren().size() );
         
         TreeNode node1FromList = (TreeNode) fromNode.getMultiValueChildren().get("many").get(0);
-        assertTrue( node1FromList.getName().equals("multiNode1") );
+        assertEquals( "multiNode1", node1FromList.getName() );
         
         TreeNode node2FromList = (TreeNode) fromNode.getMultiValueChildren().get("many").get(1);
-        assertTrue( node2FromList.getName().equals("multiNode2") );
+        assertEquals( "multiNode2", node2FromList.getName() );
         
         TreeNode node1FromNode = (TreeNode) fromNode.getSingleValueChildren().get(node1.getName());
         assertTrue( node1FromNode.getName().equals(node1.getName()) );
