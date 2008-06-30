@@ -324,7 +324,9 @@ class PropertyMapper {
 						values[i] = createValue(paramClass, fieldValues.get(i), valueFactory);
 					}
 					node.setProperty(propertyName, values);
-				}
+				} else {
+                    node.setProperty(propertyName, new Value[0]);
+                }
 				
 			} else if ( type.isArray() && type.getComponentType() != byte.class ) {
 				// multi-value property array

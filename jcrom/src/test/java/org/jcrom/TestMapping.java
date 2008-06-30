@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -786,6 +788,35 @@ public class TestMapping {
 		jcrom.updateNode(adoptedChildNode, adoptedChild);
 
 		assertTrue( rootNode.getNode(parent.getName()).getNode("adoptedChild").getNodes().nextNode().getProperty("nickName").getString().equals(adoptedChild.getNickName()) );
+	}
+    
+    /**
+     * Thanks to Decebal Suiu for contributing this test case.
+     * @throws Exception 
+     */
+	@Test
+	public void testEmptyList() throws Exception {
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(Person.class);
+
+        // create person
+		Person person = new Person();
+		person.setName("peter");
+		person.setAge(20);
+		person.setPhones(Arrays.asList(new String[] {"053453553"}));
+
+		// add person in jcr
+		Node node = jcrom.addNode(session.getRootNode(), person);
+		Person personFromJcr = jcrom.fromNode(Person.class, node);
+		assertEquals(1, personFromJcr.getPhones().size());
+
+		// update person in jcr
+		person.setPhones(new ArrayList<String>()); // reset the phones
+		jcrom.updateNode(node, person);
+
+		// retrieve updated person from jcr
+		personFromJcr = jcrom.fromNode(Person.class, node);
+		assertFalse(personFromJcr.getPhones().size() == 1); // <<< FAILED
 	}
 
 }
