@@ -484,17 +484,24 @@ public class TestMapping {
 		// change it
 		entity.setBody("Second");
 		versionedDao.update(entity);
+        
+		// change it again
+		entity.setBody("SecondSecond");
+		versionedDao.update(entity);
 			
-		assertTrue(versionedDao.getVersionSize(entity.getPath()) == 2);
+		assertEquals(3, versionedDao.getVersionSize(entity.getPath()));
 		
 		// load entity
 		VersionedEntity loadedEntity = versionedDao.get(entity.getPath());
 		
-		assertTrue(loadedEntity.getBaseVersionName().equals("1.1"));
-		assertTrue(loadedEntity.getVersionName().equals("1.1"));
+		assertEquals("1.2", loadedEntity.getBaseVersionName());
+		assertEquals("1.2", loadedEntity.getVersionName());
         assertTrue(loadedEntity.getChildren().size() == entity.getChildren().size());
 		assertTrue(versionedDao.getVersionList(entity.getPath()).size() == versionedDao.getVersionSize(entity.getPath()));
-				
+
+        VersionedEntity middleVersion = versionedDao.getVersion(entity.getPath(), "1.2");
+        assertNotNull(middleVersion);
+        
 		// restore
 		versionedDao.restoreVersion(entity.getPath(), "1.0");
 		
@@ -818,5 +825,37 @@ public class TestMapping {
 		personFromJcr = jcrom.fromNode(Person.class, node);
 		assertFalse(personFromJcr.getPhones().size() == 1); // <<< FAILED
 	}
+    
+    public void testSecondLevelFileUpdate() throws Exception {
+        
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(GrandParent.class);
+        
+        GrandParent grandParent = new GrandParent();
+        grandParent.setName("Charles");
+        
+        Parent parent = createParent("William");
+
+		Photo photo = createPhoto("jcr_passport.jpg");
+		parent.setPassportPhoto(photo);
+        
+        parent.setJcrFile(createFile("jcr_image.jpg"));
+        
+        grandParent.setChild(parent);
+        
+        Node rootNode = session.getRootNode().addNode("root");
+        
+        Node newNode = jcrom.addNode(rootNode, grandParent);
+        
+        GrandParent fromNode = jcrom.fromNode(GrandParent.class, newNode);
+        fromNode.getChild().getPassportPhoto().setName("bobby.xml");
+        fromNode.getChild().getPassportPhoto().setPhotographer("Bobbs");
+        
+        fromNode.getChild().setName("test");
+        fromNode.getChild().setTitle("Something");
+        fromNode.getChild().getJcrFile().setName("bob.xml");
+        
+        jcrom.updateNode(newNode, photo);
+    }
 
 }

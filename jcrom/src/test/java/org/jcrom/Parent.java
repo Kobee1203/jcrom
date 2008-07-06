@@ -45,6 +45,9 @@ public class Parent extends AbstractEntity implements Serializable {
 	
 	@JcrFileNode
 	private Photo passportPhoto;
+    
+    @JcrFileNode
+    private JcrFile jcrFile;
 	
 	@JcrFileNode(loadType = JcrFileNode.LoadType.BYTES)
 	private List<JcrFile> files;
@@ -114,4 +117,12 @@ public class Parent extends AbstractEntity implements Serializable {
 	public void addTag( String tag ) {
 		tags.add(tag);
 	}
+
+    public JcrFile getJcrFile() {
+        return jcrFile;
+    }
+
+    public void setJcrFile(JcrFile jcrFile) {
+        this.jcrFile = jcrFile;
+    }
 }
