@@ -229,8 +229,8 @@ class ReferenceMapper {
         if ( referencedNode != null ) {
             Object referencedObject = mapper.createInstanceForNode(referenceObjClass, referencedNode);
             if ( nameFilter.isIncluded(field.getName()) && ( maxDepth < 0 || depth < maxDepth ) ) {
-                // load and map the object
-                mapper.mapNodeToClass(referencedObject, referencedNode, nameFilter, maxDepth, obj, depth+1);
+                // load and map the object, we don't send the current object as parent
+                mapper.mapNodeToClass(referencedObject, referencedNode, nameFilter, maxDepth, null, depth+1);
             } else {
                 if ( jcrReference.byPath() ) {
                     // just store the path
