@@ -157,7 +157,8 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 			if ( isVersionable ) {
 				newNode.checkin();
 			}
-			return (T)jcrom.fromNode(entityClass, newNode);
+			//return (T)jcrom.fromNode(entityClass, newNode);
+            return entity;
 		} catch ( RepositoryException e ) {
 			throw new JcrMappingException("Could not create node", e);
 		}
