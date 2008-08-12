@@ -103,10 +103,10 @@ class ReferenceMapper {
 			if (!refValues.isEmpty()) {
 				node.setProperty(propertyName, (Value[]) refValues.toArray(new Value[refValues.size()]));
 			} else {
-				node.setProperty(propertyName, (Value) null);
+				node.setProperty(propertyName, (Value[]) null);
 			}
 		} else {
-			node.setProperty(propertyName, (Value) null);
+			node.setProperty(propertyName, (Value[]) null);
 		}
 	}
     
