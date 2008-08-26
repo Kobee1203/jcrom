@@ -16,6 +16,7 @@
 package org.jcrom;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Calendar;
 import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrNode;
@@ -35,7 +36,7 @@ import org.jcrom.annotations.JcrPath;
  * @author Olafur Gauti Gudmundsson
  */
 @JcrNode(nodeType = "nt:file")
-public class JcrFile {
+public class JcrFile implements Serializable {
 
 	@JcrPath protected String path;
 	@JcrName protected String name;

@@ -101,6 +101,22 @@ class FileNodeMapper {
 		
 		mapper.addNode(fileNode, file, null, false);
 	}
+    
+    static <T extends JcrFile> void addFileNode( Node fileNode, T file, Mapper mapper ) 
+			throws IllegalAccessException, RepositoryException, IOException {
+        file.setName(fileNode.getName());
+        file.setPath(fileNode.getPath());
+        if ( fileNode.hasProperty("jcr:uuid") ) {
+            Mapper.setUUID(file, fileNode.getUUID());
+        }
+		Node contentNode;
+        if ( fileNode.hasNode("jcr:content") ) {
+            contentNode = fileNode.getNode("jcr:content");
+        } else {
+            contentNode = fileNode.addNode("jcr:content", "nt:resource");
+        }
+		setFileNodeProperties(contentNode, file);
+	}
 	
 	private static <T extends JcrFile> void updateFileNode( Node fileNode, T file, NameFilter childNameFilter, 
 			int maxDepth, int depth, Mapper mapper ) 
@@ -302,11 +318,11 @@ class FileNodeMapper {
 		}
 		
 		// file data
-		if ( jcrFileNode.loadType() == JcrFileNode.LoadType.BYTES ) {
-			JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.BYTES, Mapper.readBytes(contentNode.getProperty("jcr:data").getStream()));
-			fileObj.setDataProvider(dataProvider);
-		} else if ( jcrFileNode.loadType() == JcrFileNode.LoadType.STREAM ) {
+        if ( jcrFileNode == null || jcrFileNode.loadType() == JcrFileNode.LoadType.STREAM ) {
 			JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.STREAM, contentNode.getProperty("jcr:data").getStream());
+			fileObj.setDataProvider(dataProvider);
+        } else if ( jcrFileNode.loadType() == JcrFileNode.LoadType.BYTES ) {
+			JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.BYTES, Mapper.readBytes(contentNode.getProperty("jcr:data").getStream()));
 			fileObj.setDataProvider(dataProvider);
 		}
 		
@@ -337,6 +353,11 @@ class FileNodeMapper {
             children.add(fileObj);
         }
         return children;
+    }
+    
+    static void mapSingleFile( JcrFile fileObj, Node fileNode, Object obj, int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 
+            throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
+        mapNodeToFileObject(null, fileObj, fileNode, nameFilter, maxDepth, obj, depth, mapper);
     }
     
     static JcrFile getSingleFile( Class childObjClass, Node fileContainer, Object obj, JcrFileNode jcrFileNode, int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 

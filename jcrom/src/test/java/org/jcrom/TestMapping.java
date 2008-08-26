@@ -37,6 +37,7 @@ import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
 import org.apache.jackrabbit.core.TransientRepository;
+import org.jcrom.JcrDataProvider.TYPE;
 import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.*;
@@ -825,6 +826,53 @@ public class TestMapping {
 		personFromJcr = jcrom.fromNode(Person.class, node);
 		assertFalse(personFromJcr.getPhones().size() == 1); // <<< FAILED
 	}
+    
+    /**
+     * Thanks to Danilo Barboza for contributing this test case.
+     * @throws Exception 
+     */
+    @Test
+    public void testCustomJcrFile() throws Exception {
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(CustomJCRFile.class);
+        
+        session.getRootNode().addNode("customs");
+        CustomJCRFileDAO dao = new CustomJCRFileDAO(session, jcrom);
+
+		File imageFile = new File("src/test/resources/ogg.jpg");
+
+        CustomJCRFile custom = new CustomJCRFile();
+		custom.setPath("customs");
+		custom.setMetadata("My Metadata!");
+		custom.setEncoding("UTF-8");
+		custom.setMimeType("image/jpg");
+		custom.setLastModified(Calendar.getInstance());
+		JcrDataProvider dataProvider = new JcrDataProviderImpl(TYPE.FILE, imageFile);
+		custom.setDataProvider(dataProvider);
+		custom.setName(imageFile.getName());
+
+		dao.create(custom);
+        
+        CustomJCRFile customFromJcr = dao.get(custom.getPath());
+        
+        assertEquals(custom.getName(), customFromJcr.getName());
+        assertEquals(custom.getEncoding(), customFromJcr.getEncoding());
+        assertEquals(custom.getMimeType(), customFromJcr.getMimeType());
+        assertEquals(custom.getMetadata(), customFromJcr.getMetadata());
+        
+        customFromJcr.setEncoding("ISO-8859-1");
+        customFromJcr.setMimeType("image/gif");
+        customFromJcr.setMetadata("Updated metadata");
+        customFromJcr.setDataProvider(null); // not going to update the file
+        
+        dao.update(customFromJcr);
+        
+        CustomJCRFile updatedFromJcr = dao.get(customFromJcr.getPath());
+        
+        assertEquals(customFromJcr.getEncoding(), updatedFromJcr.getEncoding());
+        assertEquals(customFromJcr.getMimeType(), updatedFromJcr.getMimeType());
+        assertEquals(customFromJcr.getMetadata(), updatedFromJcr.getMetadata());
+    }
     
     public void testSecondLevelFileUpdate() throws Exception {
         

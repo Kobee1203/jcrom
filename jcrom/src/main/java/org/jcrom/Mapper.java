@@ -240,8 +240,13 @@ class Mapper {
 	 */
 	Object fromNode( Class entityClass, Node node, String childNodeFilter, int maxDepth ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
+        NameFilter nameFilter = new NameFilter(childNodeFilter);
 		Object obj = createInstanceForNode(entityClass, node);
-		mapNodeToClass(obj, node, new NameFilter(childNodeFilter), maxDepth, null, 0);
+        if ( ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class) ) {
+            // special handling of JcrFile objects
+            FileNodeMapper.mapSingleFile((JcrFile)obj, node, null, 0, maxDepth, nameFilter, this);
+        }
+		mapNodeToClass(obj, node, nameFilter, maxDepth, null, 0);
 		return obj;
 	}
 	
@@ -282,6 +287,11 @@ class Mapper {
 		if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
 			node.setProperty(jcrNode.classNameProperty(), obj.getClass().getCanonicalName());
 		}
+        
+        // special handling of JcrFile objects
+        if ( ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class) && depth == 0 ) {
+            FileNodeMapper.addFileNode(node, (JcrFile)obj, this);
+        }
 		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
 			field.setAccessible(true);
@@ -368,6 +378,11 @@ class Mapper {
 		if ( jcrNode != null && !jcrNode.classNameProperty().equals("none") ) {
 			node.setProperty(jcrNode.classNameProperty(), entity.getClass().getCanonicalName());
 		}
+        
+        // special handling of JcrFile objects
+        if ( ReflectionUtils.extendsClass(entity.getClass(), JcrFile.class) ) {
+            FileNodeMapper.addFileNode(node, (JcrFile)entity, this);
+        }
 		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(entity.getClass()) ) {
 			field.setAccessible(true);
@@ -406,7 +421,7 @@ class Mapper {
 		if ( !ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class) ) {
 			// this does not apply for JcrFile extensions
 			setNodeName(obj, node.getName());
-		}
+        }
 		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
 			field.setAccessible(true);
