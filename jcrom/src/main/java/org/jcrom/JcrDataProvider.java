@@ -22,6 +22,8 @@ import java.io.InputStream;
 /**
  * An interface for providing access to file content within a JcrFile instance.
  * 
+ * <p>Thanks to Robin Wyles for adding content length.</p>
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 public interface JcrDataProvider {
@@ -62,4 +64,11 @@ public interface JcrDataProvider {
      * @param file the file in question
      */
     public void writeToFile( File file ) throws IOException;
+    
+    /**
+     * Returns the length of the byte array / file / input stream
+     * 
+     * @return
+     */
+    public long getContentLength();
 }

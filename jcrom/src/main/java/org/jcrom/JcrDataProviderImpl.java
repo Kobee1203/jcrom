@@ -27,6 +27,8 @@ import java.io.OutputStream;
  * Developers can implement their own data provider if advanced or custom
  * functionality is needed.
  * 
+ * <p>Thanks to Robin Wyles for adding content length.</p>
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 public class JcrDataProviderImpl implements JcrDataProvider {
@@ -35,6 +37,7 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 	protected final byte[] bytes;
 	protected final File file;
 	protected final InputStream inputStream;
+	protected final long contentLength;
 	
 	public JcrDataProviderImpl( TYPE type, byte[] bytes ) {
 		this.type = type;
@@ -42,6 +45,7 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 		System.arraycopy(bytes, 0, this.bytes, 0, bytes.length);
 		this.file = null;
 		this.inputStream = null;
+		this.contentLength = bytes.length;
 	}
 	
 	public JcrDataProviderImpl( TYPE type, File file ) {
@@ -49,6 +53,7 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 		this.file = file;
 		this.bytes = null;
 		this.inputStream = null;
+		this.contentLength = file.length();
 	}
 	
 	public JcrDataProviderImpl( TYPE type, InputStream inputStream ) {
@@ -56,8 +61,17 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 		this.inputStream = inputStream;
 		this.bytes = null;
 		this.file = null;
+		this.contentLength = -1;
 	}
 	
+	public JcrDataProviderImpl(TYPE type, InputStream inputStream, long length) {
+		this.type = type;
+		this.inputStream = inputStream;
+		this.bytes = null;
+		this.file = null;
+		this.contentLength = length;
+	}
+
 	public byte[] getBytes() {
 		return bytes;
 	}
@@ -127,15 +141,20 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 
 		try {
 			while ((doneCnt = in.read(buf, 0, bufSize)) >= 0) {
-				if ( doneCnt == 0 )
+				if ( doneCnt == 0 ) {
 					Thread.yield();
-				else
+                } else {
 					out.write(buf, 0, doneCnt);
+                }
 			}
 			out.flush();
 		} finally {
 			in.close();
 			out.close();
 		}
+	}
+
+	public long getContentLength() {
+		return this.contentLength;
 	}
 }
