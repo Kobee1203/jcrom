@@ -319,7 +319,7 @@ class FileNodeMapper {
 		
 		// file data
         if ( jcrFileNode == null || jcrFileNode.loadType() == JcrFileNode.LoadType.STREAM ) {
-			JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.STREAM, contentNode.getProperty("jcr:data").getStream());
+			JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.STREAM, contentNode.getProperty("jcr:data").getStream(), contentNode.getProperty("jcr:data").getLength());
 			fileObj.setDataProvider(dataProvider);
         } else if ( jcrFileNode.loadType() == JcrFileNode.LoadType.BYTES ) {
 			JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.BYTES, Mapper.readBytes(contentNode.getProperty("jcr:data").getStream()));
