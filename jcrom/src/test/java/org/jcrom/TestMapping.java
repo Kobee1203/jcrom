@@ -874,10 +874,47 @@ public class TestMapping {
         assertEquals(customFromJcr.getMetadata(), updatedFromJcr.getMetadata());
     }
     
+    @Test
+    public void testNoChildContainerNode() throws Exception {
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(UserProfile.class);
+        
+        Node rootNode = session.getRootNode().addNode("noChildTest");
+        
+        UserProfile userProfile = new UserProfile();
+        userProfile.setName("john");
+        
+        Address address = new Address();
+        address.setStreet("Some street");
+        address.setPostCode("101");
+        userProfile.setAddress(address);
+        
+        Node userProfileNode = jcrom.addNode(rootNode, userProfile);
+        
+        printNode(userProfileNode, "");
+        
+        UserProfile fromJcr = jcrom.fromNode(UserProfile.class, userProfileNode);
+        
+        assertEquals(address.getName(), "address");
+        assertEquals(address.getStreet(), fromJcr.getAddress().getStreet());
+        assertEquals(address.getPostCode(), fromJcr.getAddress().getPostCode());
+        
+        fromJcr.getAddress().setStreet("Another street");
+        
+        jcrom.updateNode(userProfileNode, fromJcr);
+        
+        UserProfile updatedFromJcr = jcrom.fromNode(UserProfile.class, userProfileNode);
+        
+        assertEquals(fromJcr.getAddress().getStreet(), updatedFromJcr.getAddress().getStreet());
+        assertEquals(fromJcr.getAddress().getPostCode(), updatedFromJcr.getAddress().getPostCode());
+    }
+    
+    @Test
     public void testSecondLevelFileUpdate() throws Exception {
         
         Jcrom jcrom = new Jcrom();
-        jcrom.map(GrandParent.class);
+        jcrom.map(GrandParent.class)
+                .map(Photo.class);
         
         GrandParent grandParent = new GrandParent();
         grandParent.setName("Charles");

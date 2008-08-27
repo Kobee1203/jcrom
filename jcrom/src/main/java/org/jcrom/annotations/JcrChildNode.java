@@ -61,4 +61,15 @@ public @interface JcrChildNode {
 	 * @return whether to apply lazy loading to this field
 	 */
 	boolean lazy() default false;
+    
+    
+    /**
+     * Setting this to false will mean not creating a container node
+     * for single child objects. This does not apply for Lists or Maps of
+     * child nodes.
+     * The default is true.
+     * 
+     * @return whether to create a child container node
+     */
+    boolean createContainerNode() default true;
 }

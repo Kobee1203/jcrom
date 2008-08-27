@@ -70,20 +70,43 @@ class ChildNodeMapper {
 			Mapper mapper, int depth, int maxDepth, NameFilter nameFilter ) 
 			throws IllegalAccessException, RepositoryException, IOException {
 		
-        Node childContainer = createChildNodeContainer(node, nodeName, jcrChildNode, mapper);
-		if ( !childContainer.hasNodes() ) {
-			if ( field.get(obj) != null ) {
-				// add the node if it does not exist
-				mapper.addNode(childContainer, field.get(obj), null);
-			}
-		} else {
-			if ( field.get(obj) != null ) {
-				mapper.updateNode(childContainer.getNodes().nextNode(), field.get(obj), field.getType(), nameFilter, maxDepth, depth+1);
-			} else {
-				// field is now null, so we remove the child node
-				removeChildren(childContainer);
-			}
-		}
+        if ( jcrChildNode.createContainerNode() ) {
+            Node childContainer = createChildNodeContainer(node, nodeName, jcrChildNode, mapper);
+            if ( !childContainer.hasNodes() ) {
+                if ( field.get(obj) != null ) {
+                    // add the node if it does not exist
+                    mapper.addNode(childContainer, field.get(obj), null);
+                }
+            } else {
+                if ( field.get(obj) != null ) {
+                    mapper.updateNode(childContainer.getNodes().nextNode(), field.get(obj), field.getType(), nameFilter, maxDepth, depth+1);
+                } else {
+                    // field is now null, so we remove the child node
+                    removeChildren(childContainer);
+                }
+            }
+        } else {
+            // don't create a container node for this child,
+            // use the field name for the node instead
+            if ( !node.hasNode(nodeName) ) {
+                if ( field.get(obj) != null ) {
+                    Object childObj = field.get(obj);
+                    Mapper.setNodeName(childObj, nodeName);
+                    mapper.addNode(node, childObj, null);
+                }
+            } else {
+                if ( field.get(obj) != null ) {
+                    Object childObj = field.get(obj);
+                    Mapper.setNodeName(childObj, nodeName);
+                    mapper.updateNode(node.getNode(nodeName), childObj, field.getType(), nameFilter, maxDepth, depth+1);
+                } else {
+                    NodeIterator nodeIterator = node.getNodes(nodeName);
+                    while ( nodeIterator.hasNext() ) {
+                        nodeIterator.nextNode().remove();
+                    }
+                }
+            }
+        }
 	}
 
 	private static void addMultipleChildrenToNode( Field field, JcrChildNode jcrChildNode, Object obj, String nodeName, Node node, 
@@ -297,8 +320,13 @@ class ChildNodeMapper {
 		String nodeName = getNodeName(field);
 		JcrChildNode jcrChildNode = field.getAnnotation(JcrChildNode.class);
 
-		if ( node.hasNode(nodeName) && node.getNode(nodeName).hasNodes() && nameFilter.isIncluded(field.getName()) ) {
-			// child nodes are always stored inside a container node
+		if ( node.hasNode(nodeName) 
+                && (node.getNode(nodeName).hasNodes() 
+                    || (!jcrChildNode.createContainerNode() && !ReflectionUtils.implementsInterface(field.getType(), List.class) && !ReflectionUtils.implementsInterface(field.getType(), Map.class))
+                    )
+                && nameFilter.isIncluded(field.getName()) ) {
+            
+			// child nodes are almost always stored inside a container node
             Node childrenContainer = node.getNode(nodeName);
 			if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 				// we can expect more than one child object here
@@ -323,15 +351,19 @@ class ChildNodeMapper {
             } else {
 				// instantiate the field class
 				Class childObjClass = field.getType();
-                if ( childrenContainer.hasNodes() ) {
+                if ( childrenContainer.hasNodes() || !jcrChildNode.createContainerNode() ) {
                     if ( jcrChildNode.lazy() ) {
                         // lazy loading
                         field.set(obj, 
                                 ProxyFactory.createChildNodeProxy(childObjClass, obj, node.getSession(), childrenContainer.getPath(), 
-                                mapper, depth, maxDepth, nameFilter, true));
+                                mapper, depth, maxDepth, nameFilter, jcrChildNode.createContainerNode()));
                     } else {
                         // eager loading
-                        field.set(obj, getSingleChild(childObjClass, childrenContainer.getNodes().nextNode(), obj, mapper, depth, maxDepth, nameFilter));
+                        if ( jcrChildNode.createContainerNode() ) {
+                            field.set(obj, getSingleChild(childObjClass, childrenContainer.getNodes().nextNode(), obj, mapper, depth, maxDepth, nameFilter));
+                        } else {
+                            field.set(obj, getSingleChild(childObjClass, childrenContainer, obj, mapper, depth, maxDepth, nameFilter));
+                        }
                     }
                 }
 			}
