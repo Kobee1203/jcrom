@@ -195,6 +195,9 @@ public interface JcrDAO<T> {
 	
 	public void restoreVersion( String path, String versionName );
 	public void restoreVersionByUUID( String uuid, String versionName );
+    
+	public void restoreVersion( String path, String versionName, boolean removeExisting );
+	public void restoreVersionByUUID( String uuid, String versionName, boolean removeExisting );
 	
 	public void removeVersion( String path, String versionName );
 	public void removeVersionByUUID( String uuid, String versionName );

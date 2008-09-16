@@ -35,10 +35,12 @@ public class VersionedEntity {
 	
 	@JcrCheckedout private boolean checkedOut;
     
-    @JcrChildNode List<VersionedEntity> children;
+    @JcrChildNode(containerMixinTypes={"mix:versionable"}) List<VersionedEntity> versionedChildren;
+    @JcrChildNode List<Child> unversionedChildren;
     
     public VersionedEntity() {
-        this.children = new ArrayList<VersionedEntity>();
+        this.versionedChildren = new ArrayList<VersionedEntity>();
+        this.unversionedChildren = new ArrayList<Child>();
     }
 
 	public Date getBaseVersionCreated() {
@@ -114,16 +116,28 @@ public class VersionedEntity {
 		this.body = body;
 	}
 
-    public List<VersionedEntity> getChildren() {
-        return children;
+    public List<Child> getUnversionedChildren() {
+        return unversionedChildren;
     }
 
-    public void setChildren(List<VersionedEntity> children) {
-        this.children = children;
+    public void setUnversionedChildren(List<Child> unversionedChildren) {
+        this.unversionedChildren = unversionedChildren;
     }
-	
-    public void addChild( VersionedEntity child ) {
-        children.add(child);
+    
+    public void addUnversionedChild( Child child ) {
+        unversionedChildren.add(child);
+    }
+
+    public List<VersionedEntity> getVersionedChildren() {
+        return versionedChildren;
+    }
+
+    public void setVersionedChildren(List<VersionedEntity> versionedChildren) {
+        this.versionedChildren = versionedChildren;
+    }
+    
+    public void addVersionedChild( VersionedEntity child ) {
+        versionedChildren.add(child);
     }
 	
 }

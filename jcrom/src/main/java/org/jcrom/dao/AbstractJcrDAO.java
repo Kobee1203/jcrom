@@ -384,23 +384,32 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	}
 	
 	public void restoreVersion( String path, String versionName ) {
-		try {
-			restoreVersion(getSession().getRootNode().getNode(relativePath(path)), versionName);
-		} catch ( RepositoryException e ) {
-			throw new JcrMappingException("Could not restore version", e);
-		}
+        restoreVersion(path, versionName, true);
 	}
+    
 	public void restoreVersionByUUID( String uuid, String versionName ) {
+        restoreVersionByUUID(uuid, versionName, true);
+	}
+    
+    public void restoreVersion(String path, String versionName, boolean removeExisting) {
 		try {
-			restoreVersion(getSession().getNodeByUUID(uuid), versionName);
+			restoreVersion(getSession().getRootNode().getNode(relativePath(path)), versionName, removeExisting);
 		} catch ( RepositoryException e ) {
 			throw new JcrMappingException("Could not restore version", e);
 		}
-	}
-	protected void restoreVersion( Node node, String versionName ) {
+    }
+
+    public void restoreVersionByUUID(String uuid, String versionName, boolean removeExisting) {
+        try {
+            restoreVersion(getSession().getNodeByUUID(uuid), versionName, removeExisting);
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not restore version", e);
+		}
+    }
+	protected void restoreVersion( Node node, String versionName, boolean removeExisting ) {
 		try {
 			node.checkout();
-			node.restore(versionName, true);
+			node.restore(versionName, removeExisting);
 		} catch ( RepositoryException e ) {
 			throw new JcrMappingException("Could not restore version", e);
 		}

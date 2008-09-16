@@ -477,13 +477,17 @@ public class TestMapping {
         child2.setName("child2");
         child2.setBody("child2Body");
         
-        entity.addChild(child1);
-        entity.addChild(child2);
+        entity.addVersionedChild(child1);
+        entity.addVersionedChild(child2);
+        
+        Child child3 = createChild("John");
+        entity.addUnversionedChild(child3);
 		
 		versionedDao.create(entity);
 		
 		// change it
 		entity.setBody("Second");
+        entity.getUnversionedChildren().get(0).setNickName("Kalli");
 		versionedDao.update(entity);
         
 		// change it again
@@ -497,7 +501,7 @@ public class TestMapping {
 		
 		assertEquals("1.2", loadedEntity.getBaseVersionName());
 		assertEquals("1.2", loadedEntity.getVersionName());
-        assertTrue(loadedEntity.getChildren().size() == entity.getChildren().size());
+        assertTrue(loadedEntity.getUnversionedChildren().size() == entity.getUnversionedChildren().size());
 		assertTrue(versionedDao.getVersionList(entity.getPath()).size() == versionedDao.getVersionSize(entity.getPath()));
 
         VersionedEntity middleVersion = versionedDao.getVersion(entity.getPath(), "1.2");
@@ -508,6 +512,8 @@ public class TestMapping {
 		
 		loadedEntity = versionedDao.get(entity.getPath());
 		assertTrue(loadedEntity.getBaseVersionName().equals("1.0"));
+        Child loadedChild3 = loadedEntity.getUnversionedChildren().get(0);
+        assertEquals("Baby",loadedChild3.getNickName()); 
 		
 		loadedEntity.setBody("Third");
 		versionedDao.update(loadedEntity);
@@ -528,16 +534,16 @@ public class TestMapping {
         
         versionedDao.create(rootNode.getPath(), anotherEntity);
         
-        VersionedEntity childEntity = loadedEntity.getChildren().get(0);
+        VersionedEntity childEntity = loadedEntity.getVersionedChildren().get(0);
         
-        versionedDao.move(childEntity, anotherEntity.getPath() + "/children");
+        versionedDao.move(childEntity, anotherEntity.getPath() + "/versionedChildren");
         
-        assertTrue( versionedDao.exists(anotherEntity.getPath() + "/children/" + childEntity.getName()));
+        assertTrue( versionedDao.exists(anotherEntity.getPath() + "/versionedChildren/" + childEntity.getName()));
         
         // remove child
-        versionedDao.remove(loadedEntity.getChildren().get(1).getPath());
+        versionedDao.remove(loadedEntity.getVersionedChildren().get(1).getPath());
         
-        assertFalse( versionedDao.exists(loadedEntity.getChildren().get(1).getPath()) );
+        assertFalse( versionedDao.exists(loadedEntity.getVersionedChildren().get(1).getPath()) );
         
         versionedDao.remove(loadedEntity.getPath());
 	}
@@ -555,6 +561,11 @@ public class TestMapping {
 		Parent dad = createParent("John Bobs");
 		dad.setDrivingLicense(false);
 		dad.setPath(rootNode.getPath());
+        
+        dad.setAdoptedChild(createChild("AdoptedChild1"));
+        dad.addChild(createChild("Child1"));
+        dad.addChild(createChild("Child2"));
+        
 		Parent mom = createParent("Jane");
 		mom.setPath(rootNode.getPath()); // mom is created directly under root
 		assertFalse(parentDao.exists(dad.getPath() + "/" + dad.getName()));
@@ -574,6 +585,15 @@ public class TestMapping {
 
 		Parent loadedMom = parentDao.get(mom.getPath());
 		assertTrue(loadedMom.getNickName().equals(mom.getNickName()));
+        
+        // test second level update
+        loadedParent.getAdoptedChild().setNickName("testing");
+        loadedParent.getChildren().get(0).setNickName("hello");
+        parentDao.update(loadedParent, "*", 2);
+        
+        Parent updatedParent = parentDao.get(dad.getPath());
+        assertEquals(loadedParent.getAdoptedChild().getNickName(), updatedParent.getAdoptedChild().getNickName());
+        assertEquals(loadedParent.getChildren().get(0).getNickName(), updatedParent.getChildren().get(0).getNickName());
 		
 		List<Parent> parents = parentDao.findAll(rootNode.getPath());
 		assertTrue(parents.size() == 2);

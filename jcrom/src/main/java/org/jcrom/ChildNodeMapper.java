@@ -57,9 +57,15 @@ class ChildNodeMapper {
         
         if ( !node.hasNode(mapper.getCleanName(containerName)) ) {
             Node containerNode = node.addNode(mapper.getCleanName(containerName), jcrChildNode.containerNodeType());
-            if ( Mapper.hasMixinType(node, "mix:versionable") ) {
-                containerNode.addMixin("mix:versionable");
-            }
+            
+			// add annotated mixin types
+			if ( jcrChildNode != null && jcrChildNode.containerMixinTypes() != null ) {
+				for ( String mixinType : jcrChildNode.containerMixinTypes() ) {
+					if ( containerNode.canAddMixin(mixinType) ) {
+						containerNode.addMixin(mixinType);
+					}
+				}
+			}
             return containerNode;
         } else {
             return node.getNode(mapper.getCleanName(containerName));

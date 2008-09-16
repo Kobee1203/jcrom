@@ -53,6 +53,13 @@ public @interface JcrChildNode {
 	 * the children
 	 */
 	String containerNodeType() default "nt:unstructured";
+    
+	/**
+	 * Mixin types to be added to the container node.
+	 * 
+	 * @return the mixin types for the child container node
+	 */
+	String[] containerMixinTypes() default {};
 	
 	/**
 	 * Setting this to true will turn on lazy loading for this field.
