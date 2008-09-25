@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 import javax.jcr.Node;
 import javax.jcr.Session;
 import net.sf.cglib.proxy.LazyLoader;
-import org.jcrom.util.NameFilter;
+import org.jcrom.util.NodeFilter;
 
 /**
  * Handles lazy loading of reference lists.
@@ -39,12 +39,11 @@ public class ReferenceListLoader implements LazyLoader {
 	private final String propertyName;
 	private final Mapper mapper;
 	private final int depth;
-	private final int maxDepth;
-	private final NameFilter nameFilter;
+	private final NodeFilter nodeFilter;
 	private final Field field;
 	
 	ReferenceListLoader( Class objClass, Object parentObject, String nodePath, String propertyName, 
-			Session session, Mapper mapper, int depth, int maxDepth, NameFilter nameFilter, Field field ) {
+			Session session, Mapper mapper, int depth, NodeFilter nodeFilter, Field field ) {
 		this.objClass = objClass;
 		this.parentObject = parentObject;
 		this.nodePath = nodePath;
@@ -52,8 +51,7 @@ public class ReferenceListLoader implements LazyLoader {
 		this.session = session;
 		this.mapper = mapper;
 		this.depth = depth;
-		this.maxDepth = maxDepth;
-		this.nameFilter = nameFilter;
+		this.nodeFilter = nodeFilter;
 		this.field = field;
 	}
 	
@@ -63,7 +61,7 @@ public class ReferenceListLoader implements LazyLoader {
 		}
 		Node node = session.getRootNode().getNode(nodePath.substring(1));
 		return ReferenceMapper.getReferenceList(field, propertyName, objClass, node, parentObject, 
-				depth, maxDepth, nameFilter, mapper);
+				depth, nodeFilter, mapper);
 	}
 
 }

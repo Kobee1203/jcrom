@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 import javax.jcr.Node;
 import javax.jcr.Session;
 import net.sf.cglib.proxy.LazyLoader;
-import org.jcrom.util.NameFilter;
+import org.jcrom.util.NodeFilter;
 
 /**
  * Handles lazy loading of single reference.
@@ -39,12 +39,11 @@ class ReferenceLoader implements LazyLoader {
 	private final String propertyName;
 	private final Mapper mapper;
 	private final int depth;
-	private final int maxDepth;
-	private final NameFilter nameFilter;
+	private final NodeFilter nodeFilter;
 	private final Field field;
 	
 	ReferenceLoader( Class objClass, Object parentObject, String nodePath, String propertyName, 
-			Session session, Mapper mapper, int depth, int maxDepth, NameFilter nameFilter, Field field ) {
+			Session session, Mapper mapper, int depth, NodeFilter nodeFilter, Field field ) {
 		this.objClass = objClass;
 		this.parentObject = parentObject;
 		this.nodePath = nodePath;
@@ -52,8 +51,7 @@ class ReferenceLoader implements LazyLoader {
 		this.session = session;
 		this.mapper = mapper;
 		this.depth = depth;
-		this.maxDepth = maxDepth;
-		this.nameFilter = nameFilter;
+		this.nodeFilter = nodeFilter;
 		this.field = field;
 	}
 
@@ -63,6 +61,6 @@ class ReferenceLoader implements LazyLoader {
 		}
 		Node node = session.getRootNode().getNode(nodePath.substring(1));
 		return ReferenceMapper.createReferencedObject(field, node.getProperty(propertyName).getValue(), parentObject, 
-				session, objClass, depth, maxDepth, nameFilter, mapper);
+				session, objClass, depth, nodeFilter, mapper);
 	}
 }

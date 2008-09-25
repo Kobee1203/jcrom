@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 import javax.jcr.Node;
 import javax.jcr.Session;
 import net.sf.cglib.proxy.LazyLoader;
-import org.jcrom.util.NameFilter;
+import org.jcrom.util.NodeFilter;
 
 /**
  * Handles lazy loading of child node lists.
@@ -37,19 +37,17 @@ class ChildNodeListLoader implements LazyLoader {
 	private final Session session;
 	private final Mapper mapper;
 	private final int depth;
-	private final int maxDepth;
-	private final NameFilter nameFilter;
+	private final NodeFilter nodeFilter;
 
 	ChildNodeListLoader( Class objectClass, Object parentObject, String containerPath, Session session, Mapper mapper,
-			int depth, int maxDepth, NameFilter nameFilter ) {
+			int depth, NodeFilter nodeFilter ) {
 		this.objectClass = objectClass;
 		this.parentObject = parentObject;
 		this.containerPath = containerPath;
 		this.session = session;
 		this.mapper = mapper;
 		this.depth = depth;
-		this.maxDepth = maxDepth;
-		this.nameFilter = nameFilter;
+		this.nodeFilter = nodeFilter;
 	}
 	
 	public Object loadObject() throws Exception {
@@ -57,7 +55,7 @@ class ChildNodeListLoader implements LazyLoader {
 			logger.fine("Lazy loading children list for " + containerPath);
 		}
 		Node childrenContainer = session.getRootNode().getNode(containerPath.substring(1));
-		return ChildNodeMapper.getChildrenList(objectClass, childrenContainer, parentObject, mapper, depth, maxDepth, nameFilter);
+		return ChildNodeMapper.getChildrenList(objectClass, childrenContainer, parentObject, mapper, depth, nodeFilter);
 	}
 
 }

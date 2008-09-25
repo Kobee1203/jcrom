@@ -29,7 +29,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import org.jcrom.annotations.JcrReference;
-import org.jcrom.util.NameFilter;
+import org.jcrom.util.NodeFilter;
 import org.jcrom.util.ReflectionUtils;
 
 /**
@@ -170,13 +170,13 @@ class ReferenceMapper {
 		}
     }
 	
-	private static void setReferenceProperties( Field field, Object obj, Node node, NameFilter nameFilter )
+	private static void setReferenceProperties( Field field, Object obj, Node node, NodeFilter nodeFilter )
 			throws IllegalAccessException, RepositoryException {
 
 		String propertyName = getPropertyName(field);
 
 		// make sure that the reference should be updated
-		if ( nameFilter == null || nameFilter.isIncluded(field.getName()) ) {
+		if ( nodeFilter == null || nodeFilter.isNameIncluded(field.getName()) ) {
 			if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 				// multiple references in a List
 				addMultipleReferencesToNode(field, obj, propertyName, node);
@@ -195,9 +195,9 @@ class ReferenceMapper {
 		setReferenceProperties(field, obj, node, null);
 	}
 
-	static void updateReferences( Field field, Object obj, Node node, NameFilter nameFilter ) 
+	static void updateReferences( Field field, Object obj, Node node, NodeFilter nodeFilter ) 
 			throws IllegalAccessException, RepositoryException {
-		setReferenceProperties(field, obj, node, nameFilter);
+		setReferenceProperties(field, obj, node, nodeFilter);
 	}
     
     private static Node getSingleReferencedNode( JcrReference jcrReference, Value value, Session session ) throws RepositoryException {
@@ -212,7 +212,7 @@ class ReferenceMapper {
     }
 	
 	static Object createReferencedObject( Field field, Value value, Object obj, Session session, Class referenceObjClass, 
-			int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 
+			int depth, NodeFilter nodeFilter, Mapper mapper ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 		
         JcrReference jcrReference = field.getAnnotation(JcrReference.class);
@@ -228,9 +228,9 @@ class ReferenceMapper {
         
         if ( referencedNode != null ) {
             Object referencedObject = mapper.createInstanceForNode(referenceObjClass, referencedNode);
-            if ( nameFilter.isIncluded(field.getName()) && ( maxDepth < 0 || depth < maxDepth ) ) {
+            if ( nodeFilter.isIncluded(field.getName(), depth) ) {
                 // load and map the object, we don't send the current object as parent
-                mapper.mapNodeToClass(referencedObject, referencedNode, nameFilter, maxDepth, null, depth+1);
+                mapper.mapNodeToClass(referencedObject, referencedNode, nodeFilter, null, depth+1);
             } else {
                 if ( jcrReference.byPath() ) {
                     // just store the path
@@ -247,14 +247,14 @@ class ReferenceMapper {
 	}
 	
 	static List getReferenceList( Field field, String propertyName, Class referenceObjClass, Node node, Object obj, 
-			int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 
+			int depth, NodeFilter nodeFilter, Mapper mapper ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 		
 		List references = new ArrayList();
         if ( node.hasProperty(propertyName) ) {
             Value[] refValues = node.getProperty(propertyName).getValues();
             for ( Value value : refValues ) {
-                Object referencedObject = createReferencedObject(field, value, obj, node.getSession(), referenceObjClass, depth, maxDepth, nameFilter, mapper);
+                Object referencedObject = createReferencedObject(field, value, obj, node.getSession(), referenceObjClass, depth, nodeFilter, mapper);
                 references.add(referencedObject);
             }
         }
@@ -262,7 +262,7 @@ class ReferenceMapper {
 	}
     
     static Map getReferenceMap( Field field, String containerName, Class mapParamClass, Node node, Object obj, 
-			int depth, int maxDepth, NameFilter nameFilter, Mapper mapper, JcrReference jcrReference ) 
+			int depth, NodeFilter nodeFilter, Mapper mapper, JcrReference jcrReference ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
         
         Map references = new HashMap();
@@ -276,11 +276,11 @@ class ReferenceMapper {
                         if ( jcrReference.lazy() ) {
                             references.put(p.getName(), 
                                 ProxyFactory.createReferenceListProxy(Object.class, obj, containerNode.getPath(), p.getName(), node.getSession(), 
-                                    mapper, depth, maxDepth, nameFilter, field)
+                                    mapper, depth, nodeFilter, field)
                                     );
                         } else {
                             references.put(p.getName(), 
-                                    getReferenceList(field, p.getName(), Object.class, containerNode, obj, depth, maxDepth, nameFilter, mapper)
+                                    getReferenceList(field, p.getName(), Object.class, containerNode, obj, depth, nodeFilter, mapper)
                                     );
                         }
                     } else {
@@ -288,9 +288,9 @@ class ReferenceMapper {
                             Node referencedNode = getSingleReferencedNode(jcrReference, p.getValue(), node.getSession());
                             references.put(p.getName(), 
                                     ProxyFactory.createReferenceProxy(mapper.findClassFromNode(Object.class, referencedNode), obj, containerNode.getPath(), p.getName(), node.getSession(), 
-                                    mapper, depth, maxDepth, nameFilter, field));
+                                    mapper, depth, nodeFilter, field));
                         } else {
-                            references.put(p.getName(), createReferencedObject(field, p.getValue(), obj, containerNode.getSession(), Object.class, depth, maxDepth, nameFilter, mapper));
+                            references.put(p.getName(), createReferencedObject(field, p.getValue(), obj, containerNode.getSession(), Object.class, depth, nodeFilter, mapper));
                         }
                     }
                 }
@@ -299,7 +299,7 @@ class ReferenceMapper {
         return references;
     }
 	
-	static void getReferencesFromNode( Field field, Node node, Object obj, int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 
+	static void getReferencesFromNode( Field field, Node node, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 		
 		String propertyName = getPropertyName(field);
@@ -312,17 +312,17 @@ class ReferenceMapper {
                 // lazy loading
                 field.set(obj, 
                         ProxyFactory.createReferenceListProxy(referenceObjClass, obj, node.getPath(), propertyName, node.getSession(), 
-                        mapper, depth, maxDepth, nameFilter, field));
+                        mapper, depth, nodeFilter, field));
             } else {
                 // eager loading
-                field.set(obj, getReferenceList(field, propertyName, referenceObjClass, node, obj, depth, maxDepth, nameFilter, mapper));
+                field.set(obj, getReferenceList(field, propertyName, referenceObjClass, node, obj, depth, nodeFilter, mapper));
             }
 
         } else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
             // multiple references in a Map
             // lazy loading is applied to each value in the Map
             Class mapParamClass = ReflectionUtils.getParameterizedClass(field,1);
-            field.set(obj, getReferenceMap(field, propertyName, mapParamClass, node, obj, depth, maxDepth, nameFilter, mapper, jcrReference));
+            field.set(obj, getReferenceMap(field, propertyName, mapParamClass, node, obj, depth, nodeFilter, mapper, jcrReference));
 
         } else {
             // single reference
@@ -331,9 +331,9 @@ class ReferenceMapper {
                 if ( jcrReference.lazy() ) {
                     field.set(obj, 
                             ProxyFactory.createReferenceProxy(referenceObjClass, obj, node.getPath(), propertyName, node.getSession(), 
-                            mapper, depth, maxDepth, nameFilter, field));
+                            mapper, depth, nodeFilter, field));
                 } else {
-                    field.set(obj, createReferencedObject(field, node.getProperty(propertyName).getValue(), obj, node.getSession(), referenceObjClass, depth, maxDepth, nameFilter, mapper));
+                    field.set(obj, createReferencedObject(field, node.getProperty(propertyName).getValue(), obj, node.getSession(), referenceObjClass, depth, nodeFilter, mapper));
                 }
             }
         }

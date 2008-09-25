@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 import javax.jcr.Node;
 import net.sf.cglib.proxy.LazyLoader;
 import org.jcrom.annotations.JcrFileNode;
-import org.jcrom.util.NameFilter;
+import org.jcrom.util.NodeFilter;
 
 /**
  * Handles lazy loading of file node lists.
@@ -36,25 +36,23 @@ class FileNodeListLoader implements LazyLoader {
     private final Object parentObject;
     private final JcrFileNode jcrFileNode;
     private final int depth;
-    private final int maxDepth;
-    private final NameFilter nameFilter;
+    private final NodeFilter nodeFilter;
     private final Mapper mapper;
     
-    FileNodeListLoader( Class objectClass, Node fileContainer, Object parentObject, JcrFileNode jcrFileNode, int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) {
+    FileNodeListLoader( Class objectClass, Node fileContainer, Object parentObject, JcrFileNode jcrFileNode, int depth, NodeFilter nodeFilter, Mapper mapper ) {
 		this.objectClass = objectClass;
 		this.parentObject = parentObject;
         this.jcrFileNode = jcrFileNode;
 		this.fileContainer = fileContainer;
 		this.mapper = mapper;
 		this.depth = depth;
-		this.maxDepth = maxDepth;
-		this.nameFilter = nameFilter;
+		this.nodeFilter = nodeFilter;
     }
     
 	public Object loadObject() throws Exception {
 		if ( logger.isLoggable(Level.FINE) ) {
 			logger.fine("Lazy loading file list for " + fileContainer.getPath());
 		}
-        return FileNodeMapper.getFileList(objectClass, fileContainer, parentObject, jcrFileNode, depth, maxDepth, nameFilter, mapper);
+        return FileNodeMapper.getFileList(objectClass, fileContainer, parentObject, jcrFileNode, depth, nodeFilter, mapper);
     }
 }

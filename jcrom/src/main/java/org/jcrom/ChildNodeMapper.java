@@ -26,7 +26,7 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import org.jcrom.annotations.JcrChildNode;
-import org.jcrom.util.NameFilter;
+import org.jcrom.util.NodeFilter;
 import org.jcrom.util.ReflectionUtils;
 
 /**
@@ -73,7 +73,7 @@ class ChildNodeMapper {
     }
 	
 	private static void addSingleChildToNode( Field field, JcrChildNode jcrChildNode, Object obj, String nodeName, Node node, 
-			Mapper mapper, int depth, int maxDepth, NameFilter nameFilter ) 
+			Mapper mapper, int depth, NodeFilter nodeFilter ) 
 			throws IllegalAccessException, RepositoryException, IOException {
 		
         if ( jcrChildNode.createContainerNode() ) {
@@ -85,7 +85,7 @@ class ChildNodeMapper {
                 }
             } else {
                 if ( field.get(obj) != null ) {
-                    mapper.updateNode(childContainer.getNodes().nextNode(), field.get(obj), field.getType(), nameFilter, maxDepth, depth+1);
+                    mapper.updateNode(childContainer.getNodes().nextNode(), field.get(obj), field.getType(), nodeFilter, depth+1);
                 } else {
                     // field is now null, so we remove the child node
                     removeChildren(childContainer);
@@ -104,7 +104,7 @@ class ChildNodeMapper {
                 if ( field.get(obj) != null ) {
                     Object childObj = field.get(obj);
                     Mapper.setNodeName(childObj, nodeName);
-                    mapper.updateNode(node.getNode(nodeName), childObj, field.getType(), nameFilter, maxDepth, depth+1);
+                    mapper.updateNode(node.getNode(nodeName), childObj, field.getType(), nodeFilter, depth+1);
                 } else {
                     NodeIterator nodeIterator = node.getNodes(nodeName);
                     while ( nodeIterator.hasNext() ) {
@@ -116,7 +116,7 @@ class ChildNodeMapper {
 	}
 
 	private static void addMultipleChildrenToNode( Field field, JcrChildNode jcrChildNode, Object obj, String nodeName, Node node, 
-			Mapper mapper, int depth, int maxDepth, NameFilter nameFilter ) 
+			Mapper mapper, int depth, NodeFilter nodeFilter ) 
 			throws IllegalAccessException, RepositoryException, IOException {
 
         Node childContainer = createChildNodeContainer(node, nodeName, jcrChildNode, mapper);
@@ -133,7 +133,7 @@ class ChildNodeMapper {
 						// this child was not found, so we remove it
 						child.remove();
 					} else {
-						mapper.updateNode(child, childEntity, paramClass, nameFilter, maxDepth, depth+1);
+						mapper.updateNode(child, childEntity, paramClass, nodeFilter, depth+1);
 					}
 				}
 				// we must add new children, if any
@@ -160,7 +160,7 @@ class ChildNodeMapper {
      * Maps a Map<String,Object> or Map<String,List<Object>> to a JCR Node.
      */
 	private static void addMapOfChildrenToNode( Field field, JcrChildNode jcrChildNode, Object obj, String nodeName, Node node, 
-			Mapper mapper, int depth, int maxDepth, NameFilter nameFilter ) 
+			Mapper mapper, int depth, NodeFilter nodeFilter ) 
 			throws IllegalAccessException, RepositoryException, IOException {
         
         Node childContainer = createChildNodeContainer(node, nodeName, jcrChildNode, mapper);
@@ -185,7 +185,7 @@ class ChildNodeMapper {
                             }
                         } else {
                             // update the child
-                            mapper.updateNode(childContainer.getNode(cleanKey), childMap.get(key), paramClass, nameFilter, maxDepth, depth+1);
+                            mapper.updateNode(childContainer.getNode(cleanKey), childMap.get(key), paramClass, nodeFilter, depth+1);
                         }
                     } else {
                         // this child does not exist, so we add it
@@ -233,23 +233,23 @@ class ChildNodeMapper {
     }
 	
 	private static void setChildren( Field field, Object obj, Node node, 
-			int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 
+			int depth, NodeFilter nodeFilter, Mapper mapper ) 
 			throws IllegalAccessException, RepositoryException, IOException {
 		
 		JcrChildNode jcrChildNode = field.getAnnotation(JcrChildNode.class);
 		String nodeName = getNodeName(field);
 
 		// make sure that this child is supposed to be updated
-		if ( nameFilter == null || nameFilter.isIncluded(field.getName()) ) {
+		if ( nodeFilter == null || nodeFilter.isIncluded(field.getName(), depth) ) {
 			if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 				// multiple children in a List
-				addMultipleChildrenToNode(field, jcrChildNode, obj, nodeName, node, mapper, depth, maxDepth, nameFilter);
+				addMultipleChildrenToNode(field, jcrChildNode, obj, nodeName, node, mapper, depth, nodeFilter);
             } else if ( ReflectionUtils.implementsInterface(field.getType(), Map.class) ) {
                 // multiple children in a Map
-                addMapOfChildrenToNode(field, jcrChildNode, obj, nodeName, node, mapper, depth, maxDepth, nameFilter);
+                addMapOfChildrenToNode(field, jcrChildNode, obj, nodeName, node, mapper, depth, nodeFilter);
 			} else {
 				// single child
-				addSingleChildToNode(field, jcrChildNode, obj, nodeName, node, mapper, depth, maxDepth, nameFilter);
+				addSingleChildToNode(field, jcrChildNode, obj, nodeName, node, mapper, depth, nodeFilter);
 			}
 		}
 	}
@@ -257,29 +257,29 @@ class ChildNodeMapper {
 	static void addChildren( Field field, Object entity, Node node, Mapper mapper ) 
 			throws IllegalAccessException, RepositoryException, IOException {
 		
-		setChildren(field, entity, node, -1, -1, null, mapper);
+		setChildren(field, entity, node, -1, null, mapper);
 	}
 	
-	static void updateChildren( Field field, Object obj, Node node, int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 
+	static void updateChildren( Field field, Object obj, Node node, int depth, NodeFilter nodeFilter, Mapper mapper ) 
 			throws IllegalAccessException, RepositoryException, IOException {
 		
-		setChildren(field, obj, node, depth, maxDepth, nameFilter, mapper);
+		setChildren(field, obj, node, depth, nodeFilter, mapper);
 	}
 	
-	static List getChildrenList( Class childObjClass, Node childrenContainer, Object parentObj, Mapper mapper, int depth, int maxDepth, NameFilter nameFilter ) 
+	static List getChildrenList( Class childObjClass, Node childrenContainer, Object parentObj, Mapper mapper, int depth, NodeFilter nodeFilter ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 		List children = new ArrayList();
 		NodeIterator iterator = childrenContainer.getNodes();
 		while ( iterator.hasNext() ) {
 			Node childNode = iterator.nextNode();
 			Object childObj = mapper.createInstanceForNode(childObjClass, childNode);
-			mapper.mapNodeToClass(childObj, childNode, nameFilter, maxDepth, parentObj, depth+1);
+			mapper.mapNodeToClass(childObj, childNode, nodeFilter, parentObj, depth+1);
 			children.add(childObj);
 		}
 		return children;
 	}
     
-    private static Map getChildrenMap( Class mapParamClass, Node childrenContainer, Object parentObj, Mapper mapper, int depth, int maxDepth, NameFilter nameFilter, JcrChildNode jcrChildNode ) 
+    private static Map getChildrenMap( Class mapParamClass, Node childrenContainer, Object parentObj, Mapper mapper, int depth, NodeFilter nodeFilter, JcrChildNode jcrChildNode ) 
             throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
         Map children = new HashMap();
@@ -291,11 +291,11 @@ class ChildNodeMapper {
 				if ( jcrChildNode.lazy() ) {
 					// lazy loading
 					children.put(childNode.getName(), ProxyFactory.createChildNodeListProxy(Object.class, parentObj, childNode.getSession(), childNode.getPath(), 
-							mapper, depth, maxDepth, nameFilter)
+							mapper, depth, nodeFilter)
                             );
 				} else {
 					// eager loading
-					children.put(childNode.getName(), getChildrenList(Object.class, childNode, parentObj, mapper, depth, maxDepth, nameFilter));
+					children.put(childNode.getName(), getChildrenList(Object.class, childNode, parentObj, mapper, depth, nodeFilter));
 				}
             } else {
                 // each value in the map is a child node
@@ -303,24 +303,24 @@ class ChildNodeMapper {
 					// lazy loading
 					children.put(childNode.getName(), 
 							ProxyFactory.createChildNodeProxy(mapper.findClassFromNode(Object.class,childNode), parentObj, childNode.getSession(), childNode.getPath(), 
-							mapper, depth, maxDepth, nameFilter, false));
+							mapper, depth, nodeFilter, false));
 				} else {
 					// eager loading
-					children.put(childNode.getName(), getSingleChild(Object.class, childNode, parentObj, mapper, depth, maxDepth, nameFilter));
+					children.put(childNode.getName(), getSingleChild(Object.class, childNode, parentObj, mapper, depth, nodeFilter));
 				}
             }
         }
         return children;
     }
 	
-	static Object getSingleChild( Class childObjClass, Node childNode, Object obj, Mapper mapper, int depth, int maxDepth, NameFilter nameFilter ) 
+	static Object getSingleChild( Class childObjClass, Node childNode, Object obj, Mapper mapper, int depth, NodeFilter nodeFilter ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 		Object childObj = mapper.createInstanceForNode(childObjClass, childNode);
-		mapper.mapNodeToClass(childObj, childNode, nameFilter, maxDepth, obj, depth+1);
+		mapper.mapNodeToClass(childObj, childNode, nodeFilter, obj, depth+1);
 		return childObj;
 	}
 	
-	static void getChildrenFromNode( Field field, Node node, Object obj, int depth, int maxDepth, NameFilter nameFilter, Mapper mapper ) 
+	static void getChildrenFromNode( Field field, Node node, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 		
 		String nodeName = getNodeName(field);
@@ -330,7 +330,7 @@ class ChildNodeMapper {
                 && (node.getNode(nodeName).hasNodes() 
                     || (!jcrChildNode.createContainerNode() && !ReflectionUtils.implementsInterface(field.getType(), List.class) && !ReflectionUtils.implementsInterface(field.getType(), Map.class))
                     )
-                && nameFilter.isIncluded(field.getName()) ) {
+                && nodeFilter.isIncluded(field.getName(), depth) ) {
             
 			// child nodes are almost always stored inside a container node
             Node childrenContainer = node.getNode(nodeName);
@@ -341,10 +341,10 @@ class ChildNodeMapper {
 				if ( jcrChildNode.lazy() ) {
 					// lazy loading
 					children = ProxyFactory.createChildNodeListProxy(childObjClass, obj, node.getSession(), childrenContainer.getPath(), 
-							mapper, depth, maxDepth, nameFilter);
+							mapper, depth, nodeFilter);
 				} else {
 					// eager loading
-					children = getChildrenList(childObjClass, childrenContainer, obj, mapper, depth, maxDepth, nameFilter);
+					children = getChildrenList(childObjClass, childrenContainer, obj, mapper, depth, nodeFilter);
 				}
 				field.set(obj, children);
 
@@ -352,7 +352,7 @@ class ChildNodeMapper {
                 // dynamic map of child nodes
                 // lazy loading is applied to each value in the Map
                 Class mapParamClass = ReflectionUtils.getParameterizedClass(field,1);
-                field.set(obj, getChildrenMap(mapParamClass, childrenContainer, obj, mapper, depth, maxDepth, nameFilter, jcrChildNode));
+                field.set(obj, getChildrenMap(mapParamClass, childrenContainer, obj, mapper, depth, nodeFilter, jcrChildNode));
             
             } else {
 				// instantiate the field class
@@ -362,13 +362,13 @@ class ChildNodeMapper {
                         // lazy loading
                         field.set(obj, 
                                 ProxyFactory.createChildNodeProxy(childObjClass, obj, node.getSession(), childrenContainer.getPath(), 
-                                mapper, depth, maxDepth, nameFilter, jcrChildNode.createContainerNode()));
+                                mapper, depth, nodeFilter, jcrChildNode.createContainerNode()));
                     } else {
                         // eager loading
                         if ( jcrChildNode.createContainerNode() ) {
-                            field.set(obj, getSingleChild(childObjClass, childrenContainer.getNodes().nextNode(), obj, mapper, depth, maxDepth, nameFilter));
+                            field.set(obj, getSingleChild(childObjClass, childrenContainer.getNodes().nextNode(), obj, mapper, depth, nodeFilter));
                         } else {
-                            field.set(obj, getSingleChild(childObjClass, childrenContainer, obj, mapper, depth, maxDepth, nameFilter));
+                            field.set(obj, getSingleChild(childObjClass, childrenContainer, obj, mapper, depth, nodeFilter));
                         }
                     }
                 }

@@ -45,7 +45,7 @@ import org.jcrom.annotations.JcrSerializedProperty;
 import org.jcrom.annotations.JcrUUID;
 import org.jcrom.annotations.JcrVersionCreated;
 import org.jcrom.annotations.JcrVersionName;
-import org.jcrom.util.NameFilter;
+import org.jcrom.util.NodeFilter;
 import org.jcrom.util.PathUtils;
 import org.jcrom.util.ReflectionUtils;
 
@@ -231,22 +231,18 @@ class Mapper {
 	 * that this Mapper was created for.
 	 * 
 	 * @param node the JCR node from which to create the object
-	 * @param childNodeFilter comma separated list of names of child nodes to load 
-	 * ("*" loads all, while "none" loads no children)
-	 * @param maxDepth the maximum depth of loaded child nodes (0 means no child nodes are loaded,
-	 * while a negative value means that no restrictions are set on the depth).
+     * @param nodeFilter the NodeFilter to be applied
 	 * @return an instance of the JCR entity class, mapped from the node
 	 * @throws java.lang.Exception
 	 */
-	Object fromNode( Class entityClass, Node node, String childNodeFilter, int maxDepth ) 
+	Object fromNode( Class entityClass, Node node, NodeFilter nodeFilter ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
-        NameFilter nameFilter = new NameFilter(childNodeFilter);
 		Object obj = createInstanceForNode(entityClass, node);
         if ( ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class) ) {
             // special handling of JcrFile objects
-            FileNodeMapper.mapSingleFile((JcrFile)obj, node, null, 0, maxDepth, nameFilter, this);
+            FileNodeMapper.mapSingleFile((JcrFile)obj, node, null, 0, nodeFilter, this);
         }
-		mapNodeToClass(obj, node, nameFilter, maxDepth, null, 0);
+		mapNodeToClass(obj, node, nodeFilter, null, 0);
 		return obj;
 	}
 	
@@ -258,12 +254,12 @@ class Mapper {
 	 * @param maxDepth
 	 * @throws java.lang.Exception
 	 */
-	String updateNode( Node node, Object entity, String childNodeFilter, int maxDepth ) 
+	String updateNode( Node node, Object entity, NodeFilter nodeFilter ) 
 			throws RepositoryException, IllegalAccessException, IOException {
-		return updateNode(node, entity, entity.getClass(), new NameFilter(childNodeFilter), maxDepth, 0);
+		return updateNode(node, entity, entity.getClass(), nodeFilter, 0);
 	}
 	
-	String updateNode( Node node, Object obj, Class objClass, NameFilter childNameFilter, int maxDepth, int depth )
+	String updateNode( Node node, Object obj, Class objClass, NodeFilter nodeFilter, int depth )
 			throws RepositoryException, IllegalAccessException, IOException {
 		
 		obj = clearCglib(obj);
@@ -303,18 +299,18 @@ class Mapper {
 				PropertyMapper.mapSerializedFieldToProperty(field, obj, node);
 				
 			} else if ( field.isAnnotationPresent(JcrChildNode.class) 
-					&& ( maxDepth < 0 || depth < maxDepth ) ) {
+					&& nodeFilter.isDepthIncluded(depth) ) {
 				// child nodes
-				ChildNodeMapper.updateChildren(field, obj, node, depth, maxDepth, childNameFilter, this);
+				ChildNodeMapper.updateChildren(field, obj, node, depth, nodeFilter, this);
 				
 			} else if ( field.isAnnotationPresent(JcrReference.class) ) {
 				// references
-				ReferenceMapper.updateReferences(field, obj, node, childNameFilter);
+				ReferenceMapper.updateReferences(field, obj, node, nodeFilter);
 				
 			} else if ( field.isAnnotationPresent(JcrFileNode.class) 
-					&& ( maxDepth < 0 || depth < maxDepth ) ) {
+					&& nodeFilter.isDepthIncluded(depth) ) {
 				// file nodes
-				FileNodeMapper.updateFiles(field, obj, node, this, depth, maxDepth, childNameFilter);
+				FileNodeMapper.updateFiles(field, obj, node, this, depth, nodeFilter);
 			}
 		}
 		return node.getName();
@@ -415,7 +411,7 @@ class Mapper {
 		return false;
 	}
 		
-	void mapNodeToClass( Object obj, Node node, NameFilter nameFilter, int maxDepth, Object parentObject, int depth ) 
+	void mapNodeToClass( Object obj, Node node, NodeFilter nodeFilter, Object parentObject, int depth ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 		
 		if ( !ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class) ) {
@@ -478,15 +474,15 @@ class Mapper {
 				}
 				
 			} else if ( field.isAnnotationPresent(JcrChildNode.class) 
-					&& ( maxDepth < 0 || depth < maxDepth ) ) {
-				ChildNodeMapper.getChildrenFromNode(field, node, obj, depth, maxDepth, nameFilter, this);
+					&& nodeFilter.isDepthIncluded(depth) ) {
+				ChildNodeMapper.getChildrenFromNode(field, node, obj, depth, nodeFilter, this);
 				
 			} else if ( field.isAnnotationPresent(JcrReference.class) ) {
-				ReferenceMapper.getReferencesFromNode(field, node, obj, depth, maxDepth, nameFilter, this);
+				ReferenceMapper.getReferencesFromNode(field, node, obj, depth, nodeFilter, this);
 				
 			} else if ( field.isAnnotationPresent(JcrFileNode.class) 
-					&& ( maxDepth < 0 || depth < maxDepth ) ) {
-				FileNodeMapper.getFilesFromNode(field, node, obj, depth, maxDepth, nameFilter, this);
+					&& nodeFilter.isDepthIncluded(depth) ) {
+				FileNodeMapper.getFilesFromNode(field, node, obj, depth, nodeFilter, this);
 			
 			} else if ( field.getName().equals("path") ) {
 				field.set(obj, node.getPath());

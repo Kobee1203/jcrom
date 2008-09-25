@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import org.jcrom.util.NodeFilter;
 
 /**
  * This is the main entry class for JCROM.
@@ -176,7 +177,7 @@ public class Jcrom {
 	 * the document, but will be cast to this class)
 	 * @param node the JCR node from which to create the object
 	 * @return an instance of the JCR entity class, mapped from the node
-	 * @throws java.lang.Exception
+	 * @throws JcrMappingException
 	 */
 	public <T> T fromNode(Class<T> entityClass, Node node) throws JcrMappingException {
 		return (T) fromNode(entityClass, node, "*", -1);
@@ -194,14 +195,29 @@ public class Jcrom {
 	 * @param maxDepth the maximum depth of loaded child nodes (0 means no child nodes are loaded,
 	 * while a negative value means that no restrictions are set on the depth).
 	 * @return an instance of the JCR entity class, mapped from the node
-	 * @throws java.lang.Exception
+	 * @throws JcrMappingException
 	 */
 	public <T> T fromNode(Class<T> entityClass, Node node, String childNodeFilter, int maxDepth) throws JcrMappingException {
+        return fromNode(entityClass, node, new NodeFilter(childNodeFilter, maxDepth));
+	}
+    
+	/**
+	 * Maps the node supplied to an instance of the entity class.
+	 * 
+	 * @param entityClass the class of the entity to be instantiated from the node
+	 * (in the case of dynamic instantiation, the instance class may be read from
+	 * the document, but will be cast to this class)
+	 * @param node the JCR node from which to create the object
+	 * @param nodeFilter the NodeFilter to apply when loading child nodes and references
+	 * @return an instance of the JCR entity class, mapped from the node
+	 * @throws JcrMappingException
+	 */
+    public <T> T fromNode(Class<T> entityClass, Node node, NodeFilter nodeFilter ) throws JcrMappingException {
 		if ( !mapper.isDynamicInstantiation() && !mapper.isMapped(entityClass) ) {
 			throw new JcrMappingException("Trying to map to an unmapped class: " + entityClass.getName());
 		}
 		try {
-			return (T) mapper.fromNode(entityClass, node, childNodeFilter, maxDepth);
+			return (T) mapper.fromNode(entityClass, node, nodeFilter);
 		} catch (ClassNotFoundException e) {
 			throw new JcrMappingException("Could not map Object from node", e);
 		} catch (InstantiationException e) {
@@ -213,7 +229,7 @@ public class Jcrom {
 		} catch (IOException e) {
 			throw new JcrMappingException("Could not map Object from node", e);
 		}
-	}
+    }
 
 	/**
 	 * Maps the entity supplied to a JCR node, and adds that node as a child
@@ -222,7 +238,7 @@ public class Jcrom {
 	 * @param parentNode the parent node to which the entity node will be added
 	 * @param entity the entity to be mapped to the JCR node
 	 * @return the newly created JCR node
-	 * @throws java.lang.Exception
+	 * @throws JcrMappingException
 	 */
 	public Node addNode(Node parentNode, Object entity) throws JcrMappingException {
 		return addNode(parentNode, entity, null);
@@ -236,7 +252,7 @@ public class Jcrom {
 	 * @param entity the entity to be mapped to the JCR node
 	 * @param mixinTypes an array of mixin type that will be added to the new node
 	 * @return the newly created JCR node
-	 * @throws java.lang.Exception
+	 * @throws JcrMappingException
 	 */
 	public Node addNode(Node parentNode, Object entity, String[] mixinTypes) throws JcrMappingException {
 		if ( !mapper.isMapped(entity.getClass()) ) {
@@ -259,10 +275,10 @@ public class Jcrom {
 	 * @param node the JCR node to be updated
 	 * @param entity the entity that will be mapped to the existing node
 	 * @return the name of the updated node
-	 * @throws java.lang.Exception
+	 * @throws JcrMappingException
 	 */
 	public String updateNode(Node node, Object entity) throws JcrMappingException {
-		return updateNode(node, entity, "*", -1);
+		return updateNode(node, entity, new NodeFilter("*", -1));
 	}
 
 	/**
@@ -275,14 +291,28 @@ public class Jcrom {
 	 * @param maxDepth the maximum depth of updated child nodes (0 means no child nodes are updated,
 	 * while a negative value means that no restrictions are set on the depth).
 	 * @return the name of the updated node
-	 * @throws java.lang.Exception
+	 * @throws JcrMappingException
 	 */
 	public String updateNode(Node node, Object entity, String childNodeFilter, int maxDepth) throws JcrMappingException {
+        return updateNode(node, entity, new NodeFilter(childNodeFilter, maxDepth));
+    }
+    
+	/**
+	 * Update an existing JCR node with the entity supplied.
+	 * 
+	 * @param node the JCR node to be updated
+	 * @param entity the entity that will be mapped to the existing node
+	 * @param nodeFilter the NodeFilter to apply when updating child nodes and references
+	 * @return the name of the updated node
+	 * @throws JcrMappingException
+	 */
+    public String updateNode(Node node, Object entity, NodeFilter nodeFilter ) throws JcrMappingException {
+        
 		if ( !mapper.isMapped(entity.getClass()) ) {
 			throw new JcrMappingException("Trying to map an unmapped class: " + entity.getClass().getName());
 		}
 		try {
-			return mapper.updateNode(node, entity, childNodeFilter, maxDepth);
+			return mapper.updateNode(node, entity, nodeFilter);
 		} catch (RepositoryException e) {
 			throw new JcrMappingException("Could not update node from object", e);
 		} catch (IllegalAccessException e) {

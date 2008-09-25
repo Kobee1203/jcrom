@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 import javax.jcr.Node;
 import javax.jcr.Session;
 import net.sf.cglib.proxy.LazyLoader;
-import org.jcrom.util.NameFilter;
+import org.jcrom.util.NodeFilter;
 
 /**
  * Handles lazy loading of single child node.
@@ -37,26 +37,24 @@ class ChildNodeLoader implements LazyLoader {
 	private final Session session;
 	private final Mapper mapper;
 	private final int depth;
-	private final int maxDepth;
-	private final NameFilter nameFilter;
+	private final NodeFilter nodeFilter;
     private final boolean pathIsContainer;
 
 	ChildNodeLoader( Class objectClass, Object parentObject, String containerPath, Session session, Mapper mapper,
-			int depth, int maxDepth, NameFilter nameFilter ) {
+			int depth, NodeFilter nodeFilter ) {
         
-        this(objectClass, parentObject, containerPath, session, mapper, depth, maxDepth, nameFilter, true);
+        this(objectClass, parentObject, containerPath, session, mapper, depth, nodeFilter, true);
     }
     
 	ChildNodeLoader( Class objectClass, Object parentObject, String containerPath, Session session, Mapper mapper,
-			int depth, int maxDepth, NameFilter nameFilter, boolean pathIsContainer ) {
+			int depth, NodeFilter nodeFilter, boolean pathIsContainer ) {
 		this.objectClass = objectClass;
 		this.parentObject = parentObject;
 		this.containerPath = containerPath;
 		this.session = session;
 		this.mapper = mapper;
 		this.depth = depth;
-		this.maxDepth = maxDepth;
-		this.nameFilter = nameFilter;
+		this.nodeFilter = nodeFilter;
         this.pathIsContainer = pathIsContainer;
 	}
 
@@ -70,6 +68,6 @@ class ChildNodeLoader implements LazyLoader {
         } else {
             node = session.getRootNode().getNode(containerPath.substring(1));
         }
-		return ChildNodeMapper.getSingleChild(objectClass, node, parentObject, mapper, depth, maxDepth, nameFilter);
+		return ChildNodeMapper.getSingleChild(objectClass, node, parentObject, mapper, depth, nodeFilter);
 	}
 }
