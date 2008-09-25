@@ -38,6 +38,7 @@ import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
 import org.apache.jackrabbit.core.TransientRepository;
 import org.jcrom.JcrDataProvider.TYPE;
+import org.jcrom.util.NodeFilter;
 import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.*;
@@ -782,7 +783,6 @@ public class TestMapping {
 		parentFromNode = jcrom.fromNode(Parent.class, newNode);
 		System.out.println("Updated photographer: " + parentFromNode.getPassportPhoto().getPhotographer());
 		System.out.println("InputStream is null: " + (parentFromNode.getPassportPhoto().getDataProvider().getInputStream()==null));
-		
 
 		// validate that the node is updated
 		assertTrue( newNode.getProperty("birthDay").getDate().getTime().equals(parent.getBirthDay()) );
@@ -800,6 +800,14 @@ public class TestMapping {
         
         Parent updatedParent = jcrom.fromNode(Parent.class, newNode);
         assertTrue(updatedParent.getFiles().size() == parentFromNode.getFiles().size());
+        
+        // load with filter
+        NodeFilter nodeFilter = new NodeFilter("children", NodeFilter.DEPTH_INFINITE, 1);
+        Parent filteredParent = jcrom.fromNode(Parent.class, newNode, nodeFilter);
+        
+        assertNull(filteredParent.getAdoptedChild());
+        assertEquals(updatedParent.getChildren().size(), filteredParent.getChildren().size());
+        assertEquals(updatedParent.getChildren().get(0).getNickName(), filteredParent.getChildren().get(0).getNickName());
 		
 		// move the node
 		parent.setTitle("Mohammed");
