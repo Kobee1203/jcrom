@@ -381,7 +381,11 @@ class PropertyMapper {
 			}
 		} else {
 			// remove the value
-			node.setProperty(propertyName, (Value)null);
+            if (ReflectionUtils.implementsInterface(type, List.class)) {
+                node.setProperty(propertyName, (Value[]) null);
+            } else {
+                node.setProperty(propertyName, (Value) null);
+            }
 		}
 	}
 	
