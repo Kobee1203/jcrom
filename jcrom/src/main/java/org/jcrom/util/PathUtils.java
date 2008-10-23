@@ -32,7 +32,9 @@ public class PathUtils {
         char[] testChars = str.toCharArray();
 		char lastChar = 'A';
         for (int i = 0; i < testChars.length; i++) {
-            if (Character.isLetterOrDigit(testChars[i]) || testChars[i] == '.') {
+            if ( Character.isLetterOrDigit(testChars[i]) 
+                    || testChars[i] == '.'
+                    || testChars[i] == ':' ) {
                 ret.append(testChars[i]);
 				lastChar = testChars[i];
             } else if ( i > 0 && (i+1) != testChars.length && lastChar != subst ) {
