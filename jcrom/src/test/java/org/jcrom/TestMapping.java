@@ -348,7 +348,8 @@ public class TestMapping {
 		Jcrom jcrom = new Jcrom(true, true);
 		jcrom.map(Circle.class)
 				.map(Rectangle.class)
-				.map(ShapeParent.class);
+				.map(ShapeParent.class)
+                .map(Square.class);
 		
 		Shape circle = new Circle(5);
 		circle.setName("circle");
@@ -374,15 +375,22 @@ public class TestMapping {
 		circle2.setName("circle2");
 		Shape rectangle1 = new Rectangle(2,2);
 		rectangle1.setName("rectangle");
+
+        // and a subclass:
+        Shape square = new Square(3,3);
+        square.setName("square");
 		
 		ShapeParent shapeParent = new ShapeParent();
 		shapeParent.setName("ShapeParent");
 		shapeParent.addShape(circle1);
 		shapeParent.addShape(rectangle1);
+        shapeParent.addShape(square);
 		shapeParent.setMainShape(circle2);
 		
 		Node shapeParentNode = jcrom.addNode(rootNode, shapeParent);
 		session.save();
+
+        printNode(shapeParentNode, "");
 		
 		ShapeParent fromNode = jcrom.fromNode(ShapeParent.class, shapeParentNode);
 		
@@ -390,6 +398,7 @@ public class TestMapping {
 		assertTrue( fromNode.getShapes().size() == shapeParent.getShapes().size() );
 		assertTrue( fromNode.getShapes().get(0).getArea() == shapeParent.getShapes().get(0).getArea() );
 		assertTrue( fromNode.getShapes().get(1).getArea() == shapeParent.getShapes().get(1).getArea() );
+        assertTrue( fromNode.getShapes().get(2).getArea() == shapeParent.getShapes().get(2).getArea() );
 	}
 	
 	@Test

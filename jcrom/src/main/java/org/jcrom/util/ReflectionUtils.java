@@ -271,7 +271,15 @@ public class ReflectionUtils {
 				if ( parent.isAnnotationPresent(JcrNode.class) ) {
 					return (JcrNode) parent.getAnnotation(JcrNode.class);
 				}
-				parent = parent.getSuperclass();
+
+                // ...and interfaces that the superclass implements
+                for ( Class interfaceClass : parent.getInterfaces() ) {
+                    if ( interfaceClass.isAnnotationPresent(JcrNode.class) ) {
+                        return (JcrNode) interfaceClass.getAnnotation(JcrNode.class);
+                    }
+                }
+
+                parent = parent.getSuperclass();
 			}
 			
 			// ...and all implemented interfaces
