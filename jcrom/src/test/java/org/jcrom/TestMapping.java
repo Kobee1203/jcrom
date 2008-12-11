@@ -389,8 +389,6 @@ public class TestMapping {
 		
 		Node shapeParentNode = jcrom.addNode(rootNode, shapeParent);
 		session.save();
-
-        printNode(shapeParentNode, "");
 		
 		ShapeParent fromNode = jcrom.fromNode(ShapeParent.class, shapeParentNode);
 		
@@ -1059,5 +1057,30 @@ public class TestMapping {
 
         assertEquals(node1.body, fromNode2.reference.body);
         assertEquals(node2.body, fromNode1.reference.body);
+    }
+
+    @Test
+    public void testNestedInterfaces() throws Exception {
+        Jcrom jcrom = new Jcrom(true, true);
+        jcrom.map(AImpl.class)
+                .map(BImpl.class)
+                .map(CImpl.class);
+
+        A a = new AImpl("a");
+        B b = new BImpl("b");
+        C c = new CImpl("c");
+
+        c.setBody("hello world");
+        b.setC(c);
+        a.setB(b);
+
+        Node rootNode = session.getRootNode();
+        Node nodeA = jcrom.addNode(rootNode, a);
+
+        printNode(nodeA, "");
+
+        A fromNodeA = jcrom.fromNode(A.class, nodeA);
+
+        assertEquals(c.getBody(), fromNodeA.getB().getC().getBody());
     }
 }
