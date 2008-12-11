@@ -444,13 +444,13 @@ public class TestMapping {
 		assertTrue(fromNode.getReferences().get(1).getName().equals(reference2.getName()));
 		assertTrue(fromNode.getReferences().get(1).getBody().equals(reference2.getBody()));
         
-		assertTrue(fromNode.getReferenceByPath() != null);
-		assertTrue(fromNode.getReferenceByPath().getName().equals(reference.getName()));
-		assertTrue(fromNode.getReferenceByPath().getBody().equals(reference.getBody()));
-        
 		assertTrue(fromNode.getReferencesByPath().size() == 2);
 		assertTrue(fromNode.getReferencesByPath().get(1).getName().equals(reference2.getName()));
 		assertTrue(fromNode.getReferencesByPath().get(1).getBody().equals(reference2.getBody()));
+
+		assertTrue(fromNode.getReferenceByPath() != null);
+		assertTrue(fromNode.getReferenceByPath().getName().equals(reference.getName()));
+		assertTrue(fromNode.getReferenceByPath().getBody().equals(reference.getBody()));
         
         assertTrue(fromNode.getShape().getArea() == rectangle.getArea());
 	}
@@ -670,6 +670,53 @@ public class TestMapping {
 		System.out.println("Base version name (after restore): " + session.getRootNode().getNode("versionTest").getBaseVersion().getName());
 	}
 	*/
+    
+    /**
+     * Thanks to Nguyen Ngoc Trung for reporting the issues tested here. 
+     * @throws java.lang.Exception
+     */
+    @Test
+    public void testMultiValuedProperties() throws Exception {
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(Parent.class);
+        Node rootNode = session.getRootNode().addNode("root");
+        
+        Parent parent = createParent("John Mugabe");
+        
+        // test only one value in multi-valued property
+        parent.getTags().clear();
+        parent.getTags().add("first");
+        
+        Node newNode = jcrom.addNode(rootNode, parent);
+        
+        assertTrue(newNode.getProperty("tags").getDefinition().isMultiple());
+        assertEquals(1, newNode.getProperty("tags").getValues().length);
+        
+        Parent fromNode = jcrom.fromNode(Parent.class, newNode);
+        
+        assertEquals(1, fromNode.getTags().size());
+        assertEquals("first", fromNode.getTags().get(0));
+        
+        // test changing multiple values to one
+        
+        Parent parent2 = createParent("MultiParent");
+        
+        Node newNode2 = jcrom.addNode(rootNode, parent2);
+        
+        assertTrue(newNode2.getProperty("tags").getDefinition().isMultiple());
+        assertEquals(3, newNode2.getProperty("tags").getValues().length);
+        
+        Parent fromNode2 = jcrom.fromNode(Parent.class, newNode2);
+        
+        fromNode2.getTags().clear();
+        fromNode2.getTags().add("second");
+        
+        jcrom.updateNode(newNode2, fromNode2);
+        
+        Parent fromNodeAgain = jcrom.fromNode(Parent.class, newNode2);
+        assertTrue(newNode2.getProperty("tags").getDefinition().isMultiple());
+        assertEquals(1, newNode2.getProperty("tags").getValues().length);
+    }
 
 	
 	@Test
@@ -971,4 +1018,37 @@ public class TestMapping {
         jcrom.updateNode(newNode, photo);
     }
 
+
+    /**
+     * Thanks to Bouiaw and Andrius Kurtinaitis identifying this problem and
+     * contributing this test case.
+     * @throws Exception
+     */
+    @Test
+    public void testReferenceCycles() throws Exception {
+        Jcrom jcrom = new Jcrom(true, true);
+        jcrom.map(BadNode.class);
+
+        BadNode node1 = new BadNode();
+        node1.body = "body1";
+
+        BadNode node2 = new BadNode();
+        node2.body = "body2";
+
+        Node rootNode = session.getRootNode();
+        Node n1 = jcrom.addNode(rootNode, node1);
+        Node n2 = jcrom.addNode(rootNode, node2);
+
+        node1.reference = node2;
+        node2.reference = node1;
+
+        jcrom.updateNode(n1, node1);
+        jcrom.updateNode(n2, node2);
+
+        BadNode fromNode1 = jcrom.fromNode(BadNode.class, n1);
+        BadNode fromNode2 = jcrom.fromNode(BadNode.class, n2);
+
+        assertEquals(node1.body, fromNode2.reference.body);
+        assertEquals(node2.body, fromNode1.reference.body);
+    }
 }

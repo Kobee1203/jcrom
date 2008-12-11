@@ -273,7 +273,7 @@ class ChildNodeMapper {
 		while ( iterator.hasNext() ) {
 			Node childNode = iterator.nextNode();
 			Object childObj = mapper.createInstanceForNode(childObjClass, childNode);
-			mapper.mapNodeToClass(childObj, childNode, nodeFilter, parentObj, depth+1);
+			childObj = mapper.mapNodeToClass(childObj, childNode, nodeFilter, parentObj, depth+1);
 			children.add(childObj);
 		}
 		return children;
@@ -316,7 +316,7 @@ class ChildNodeMapper {
 	static Object getSingleChild( Class childObjClass, Node childNode, Object obj, Mapper mapper, int depth, NodeFilter nodeFilter ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 		Object childObj = mapper.createInstanceForNode(childObjClass, childNode);
-		mapper.mapNodeToClass(childObj, childNode, nodeFilter, obj, depth+1);
+		childObj = mapper.mapNodeToClass(childObj, childNode, nodeFilter, obj, depth+1);
 		return childObj;
 	}
 	

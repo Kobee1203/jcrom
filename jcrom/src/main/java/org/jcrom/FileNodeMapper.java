@@ -327,7 +327,7 @@ class FileNodeMapper {
 		
 		// if this is a JcrFile subclass, it may contain custom properties and 
 		// child nodes that need to be mapped
-		mapper.mapNodeToClass(fileObj, fileNode, nodeFilter, parentObject, depth+1);
+		fileObj = (T)mapper.mapNodeToClass(fileObj, fileNode, nodeFilter, parentObject, depth+1);
 	}
 	
 	static void addFiles( Field field, Object obj, Node node, Mapper mapper ) 

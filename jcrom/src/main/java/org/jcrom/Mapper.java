@@ -22,7 +22,9 @@ import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -65,6 +67,8 @@ class Mapper {
 	private final boolean cleanNames;
 	/** Specifies whether to retrieve mapped class name from node property */
 	private final boolean dynamicInstantiation;
+
+    private final ThreadLocal<Map<String,Object>> history = new ThreadLocal<Map<String,Object>>();
 	
 	/**
 	 * Create a Mapper for a specific class.
@@ -237,12 +241,14 @@ class Mapper {
 	 */
 	Object fromNode( Class entityClass, Node node, NodeFilter nodeFilter ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
+        history.set(new HashMap<String,Object>());
 		Object obj = createInstanceForNode(entityClass, node);
         if ( ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class) ) {
             // special handling of JcrFile objects
             FileNodeMapper.mapSingleFile((JcrFile)obj, node, null, 0, nodeFilter, this);
         }
 		mapNodeToClass(obj, node, nodeFilter, null, 0);
+        history.remove();
 		return obj;
 	}
 	
@@ -411,12 +417,21 @@ class Mapper {
 		return false;
 	}
 		
-	void mapNodeToClass( Object obj, Node node, NodeFilter nodeFilter, Object parentObject, int depth ) 
+	Object mapNodeToClass( Object obj, Node node, NodeFilter nodeFilter, Object parentObject, int depth )
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
-		
+
 		if ( !ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class) ) {
 			// this does not apply for JcrFile extensions
 			setNodeName(obj, node.getName());
+        }
+
+        if ( history.get() == null ) {
+            history.set(new HashMap<String,Object>());
+        }
+        if ( history.get().containsKey(node.getPath()) ) {
+            return history.get().get(node.getPath());
+        } else {
+            history.get().put(node.getPath(), obj);
         }
 		
 		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
@@ -489,6 +504,7 @@ class Mapper {
 			
 			}
 		}
+        return obj;
 	}
 	
 	static byte[] readBytes( InputStream in ) throws IOException {

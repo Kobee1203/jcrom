@@ -214,7 +214,7 @@ class ReferenceMapper {
 	static Object createReferencedObject( Field field, Value value, Object obj, Session session, Class referenceObjClass, 
 			int depth, NodeFilter nodeFilter, Mapper mapper ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
-		
+
         JcrReference jcrReference = field.getAnnotation(JcrReference.class);
         Node referencedNode = null;
         
@@ -230,7 +230,7 @@ class ReferenceMapper {
             Object referencedObject = mapper.createInstanceForNode(referenceObjClass, referencedNode);
             if ( nodeFilter.isIncluded(field.getName(), depth) ) {
                 // load and map the object, we don't send the current object as parent
-                mapper.mapNodeToClass(referencedObject, referencedNode, nodeFilter, null, depth+1);
+                referencedObject = mapper.mapNodeToClass(referencedObject, referencedNode, nodeFilter, null, depth+1);
             } else {
                 if ( jcrReference.byPath() ) {
                     // just store the path
