@@ -499,7 +499,7 @@ class Mapper {
 					&& nodeFilter.isDepthIncluded(depth) ) {
 				FileNodeMapper.getFilesFromNode(field, node, obj, depth, nodeFilter, this);
 			
-			} else if ( field.getName().equals("path") ) {
+			} else if ( field.isAnnotationPresent(JcrPath.class) ) {
 				field.set(obj, node.getPath());
 			
 			}
