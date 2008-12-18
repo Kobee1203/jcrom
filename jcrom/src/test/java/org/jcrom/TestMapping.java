@@ -214,6 +214,12 @@ public class TestMapping {
                 }
                 System.out.println();
 			}
+
+            if ( p.getName().equals("jcr:childVersionHistory") ) {
+                System.out.println(indentation + "------- CHILD VERSION HISTORY -------");
+                printNode(node.getSession().getNodeByUUID(p.getString()), indentation + "\t");
+                System.out.println(indentation + "------- CHILD VERSION ENDS -------");
+            }
 		}
 	
 		NodeIterator nodeIterator = node.getNodes();
@@ -555,6 +561,120 @@ public class TestMapping {
         
         versionedDao.remove(loadedEntity.getPath());
 	}
+
+    /**
+     * Thanks to Andrius Kurtinaitis for identifying this problem and
+     * contributing this test case.
+     * @throws Exception
+     */
+    @Test
+    public void versioningDAOChild1() throws Exception {
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(VersionedEntity.class);
+
+        // create the root
+        Node rootNode = session.getRootNode().addNode("content").addNode("versionedEntities");
+        VersionedDAO versionedDao = new VersionedDAO(session, jcrom);
+
+        VersionedEntity entity = new VersionedEntity();
+        entity.setName("MyEntity");
+        entity.setBody("First");
+        entity.setPath(rootNode.getPath());
+
+        VersionedEntity child = new VersionedEntity();
+        child.setName("child1");
+        child.setBody("child1Body");
+
+        entity.versionedChild1 = child;
+        versionedDao.create(entity);
+
+        VersionedEntity fromNode = versionedDao.getVersion(entity.getPath(), "1.0");
+        assertEquals(child.getBody(), fromNode.versionedChild1.getBody());
+    }
+
+    /**
+     * Thanks to Andrius Kurtinaitis for identifying this problem and
+     * contributing this test case.
+     * @throws Exception
+     */
+    @Test
+    public void versioningDAOChild2() throws Exception {
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(VersionedEntity.class);
+
+        // create the root
+        Node rootNode = session.getRootNode().addNode("content").addNode("versionedEntities");
+        VersionedDAO versionedDao = new VersionedDAO(session, jcrom);
+
+        VersionedEntity entity = new VersionedEntity();
+        entity.setTitle("MyEntity");
+        entity.setBody("First");
+        entity.setPath(rootNode.getPath());
+
+        VersionedEntity child = new VersionedEntity();
+        child.setName("child1");
+        child.setBody("child1Body");
+
+        entity.versionedChild2 = child;
+        versionedDao.create(entity);
+        assertEquals(child.getBody(), versionedDao.getVersion(entity.getPath(), "1.0").versionedChild2.getBody());
+    }
+
+    /**
+     * Thanks to Andrius Kurtinaitis for identifying this problem and
+     * contributing this test case.
+     * @throws Exception
+     */
+    @Test
+    public void versioningDAOChild3() throws Exception {
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(VersionedEntity.class);
+
+        // create the root
+        Node rootNode = session.getRootNode().addNode("content").addNode("versionedEntities");
+        VersionedDAO versionedDao = new VersionedDAO(session, jcrom);
+
+        VersionedEntity entity = new VersionedEntity();
+        entity.setTitle("MyEntity");
+        entity.setBody("First");
+        entity.setPath(rootNode.getPath());
+
+        VersionedEntity child = new VersionedEntity();
+        child.setName("child1");
+        child.setBody("child1Body");
+
+        entity.versionedChild3 = child;
+        versionedDao.create(entity);
+        assertEquals(child.getBody(), versionedDao.getVersion(entity.getPath(), "1.0").versionedChild3.getBody());
+    }
+
+    /**
+     * Thanks to Andrius Kurtinaitis for identifying this problem and
+     * contributing this test case.
+     * @throws Exception
+     */
+    @Test
+    public void versioningDAOChild4() throws Exception {
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(VersionedEntity.class);
+
+        // create the root
+        Node rootNode = session.getRootNode().addNode("content").addNode("versionedEntities");
+        VersionedDAO versionedDao = new VersionedDAO(session, jcrom);
+
+        VersionedEntity entity = new VersionedEntity();
+        entity.setTitle("MyEntity");
+        entity.setBody("First");
+        entity.setPath(rootNode.getPath());
+
+        VersionedEntity child = new VersionedEntity();
+        child.setName("child1");
+        child.setBody("child1Body");
+
+        entity.versionedChild4 = child;
+        versionedDao.create(entity);
+        assertEquals(child.getBody(), versionedDao.getVersion(entity.getPath(), "1.0").versionedChild4.getBody());
+    }
 	
 	@Test
 	public void testDAOs() throws Exception {
@@ -973,8 +1093,6 @@ public class TestMapping {
         
         Node userProfileNode = jcrom.addNode(rootNode, userProfile);
         
-        printNode(userProfileNode, "");
-        
         UserProfile fromJcr = jcrom.fromNode(UserProfile.class, userProfileNode);
         
         assertEquals(address.getName(), "address");
@@ -1076,8 +1194,6 @@ public class TestMapping {
 
         Node rootNode = session.getRootNode();
         Node nodeA = jcrom.addNode(rootNode, a);
-
-        printNode(nodeA, "");
 
         A fromNodeA = jcrom.fromNode(A.class, nodeA);
 

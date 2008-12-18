@@ -155,7 +155,8 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 			Node newNode = jcrom.addNode(parentNode, entity, mixinTypes);
 			getSession().save();
 			if ( isVersionable ) {
-				newNode.checkin();
+				//newNode.checkin();
+                checkinRecursively(newNode);
 			}
 			//return (T)jcrom.fromNode(entityClass, newNode);
             return entity;
@@ -163,6 +164,36 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 			throw new JcrMappingException("Could not create node", e);
 		}
 	}
+
+    private void checkinRecursively( Node node ) {
+        try {
+            NodeIterator it = node.getNodes();
+            while ( it.hasNext() ) {
+                checkinRecursively(it.nextNode());
+            }
+            if ( node.isCheckedOut() && node.isNodeType("mix:versionable") ) {
+                node.checkin();
+            }
+
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not perform check-in", e);
+		}
+    }
+
+    private void checkoutRecursively( Node node ) {
+        try {
+            NodeIterator it = node.getNodes();
+            while ( it.hasNext() ) {
+                checkoutRecursively(it.nextNode());
+            }
+            if ( !node.isCheckedOut() && node.isNodeType("mix:versionable") ) {
+                node.checkout();
+            }
+
+		} catch ( RepositoryException e ) {
+			throw new JcrMappingException("Could not perform check-in", e);
+		}
+    }
 	
 	public String update( T entity ) {
 		return update(entity, "*", -1);
@@ -195,12 +226,14 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 	protected String update( Node node, T entity, String childNodeFilter, int maxDepth ) {
 		try {
 			if ( isVersionable ) {
-				node.checkout();
+				//node.checkout();
+                checkoutRecursively(node);
 			}
 			String name = jcrom.updateNode(node, entity, childNodeFilter, maxDepth);
 			getSession().save();
 			if ( isVersionable ) {
-				node.checkin();
+				//node.checkin();
+                checkinRecursively(node);
 			}
 			return name;
 		} catch ( RepositoryException e ) {

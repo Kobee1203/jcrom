@@ -272,9 +272,7 @@ class ChildNodeMapper {
 		NodeIterator iterator = childrenContainer.getNodes();
 		while ( iterator.hasNext() ) {
 			Node childNode = iterator.nextNode();
-			Object childObj = mapper.createInstanceForNode(childObjClass, childNode);
-			childObj = mapper.mapNodeToClass(childObj, childNode, nodeFilter, parentObj, depth+1);
-			children.add(childObj);
+			children.add(getSingleChild(childObjClass, childNode, parentObj, mapper, depth, nodeFilter));
 		}
 		return children;
 	}
@@ -315,6 +313,7 @@ class ChildNodeMapper {
 	
 	static Object getSingleChild( Class childObjClass, Node childNode, Object obj, Mapper mapper, int depth, NodeFilter nodeFilter ) 
 			throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
+        childNode = mapper.checkIfVersionedChild(childNode);
 		Object childObj = mapper.createInstanceForNode(childObjClass, childNode);
 		childObj = mapper.mapNodeToClass(childObj, childNode, nodeFilter, obj, depth+1);
 		return childObj;
@@ -326,14 +325,17 @@ class ChildNodeMapper {
 		String nodeName = getNodeName(field);
 		JcrChildNode jcrChildNode = field.getAnnotation(JcrChildNode.class);
 
+        boolean childHasNodes = node.hasNode(nodeName) && (node.getNode(nodeName).hasNodes() || node.getNode(nodeName).hasProperty("jcr:childVersionHistory"));
+
 		if ( node.hasNode(nodeName) 
-                && (node.getNode(nodeName).hasNodes() 
+                && (childHasNodes
                     || (!jcrChildNode.createContainerNode() && !ReflectionUtils.implementsInterface(field.getType(), List.class) && !ReflectionUtils.implementsInterface(field.getType(), Map.class))
                     )
                 && nodeFilter.isIncluded(field.getName(), depth) ) {
-            
+
 			// child nodes are almost always stored inside a container node
             Node childrenContainer = node.getNode(nodeName);
+            childrenContainer = mapper.checkIfVersionedChild(childrenContainer);
 			if ( ReflectionUtils.implementsInterface(field.getType(), List.class) ) {
 				// we can expect more than one child object here
 				Class childObjClass = ReflectionUtils.getParameterizedClass(field);

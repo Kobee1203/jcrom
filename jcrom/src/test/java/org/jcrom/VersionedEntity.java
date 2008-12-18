@@ -37,6 +37,11 @@ public class VersionedEntity {
     
     @JcrChildNode(containerMixinTypes={"mix:versionable"}) List<VersionedEntity> versionedChildren;
     @JcrChildNode List<Child> unversionedChildren;
+
+    @JcrChildNode(createContainerNode=true,  containerMixinTypes={"mix:versionable"}) VersionedEntity versionedChild1;
+    @JcrChildNode(createContainerNode=true                                          ) VersionedEntity versionedChild2;
+    @JcrChildNode(createContainerNode=false, containerMixinTypes={"mix:versionable"}) VersionedEntity versionedChild3;
+    @JcrChildNode(createContainerNode=false                                         ) VersionedEntity versionedChild4;
     
     public VersionedEntity() {
         this.versionedChildren = new ArrayList<VersionedEntity>();

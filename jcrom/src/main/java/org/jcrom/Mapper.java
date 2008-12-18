@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
@@ -195,7 +196,33 @@ class Mapper {
 			uuidField.set(object, uuid);
 		}
 	}
-    
+
+    /**
+     * Check if this node has a child version history reference.
+     * If so, then return the referenced node, else return the node supplied.
+     * @param node
+     * @return
+     * @throws javax.jcr.RepositoryException
+     */
+    Node checkIfVersionedChild( Node node ) throws RepositoryException {
+        if ( node.hasProperty("jcr:childVersionHistory") ) {
+            Node versionNode = node.getSession().getNodeByUUID(node.getProperty("jcr:childVersionHistory").getString());
+            NodeIterator it = versionNode.getNodes();
+            while ( it.hasNext() ) {
+                Node n = it.nextNode();
+                if ( !n.getName().equals("jcr:rootVersion") 
+                        && n.isNodeType("nt:version")
+                        && n.hasNode("jcr:frozenNode")
+                        && node.getPath().indexOf("/" + n.getName() + "/") != -1 ) {
+                    return n.getNode("jcr:frozenNode");
+                }
+            }
+            return node;
+        } else {
+            return node;
+        }
+    }
+
     Class findClassFromNode( Class defaultClass, Node node )
 			throws RepositoryException, IllegalAccessException, ClassNotFoundException, InstantiationException {
 		if ( dynamicInstantiation ) {
