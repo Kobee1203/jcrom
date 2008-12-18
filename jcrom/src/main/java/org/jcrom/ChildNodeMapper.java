@@ -122,7 +122,6 @@ class ChildNodeMapper {
         Node childContainer = createChildNodeContainer(node, nodeName, jcrChildNode, mapper);
 		List children = (List)field.get(obj);
 		if ( children != null && !children.isEmpty() ) {
-			Class paramClass = ReflectionUtils.getParameterizedClass(field);
 			if ( childContainer.hasNodes() ) {
 				// children exist, we must update
 				NodeIterator childNodes = childContainer.getNodes();
@@ -133,7 +132,7 @@ class ChildNodeMapper {
 						// this child was not found, so we remove it
 						child.remove();
 					} else {
-						mapper.updateNode(child, childEntity, paramClass, nodeFilter, depth+1);
+						mapper.updateNode(child, childEntity, childEntity.getClass(), nodeFilter, depth+1);
 					}
 				}
 				// we must add new children, if any
