@@ -556,8 +556,14 @@ public class TestMapping {
         
         // remove child
         versionedDao.remove(loadedEntity.getVersionedChildren().get(1).getPath());
-        
+
         assertFalse( versionedDao.exists(loadedEntity.getVersionedChildren().get(1).getPath()) );
+
+        VersionedEntity addVersionedEntity = new VersionedEntity();
+        addVersionedEntity.setName("newAddedEntity");
+        addVersionedEntity.setBody("newAddedEntity");
+        loadedEntity.getVersionedChildren().add(addVersionedEntity);
+        versionedDao.update(loadedEntity);
         
         versionedDao.remove(loadedEntity.getPath());
 	}
@@ -1145,7 +1151,7 @@ public class TestMapping {
 
 
     /**
-     * Thanks to Bouiaw and Andrius Kurtinaitis identifying this problem and
+     * Thanks to Bouiaw and Andrius Kurtinaitis for identifying this problem and
      * contributing this test case.
      * @throws Exception
      */
@@ -1198,5 +1204,72 @@ public class TestMapping {
         A fromNodeA = jcrom.fromNode(A.class, nodeA);
 
         assertEquals(c.getBody(), fromNodeA.getB().getC().getBody());
+    }
+
+    /**
+     * Thanks to Leander for identifying this problem and
+     * contributing this test case.
+     * @throws Exception
+     */
+    @Test
+    public final void testUpdateNodeNodeObject() throws Exception {
+        // initialize JCrom
+        final Jcrom jcrom = new Jcrom(true, true);
+        jcrom.map(Shape.class).map(Triangle.class).map(ShapeParent.class);
+
+        // setup test data
+        Triangle mainShape = new Triangle(1, 1);
+        mainShape.setName("mainShape");
+
+        Triangle childShape = new Triangle(2, 2);
+        childShape.setName("childShape");
+
+        ShapeParent shapeParent = new ShapeParent();
+        shapeParent.setPath("/");
+        shapeParent.setName("shapeParent");
+        shapeParent.setMainShape(mainShape);
+        shapeParent.addShape(childShape);
+
+        // create node and children
+        final Node rootNode = this.session.getRootNode();
+        jcrom.addNode(rootNode, shapeParent);
+        this.session.save();
+
+        // get parent object from created node
+        Node node = rootNode.getNode("shapeParent");
+        shapeParent = jcrom.fromNode(ShapeParent.class, node);
+
+        // make some changes
+        mainShape = (Triangle) shapeParent.getMainShape();
+        assertEquals("Base is wrong", 1, mainShape.getBase(), 0);
+        assertEquals("Height is wrong", 1, mainShape.getHeight(), 0);
+        mainShape.setBase(2);
+        mainShape.setHeight(2);
+
+        childShape = (Triangle) shapeParent.getShapes().get(0);
+        assertEquals("Base is wrong", 2, mainShape.getBase(), 0);
+        assertEquals("Height is wrong", 2, mainShape.getHeight(), 0);
+        childShape.setBase(3);
+        childShape.setHeight(3);
+
+        // and update
+        jcrom.updateNode(node, shapeParent);
+        this.session.save();
+
+        // now reread the node and check the children
+        node = rootNode.getNode("shapeParent");
+        shapeParent = jcrom.fromNode(ShapeParent.class, node);
+
+        mainShape = (Triangle) shapeParent.getMainShape();
+
+        // this will fail, still has old value
+        assertEquals("Base is wrong", 2, mainShape.getBase(), 0);
+        assertEquals("Height is wrong", 2, mainShape.getHeight(), 0);
+
+        childShape = (Triangle) shapeParent.getShapes().get(0);
+
+        // this will fail, still has old value
+        assertEquals("Base is wrong", 3, childShape.getBase(), 0);
+        assertEquals("Height is wrong", 3, childShape.getHeight(), 0);
     }
 }

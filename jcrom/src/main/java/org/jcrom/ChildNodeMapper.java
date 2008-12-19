@@ -85,7 +85,8 @@ class ChildNodeMapper {
                 }
             } else {
                 if ( field.get(obj) != null ) {
-                    mapper.updateNode(childContainer.getNodes().nextNode(), field.get(obj), field.getType(), nodeFilter, depth+1);
+                    Object childObj = field.get(obj);
+                    mapper.updateNode(childContainer.getNodes().nextNode(), childObj, childObj.getClass(), nodeFilter, depth+1);
                 } else {
                     // field is now null, so we remove the child node
                     removeChildren(childContainer);
@@ -104,7 +105,7 @@ class ChildNodeMapper {
                 if ( field.get(obj) != null ) {
                     Object childObj = field.get(obj);
                     Mapper.setNodeName(childObj, nodeName);
-                    mapper.updateNode(node.getNode(nodeName), childObj, field.getType(), nodeFilter, depth+1);
+                    mapper.updateNode(node.getNode(nodeName), childObj, childObj.getClass(), nodeFilter, depth+1);
                 } else {
                     NodeIterator nodeIterator = node.getNodes(nodeName);
                     while ( nodeIterator.hasNext() ) {
