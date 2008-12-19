@@ -17,12 +17,16 @@ package org.jcrom;
 
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrProperty;
+import org.jcrom.annotations.JcrUUID;
 
 /**
- * Thanks to Danilo Barboza for contributing this test class.
+ * Thanks to Danilo Barboza and Leander for contributing this test class.
  */
-@JcrNode(nodeType = "nt:unstructured")
+@JcrNode(nodeType = "nt:unstructured", mixinTypes = { "mix:referenceable" })
 public class CustomJCRFile extends JcrFile {
+
+	@JcrUUID
+	private String uuid;
 
 	@JcrProperty
 	private String metadata;
@@ -43,5 +47,20 @@ public class CustomJCRFile extends JcrFile {
 	 */
 	public void setMetadata(String metadata) {
 		this.metadata = metadata;
-	} 
+	}
+
+	/**
+	 * @return the uuid
+	 */
+	public String getUuid() {
+		return this.uuid;
+	}
+
+	/**
+	 * @param uuid
+	 *            the uuid to set
+	 */
+	public void setUuid(final String uuid) {
+		this.uuid = uuid;
+	}
 }

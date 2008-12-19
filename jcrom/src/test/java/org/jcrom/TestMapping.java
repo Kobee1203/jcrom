@@ -36,6 +36,7 @@ import javax.jcr.Repository;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
+import javax.jcr.nodetype.NodeType;
 import org.apache.jackrabbit.core.TransientRepository;
 import org.jcrom.JcrDataProvider.TYPE;
 import org.jcrom.util.NodeFilter;
@@ -1272,4 +1273,85 @@ public class TestMapping {
         assertEquals("Base is wrong", 3, childShape.getBase(), 0);
         assertEquals("Height is wrong", 3, childShape.getHeight(), 0);
     }
+
+	/**
+	 * Thanks to Leander for contributing this test case.
+     * @throws Exception
+	 */
+	@Test
+	public final void testAddCustomJCRFileParentNode() throws Exception {
+		final Jcrom jcrom = new Jcrom();
+		jcrom.map(CustomJCRFile.class);
+		jcrom.map(CustomJCRFileParentNode.class);
+
+		// create root node
+		final Node customs = this.session.getRootNode().addNode("customs");
+
+		// initialize the file
+		final CustomJCRFile custom = new CustomJCRFile();
+		custom.setPath("customs");
+		custom.setMetadata("My Metadata!");
+		custom.setEncoding("UTF-8");
+		custom.setMimeType("image/jpg");
+		custom.setLastModified(Calendar.getInstance());
+		final File imageFile = new File("src/test/resources/ogg.jpg");
+		final JcrDataProvider dataProvider = new JcrDataProviderImpl(TYPE.FILE,
+				imageFile);
+		custom.setDataProvider(dataProvider);
+		custom.setName(imageFile.getName());
+
+		final CustomJCRFileParentNode parent = new CustomJCRFileParentNode();
+		parent.setName("parent");
+		parent.setFile(custom);
+
+		final Node parentNode = jcrom.addNode(customs, parent);
+		final Node customNode = parentNode.getNode("file/ogg.jpg");
+
+		// create custom directly, check the node types
+		final NodeType[] mixins = customNode.getMixinNodeTypes();
+		assertEquals("Mixin size is wrong.", 1, mixins.length);
+		assertEquals("mix:referenceable", mixins[0].getName());
+
+		final CustomJCRFileParentNode parentFromJcr = jcrom.fromNode(
+				CustomJCRFileParentNode.class, parentNode);
+		assertNotNull("UUID is null.", parentFromJcr.getFile().getUuid());
+	}
+
+	/**
+	 * Thanks to Leander for contributing this test case.
+     * @throws Exception
+	 */
+	@Test
+	public final void testAddCustomJCRFile() throws Exception {
+		final Jcrom jcrom = new Jcrom();
+		jcrom.map(CustomJCRFile.class);
+		jcrom.map(CustomJCRFileParentNode.class);
+
+		// create root node
+		final Node customs = this.session.getRootNode().addNode("customs");
+
+		// initialize the file
+		final CustomJCRFile custom = new CustomJCRFile();
+		custom.setPath("customs");
+		custom.setMetadata("My Metadata!");
+		custom.setEncoding("UTF-8");
+		custom.setMimeType("image/jpg");
+		custom.setLastModified(Calendar.getInstance());
+		final File imageFile = new File("src/test/resources/ogg.jpg");
+		final JcrDataProvider dataProvider = new JcrDataProviderImpl(TYPE.FILE,
+				imageFile);
+		custom.setDataProvider(dataProvider);
+		custom.setName(imageFile.getName());
+
+		// create custom directly, check the node types
+		final Node customNode = jcrom.addNode(customs, custom);
+		final NodeType[] mixins = customNode.getMixinNodeTypes();
+
+		assertEquals("Mixin size is wrong.", 1, mixins.length);
+		assertEquals("mix:referenceable", mixins[0].getName());
+
+		final CustomJCRFile customFromJcr = jcrom.fromNode(CustomJCRFile.class,
+				customNode);
+		assertNotNull("UUID is null.", customFromJcr.getUuid());
+	}
 }

@@ -91,6 +91,17 @@ class FileNodeMapper {
 		} else {
 			fileNode = parentNode.addNode(mapper.getCleanName(file.getName()), jcrNode.nodeType());
 		}
+        
+        // add annotated mixin types
+        if ((jcrNode != null) && (jcrNode.mixinTypes() != null)) {
+            for (final String mixinType : jcrNode.mixinTypes()) {
+                if (fileNode.canAddMixin(mixinType)) {
+                    fileNode.addMixin(mixinType);
+                }
+            }
+        }
+
+        // update the object name and path
         file.setName(fileNode.getName());
         file.setPath(fileNode.getPath());
         if ( fileNode.hasProperty("jcr:uuid") ) {
