@@ -122,8 +122,8 @@ class Mapper {
 		return null;
 	}
 	
-	static Field findAnnotatedField( Object obj, Class annotationClass ) {
-		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
+	private static Field findAnnotatedField( Object obj, Class annotationClass ) {
+		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass(), false) ) {
 			if ( field.isAnnotationPresent(annotationClass) ) {
 				field.setAccessible(true);
 				return field;
@@ -322,7 +322,7 @@ class Mapper {
             FileNodeMapper.addFileNode(node, (JcrFile)obj, this);
         }
 		
-		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass) ) {
+		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass, true) ) {
 			field.setAccessible(true);
 		
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {
@@ -413,7 +413,7 @@ class Mapper {
             FileNodeMapper.addFileNode(node, (JcrFile)entity, this);
         }
 		
-		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(entity.getClass()) ) {
+		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(entity.getClass(), true) ) {
 			field.setAccessible(true);
 			
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {
@@ -461,7 +461,7 @@ class Mapper {
             history.get().put(node.getPath(), obj);
         }
 		
-		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
+		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass(), false) ) {
 			field.setAccessible(true);
 			
 			if ( field.isAnnotationPresent(JcrProperty.class) ) {
@@ -562,7 +562,7 @@ class Mapper {
 	 * @throws java.lang.IllegalAccessException
 	 */
 	private Object clearCglib( Object obj ) throws IllegalAccessException {
-		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
+		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass(), true) ) {
 			field.setAccessible(true);
 			if ( field.getName().equals("CGLIB$LAZY_LOADER_0") ) {
                 if ( field.get(obj) != null ) {
@@ -578,7 +578,7 @@ class Mapper {
 	}
     
     private Object triggerLazyLoading( Object obj ) throws IllegalAccessException {
-		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass()) ) {
+		for ( Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass(), false) ) {
 			field.setAccessible(true);
             if ( field.getName().equals("CGLIB$CALLBACK_0") ) {
                 try {

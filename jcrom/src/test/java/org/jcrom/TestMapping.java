@@ -1354,4 +1354,20 @@ public class TestMapping {
 				customNode);
 		assertNotNull("UUID is null.", customFromJcr.getUuid());
 	}
+
+    @Test
+    public void finalFields() throws Exception {
+        final Jcrom jcrom = new Jcrom();
+        jcrom.map(FinalEntity.class);
+
+        FinalEntity entity = new FinalEntity("This cannot be changed");
+        entity.setName("myentity");
+
+        final Node parentNode = this.session.getRootNode().addNode("mynode");
+
+        jcrom.addNode(parentNode, entity);
+
+        assertTrue(parentNode.getNode("myentity").hasProperty("immutableString"));
+        assertEquals(entity.getImmutableString(), parentNode.getNode("myentity").getProperty("immutableString").getString());
+    }
 }

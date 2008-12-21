@@ -77,7 +77,7 @@ class Validator {
 			
 			// when dynamic instantiation is turned on, we ignore interfaces
 			if ( !(c.isInterface() && dynamicInstantiation) ) {
-				validateFields(c, ReflectionUtils.getDeclaredAndInheritedFields(c), validClasses, dynamicInstantiation);
+				validateFields(c, ReflectionUtils.getDeclaredAndInheritedFields(c, true), validClasses, dynamicInstantiation);
 			}
 		}
 	}
@@ -273,7 +273,7 @@ class Validator {
                     if ( !jcrReference.byPath() && !(fieldType.isInterface() && dynamicInstantiation) ) {
                         // make sure the class has a @JcrUUID
                         boolean foundUUID = false;
-                        for ( Field refField : ReflectionUtils.getDeclaredAndInheritedFields(fieldType) ) {
+                        for ( Field refField : ReflectionUtils.getDeclaredAndInheritedFields(fieldType, true) ) {
                             if ( refField.isAnnotationPresent(JcrUUID.class) ) {
                                 foundUUID = true;
                             }

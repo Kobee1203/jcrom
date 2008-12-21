@@ -43,24 +43,25 @@ public class ReflectionUtils {
 	 * and all its superclasses (except java.lang.Object).
 	 * 
 	 * @param type the class for which we want to retrieve the Fields
+     * @param returnFinalFields specifies whether to return final fields
 	 * @return an array of all declared and inherited fields
 	 */
-	public static Field[] getDeclaredAndInheritedFields( Class type ) {
+	public static Field[] getDeclaredAndInheritedFields( Class type, boolean returnFinalFields ) {
 		List<Field> allFields = new ArrayList<Field>();
-		allFields.addAll(getValidFields(type.getDeclaredFields()));
+		allFields.addAll(getValidFields(type.getDeclaredFields(), returnFinalFields));
 		Class parent = type.getSuperclass();
 		while ( parent != null && parent != Object.class ) {
-			allFields.addAll(getValidFields(parent.getDeclaredFields()));
+			allFields.addAll(getValidFields(parent.getDeclaredFields(), returnFinalFields));
 			parent = parent.getSuperclass();
 		}
 		return allFields.toArray(new Field[allFields.size()]);
 	}
 	
-	public static List<Field> getValidFields( Field[] fields ) {
+	public static List<Field> getValidFields( Field[] fields, boolean returnFinalFields ) {
 		List<Field> validFields = new ArrayList<Field>();
 		// we ignore static and final fields
 		for ( Field field : fields ) {
-			if ( !Modifier.isStatic(field.getModifiers()) && !Modifier.isFinal(field.getModifiers()) ) {
+			if ( !Modifier.isStatic(field.getModifiers()) && (returnFinalFields || !Modifier.isFinal(field.getModifiers())) ) {
 				validFields.add(field);
 			}
 		}
