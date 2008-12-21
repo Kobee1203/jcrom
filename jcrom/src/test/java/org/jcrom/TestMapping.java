@@ -39,6 +39,8 @@ import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 import org.apache.jackrabbit.core.TransientRepository;
 import org.jcrom.JcrDataProvider.TYPE;
+import org.jcrom.entities.First;
+import org.jcrom.entities.Second;
 import org.jcrom.util.NodeFilter;
 import org.junit.After;
 import org.junit.Before;
@@ -1369,5 +1371,27 @@ public class TestMapping {
 
         assertTrue(parentNode.getNode("myentity").hasProperty("immutableString"));
         assertEquals(entity.getImmutableString(), parentNode.getNode("myentity").getProperty("immutableString").getString());
+    }
+
+    @Test
+    public void mapPackage() throws Exception {
+        final Jcrom jcrom = new Jcrom();
+        jcrom.mapPackage("org.jcrom.entities");
+
+        final Node parentNode = this.session.getRootNode().addNode("mynode");
+
+        First first = new First();
+        first.setName("first");
+        first.setFirstString("nr1");
+
+        Second second = new Second();
+        second.setName("second");
+        second.setSecondString("nr2");
+
+        jcrom.addNode(parentNode, first);
+        jcrom.addNode(parentNode, second);
+
+        assertTrue(parentNode.getNode("first").hasProperty("firstString"));
+        assertTrue(parentNode.getNode("second").hasProperty("secondString"));
     }
 }

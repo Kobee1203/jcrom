@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import org.jcrom.util.NodeFilter;
+import org.jcrom.util.ReflectionUtils;
 
 /**
  * This is the main entry class for JCROM.
@@ -124,6 +125,42 @@ public class Jcrom {
 		}
 		return this;
 	}
+
+    /**
+     * Tries to map all classes in the package specified.
+     * Fails if one of the classes is not valid for mapping.
+     * @param packageName the name of the package to process
+     * @return the Jcrom instance
+     */
+    public synchronized Jcrom mapPackage( String packageName ) {
+        return mapPackage(packageName, false);
+    }
+
+    /**
+     * Tries to map all classes in the package specified.
+     * @param packageName the name of the package to process
+     * @param ignoreInvalidClasses specifies whether to ignore classes in the
+     * package that cannot be mapped
+     * @return the Jcrom instance
+     */
+    public synchronized Jcrom mapPackage( String packageName, boolean ignoreInvalidClasses ) {
+        try {
+            for ( Class c : ReflectionUtils.getClasses(packageName) ) {
+                try {
+                    map(c);
+                } catch ( JcrMappingException ex ) {
+                    if ( !ignoreInvalidClasses ) {
+                        throw ex;
+                    }
+                }
+            }
+            return this;
+        } catch ( IOException ioex ) {
+            throw new JcrMappingException("Could not get map classes from package " + packageName, ioex);
+        } catch ( ClassNotFoundException cnfex ) {
+            throw new JcrMappingException("Could not get map classes from package " + packageName, cnfex);
+        }
+    }
 
 	/**
 	 * Get a set of all classes that are mapped by this instance.
