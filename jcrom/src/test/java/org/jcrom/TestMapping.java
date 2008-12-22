@@ -1394,4 +1394,25 @@ public class TestMapping {
         assertTrue(parentNode.getNode("first").hasProperty("firstString"));
         assertTrue(parentNode.getNode("second").hasProperty("secondString"));
     }
+
+    @Test
+    public void parentInterface() throws Exception {
+        final Jcrom jcrom = new Jcrom(true, true);
+        jcrom.map(Square.class).map(WithParentInterface.class);
+
+        final Node parentNode = this.session.getRootNode().addNode("mynode");
+
+        WithParentInterface child = new WithParentInterface();
+        child.setName("child");
+
+        Square square = new Square(3, 3);
+        square.setName("square");
+        square.setChild(child);
+
+        Node newNode = jcrom.addNode(parentNode, square);
+
+        Square fromNode = jcrom.fromNode(Square.class, newNode);
+
+        assertTrue(square.getArea() == fromNode.getChild().getParent().getArea());
+    }
 }

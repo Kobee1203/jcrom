@@ -511,7 +511,7 @@ class Mapper {
 				}
 			
 			} else if ( field.isAnnotationPresent(JcrParentNode.class) ) {
-				if ( parentObject != null && ReflectionUtils.extendsClass(parentObject.getClass(), field.getType()) ) {
+				if ( parentObject != null && field.getType().isInstance(parentObject) ) {
 					field.set(obj, parentObject);
 				}
 				
