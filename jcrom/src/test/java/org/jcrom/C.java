@@ -9,6 +9,6 @@ import org.jcrom.annotations.JcrNode;
 @JcrNode(classNameProperty="className")
 public interface C {
 
-    public void setBody( String body );
-    public String getBody();
+    public void setA( A a );
+    public A getA();
 }

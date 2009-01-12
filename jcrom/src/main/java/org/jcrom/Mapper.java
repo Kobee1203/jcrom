@@ -80,6 +80,10 @@ class Mapper {
 		this.cleanNames = cleanNames;
 		this.dynamicInstantiation = dynamicInstantiation;
 	}
+
+    void clearHistory() {
+        history.remove();
+    }
 	
 	boolean isMapped( Class c ) {
 		return mappedClasses.contains(c);
@@ -357,7 +361,7 @@ class Mapper {
 	 */
 	Node addNode( Node parentNode, Object entity, String[] mixinTypes ) 
 			throws IllegalAccessException, RepositoryException, IOException {
-		return addNode(parentNode, entity, mixinTypes, true);
+        return addNode(parentNode, entity, mixinTypes, true);
 	}
 	
 	Node addNode( Node parentNode, Object entity, String[] mixinTypes, boolean createNode ) 

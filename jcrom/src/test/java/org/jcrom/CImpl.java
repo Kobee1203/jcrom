@@ -1,6 +1,6 @@
 package org.jcrom;
 
-import org.jcrom.annotations.JcrProperty;
+import org.jcrom.annotations.JcrReference;
 
 /**
  *
@@ -8,7 +8,7 @@ import org.jcrom.annotations.JcrProperty;
  */
 public class CImpl extends AbstractJcrEntity implements C {
 
-    @JcrProperty private String body;
+    @JcrReference(byPath=true) private A body;
 
     public CImpl() {
         this(null);
@@ -19,11 +19,11 @@ public class CImpl extends AbstractJcrEntity implements C {
         this.name = name;
     }
 
-    public String getBody() {
+    public A getA() {
         return body;
     }
 
-    public void setBody(String body) {
+    public void setA(A body) {
         this.body = body;
     }
 

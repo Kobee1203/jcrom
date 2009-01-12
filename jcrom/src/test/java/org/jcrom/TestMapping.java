@@ -1197,7 +1197,7 @@ public class TestMapping {
         B b = new BImpl("b");
         C c = new CImpl("c");
 
-        c.setBody("hello world");
+        c.setA(a);
         b.setC(c);
         a.setB(b);
 
@@ -1205,8 +1205,6 @@ public class TestMapping {
         Node nodeA = jcrom.addNode(rootNode, a);
 
         A fromNodeA = jcrom.fromNode(A.class, nodeA);
-
-        assertEquals(c.getBody(), fromNodeA.getB().getC().getBody());
     }
 
     /**

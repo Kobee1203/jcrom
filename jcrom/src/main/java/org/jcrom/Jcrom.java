@@ -265,6 +265,8 @@ public class Jcrom {
 			throw new JcrMappingException("Could not map Object from node", e);
 		} catch (IOException e) {
 			throw new JcrMappingException("Could not map Object from node", e);
+		} finally {
+            mapper.clearHistory();
 		}
     }
 
@@ -303,7 +305,9 @@ public class Jcrom {
 			throw new JcrMappingException("Could not create node from object", e);
 		} catch (IOException e) {
 			throw new JcrMappingException("Could not create node from object", e);
-		}
+		} finally {
+            mapper.clearHistory();
+        }
 	}
 
 	/**
@@ -356,6 +360,8 @@ public class Jcrom {
 			throw new JcrMappingException("Could not update node from object", e);
 		} catch (IOException e) {
 			throw new JcrMappingException("Could not update node from object", e);
+		} finally {
+            mapper.clearHistory();
 		}
 	}
 }

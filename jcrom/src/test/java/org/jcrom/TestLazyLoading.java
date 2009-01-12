@@ -102,13 +102,13 @@ public class TestLazyLoading {
 		Node treeRootNode = jcrom.addNode(session.getRootNode(), tree);
 
 		Tree fromNode = jcrom.fromNode(Tree.class, treeRootNode);		
-		assertTrue( fromNode.getChildren().size() == tree.getChildren().size() );
+		assertEquals(tree.getChildren().size(), fromNode.getChildren().size());
 		
-		assertTrue( fromNode.getLazyObject().getString().equals(lazyObject1.getString()) );
-		assertTrue( fromNode.getLazyObjects().size() == tree.getLazyObjects().size() );
-		assertTrue( fromNode.getLazyObjects().get(1).getString().equals(lazyObject2.getString()) );
+		assertEquals(lazyObject1.getString(), fromNode.getLazyObject().getString());
+		assertEquals(tree.getLazyObjects().size(), fromNode.getLazyObjects().size());
+		assertEquals(lazyObject2.getString(), fromNode.getLazyObjects().get(1).getString());
         
-        assertTrue( fromNode.getStartNode() == null );
+        assertNull(fromNode.getStartNode());
 		
 		TreeNode homeFromNode = fromNode.getChildren().get(0);
 		assertTrue( homeFromNode.getChildren().size() == homeNode.getChildren().size() );
