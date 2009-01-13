@@ -499,12 +499,25 @@ public class TestMapping {
         
         Child child3 = createChild("John");
         entity.addUnversionedChild(child3);
+
+        VersionedEntity test = new VersionedEntity();
+        test.setName("testChild");
+        test.setBody("testBody");
+        entity.versionedChild1 = test;
+
+        VersionedEntity test2 = new VersionedEntity();
+        test2.setName("testChild2");
+        test2.setBody("testBody2");
+        entity.versionedChild2 = test2;
 		
 		versionedDao.create(entity);
 		
 		// change it
 		entity.setBody("Second");
         entity.getUnversionedChildren().get(0).setNickName("Kalli");
+        entity.getVersionedChildren().get(0).setBody("zimbob");
+        entity.versionedChild1.setBody("mybody");
+        entity.versionedChild2.setBody("mybody2");
 		versionedDao.update(entity);
         
 		// change it again
@@ -518,6 +531,10 @@ public class TestMapping {
 		
 		assertEquals("1.2", loadedEntity.getBaseVersionName());
 		assertEquals("1.2", loadedEntity.getVersionName());
+        assertEquals("Kalli", loadedEntity.getUnversionedChildren().get(0).getNickName());
+        assertEquals("zimbob", loadedEntity.getVersionedChildren().get(0).getBody());
+        assertEquals("mybody", loadedEntity.versionedChild1.getBody());
+        assertEquals("mybody2", loadedEntity.versionedChild2.getBody());
         assertTrue(loadedEntity.getUnversionedChildren().size() == entity.getUnversionedChildren().size());
 		assertTrue(versionedDao.getVersionList(entity.getPath()).size() == versionedDao.getVersionSize(entity.getPath()));
 
