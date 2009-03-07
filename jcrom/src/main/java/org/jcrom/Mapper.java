@@ -361,10 +361,10 @@ class Mapper {
 	 */
 	Node addNode( Node parentNode, Object entity, String[] mixinTypes ) 
 			throws IllegalAccessException, RepositoryException, IOException {
-        return addNode(parentNode, entity, mixinTypes, true);
+        return addNode(parentNode, entity, mixinTypes, true, false);
 	}
 	
-	Node addNode( Node parentNode, Object entity, String[] mixinTypes, boolean createNode ) 
+	Node addNode( Node parentNode, Object entity, String[] mixinTypes, boolean createNode, boolean ignoreFileProperties )
 			throws IllegalAccessException, RepositoryException, IOException {
 		
 		entity = clearCglib(entity);
@@ -413,7 +413,7 @@ class Mapper {
 		}
         
         // special handling of JcrFile objects
-        if ( ReflectionUtils.extendsClass(entity.getClass(), JcrFile.class) ) {
+        if ( ReflectionUtils.extendsClass(entity.getClass(), JcrFile.class) && !ignoreFileProperties ) {
             FileNodeMapper.addFileNode(node, (JcrFile)entity, this);
         }
 		

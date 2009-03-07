@@ -110,7 +110,7 @@ class FileNodeMapper {
 		Node contentNode = fileNode.addNode("jcr:content", "nt:resource");
 		setFileNodeProperties(contentNode, file);
 		
-		mapper.addNode(fileNode, file, null, false);
+		mapper.addNode(fileNode, file, null, false, true);
 	}
     
     static <T extends JcrFile> void addFileNode( Node fileNode, T file, Mapper mapper ) 

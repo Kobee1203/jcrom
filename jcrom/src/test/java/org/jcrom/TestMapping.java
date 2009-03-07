@@ -136,20 +136,29 @@ public class TestMapping {
 		grandChild.setNickName("Zima");
 		return grandChild;
 	}
-	
-	static JcrFile createFile( String name ) {
+
+    static JcrFile createFile( String name ) throws Exception {
+        return createFile(name, false);
+    }
+
+	static JcrFile createFile( String name, boolean stream ) throws Exception {
 		JcrFile jcrFile = new JcrFile();
 		jcrFile.setName(name);
 		jcrFile.setMimeType("image/jpeg");
+        jcrFile.setEncoding("UTF-8");
 		
 		File imageFile = new File("src/test/resources/ogg.jpg");
 		
 		Calendar lastModified = Calendar.getInstance();
 		lastModified.setTimeInMillis(imageFile.lastModified());
 		jcrFile.setLastModified(lastModified);
-		
-		JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.FILE, imageFile);
-		jcrFile.setDataProvider(dataProvider);
+
+        if ( stream ) {
+            jcrFile.setDataProvider(new JcrDataProviderImpl(JcrDataProvider.TYPE.STREAM, new FileInputStream(imageFile)));
+        } else {
+            JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(JcrDataProvider.TYPE.FILE, imageFile);
+            jcrFile.setDataProvider(dataProvider);
+        }
 		
 		return jcrFile;
 	}
@@ -1054,6 +1063,30 @@ public class TestMapping {
 		personFromJcr = jcrom.fromNode(Person.class, node);
 		assertFalse(personFromJcr.getPhones().size() == 1); // <<< FAILED
 	}
+
+    @Test
+    public void testJcrFileMapping() throws Exception {
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(JcrFile.class);
+
+        Node root = session.getRootNode().addNode("files");
+
+        JcrFile file = createFile("myfile", true);
+        Calendar lastModified = file.getLastModified();
+
+        Node node = jcrom.addNode(root, file);
+
+        assertTrue(node.hasNode("jcr:content"));
+        assertEquals("image/jpeg", node.getNode("jcr:content").getProperty("jcr:mimeType").getString());
+        assertEquals("UTF-8", node.getNode("jcr:content").getProperty("jcr:encoding").getString());
+
+        JcrFile fromNode = jcrom.fromNode(JcrFile.class, node);
+
+        assertEquals("image/jpeg", fromNode.getMimeType());
+        assertEquals("UTF-8", fromNode.getEncoding());
+        assertEquals(lastModified, fromNode.getLastModified());
+        assertTrue(fromNode.getDataProvider().getContentLength() > 0);
+    }
     
     /**
      * Thanks to Danilo Barboza for contributing this test case.
@@ -1150,7 +1183,7 @@ public class TestMapping {
 		Photo photo = createPhoto("jcr_passport.jpg");
 		parent.setPassportPhoto(photo);
         
-        parent.setJcrFile(createFile("jcr_image.jpg"));
+        parent.setJcrFile(createFile("jcr_image.jpg", true));
         
         grandParent.setChild(parent);
         
