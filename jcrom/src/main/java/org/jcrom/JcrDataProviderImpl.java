@@ -15,11 +15,13 @@
  */
 package org.jcrom;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 /**
@@ -87,6 +89,20 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 	public TYPE getType() {
 		return type;
 	}
+
+    public String getAsString( String charset ) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder sb = new StringBuilder();
+        String line = null;
+        try {
+            while ((line = br.readLine()) != null) {
+                sb.append(line).append('\n');
+            }
+        } finally {
+            inputStream.close();
+        }
+        return sb.toString();
+    }
 
     public void writeToFile(File destination) throws IOException {
         if ( type == TYPE.BYTES ) {
