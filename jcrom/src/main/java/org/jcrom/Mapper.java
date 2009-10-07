@@ -78,7 +78,7 @@ class Mapper {
 
     private final Jcrom jcrom;
 
-    private final ThreadLocal<Map<String, Object>> history = new ThreadLocal<Map<String, Object>>();
+    private final ThreadLocal<Map<HistoryKey, Object>> history = new ThreadLocal<Map<HistoryKey, Object>>();
 
     /**
      * Create a Mapper for a specific class.
@@ -287,7 +287,7 @@ class Mapper {
      */
     Object fromNode(Class entityClass, Node node, NodeFilter nodeFilter) throws ClassNotFoundException,
             InstantiationException, RepositoryException, IllegalAccessException, IOException {
-        history.set(new HashMap<String, Object>());
+        history.set(new HashMap<HistoryKey, Object>());
         Object obj = createInstanceForNode(entityClass, node);
         if (ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class)) {
             // special handling of JcrFile objects
@@ -472,13 +472,25 @@ class Mapper {
             setNodeName(obj, node.getName());
         }
 
-        if (history.get() == null) {
-            history.set(new HashMap<String, Object>());
-        }
-        if (history.get().containsKey(node.getPath())) {
-            return history.get().get(node.getPath());
+        // construct history key
+        HistoryKey key = new HistoryKey();
+        key.path = node.getPath();
+        if (nodeFilter.getMaxDepth() == NodeFilter.DEPTH_INFINITE) {
+            // then use infinite depth as key depth
+            key.depth = NodeFilter.DEPTH_INFINITE;
         } else {
-            history.get().put(node.getPath(), obj);
+            // calculate key depth from max depth - current depth
+            key.depth = nodeFilter.getMaxDepth() - depth;
+        }
+
+        // now check the history key
+        if (history.get() == null) {
+            history.set(new HashMap<HistoryKey, Object>());
+        }
+        if (history.get().containsKey(key)) {
+            return history.get().get(key);
+        } else {
+            history.get().put(key, obj);
         }
 
         for (Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass(), false)) {
@@ -634,4 +646,48 @@ class Mapper {
         return jcrom;
     }
 
+    /**
+     * Class for the history key. Contains the node path and the depth.
+     * Thanks to Leander for supplying this fix.
+     */
+    private static class HistoryKey {
+
+        private String path;
+        private int depth;
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + depth;
+            result = prime * result + ((path == null) ? 0 : path.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            HistoryKey other = (HistoryKey) obj;
+            if (depth != other.depth) {
+                return false;
+            }
+            if (path == null) {
+                if (other.path != null) {
+                    return false;
+                }
+            } else if (!path.equals(other.path)) {
+                return false;
+            }
+            return true;
+        }
+
+    }
 }
