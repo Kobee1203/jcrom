@@ -38,77 +38,76 @@ import org.jcrom.annotations.JcrPath;
 @JcrNode(nodeType = "nt:file")
 public class JcrFile implements Serializable {
 
-	@JcrPath protected String path;
-	@JcrName protected String name;
-	
-	protected String mimeType;
-	protected Calendar lastModified;
-	protected String encoding;
+    @JcrPath protected String path;
+    @JcrName protected String name;
 
-	protected JcrDataProvider dataProvider;
-	
-	public JcrFile() {
-	}
-	
-	public static JcrFile fromFile( String name, File file, String mimeType ) {
-		JcrFile jcrFile = new JcrFile();
-		jcrFile.setName(name);
-		
-		Calendar cal = Calendar.getInstance();
-		cal.setTimeInMillis(file.lastModified());
-		
-		jcrFile.setLastModified(cal);
-		jcrFile.setMimeType(mimeType);
-		jcrFile.setDataProvider( new JcrDataProviderImpl(JcrDataProvider.TYPE.FILE, file) );
-		
-		return jcrFile;
-	}
-	
-	public JcrDataProvider getDataProvider() {
-		return dataProvider;
-	}
+    protected String mimeType;
+    protected Calendar lastModified;
+    protected String encoding;
+    protected JcrDataProvider dataProvider;
 
-	public void setDataProvider(JcrDataProvider dataProvider) {
-		this.dataProvider = dataProvider;
-	}
+    public JcrFile() {
+    }
 
-	public String getName() {
-		return name;
-	}
+    public static JcrFile fromFile(String name, File file, String mimeType) {
+        JcrFile jcrFile = new JcrFile();
+        jcrFile.setName(name);
 
-	public String getPath() {
-		return path;
-	}
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(file.lastModified());
 
-	public void setName(String name) {
-		this.name = name;
-	}
+        jcrFile.setLastModified(cal);
+        jcrFile.setMimeType(mimeType);
+        jcrFile.setDataProvider(new JcrDataProviderImpl(file));
 
-	public void setPath(String path) {
-		this.path = path;
-	}
+        return jcrFile;
+    }
 
-	public Calendar getLastModified() {
-		return lastModified;
-	}
+    public JcrDataProvider getDataProvider() {
+        return dataProvider;
+    }
 
-	public void setLastModified(Calendar lastModified) {
-		this.lastModified = lastModified;
-	}
+    public void setDataProvider(JcrDataProvider dataProvider) {
+        this.dataProvider = dataProvider;
+    }
 
-	public String getMimeType() {
-		return mimeType;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setMimeType(String mimeType) {
-		this.mimeType = mimeType;
-	}
-	
-	public String getEncoding() {
-		return encoding;
-	}
+    public String getPath() {
+        return path;
+    }
 
-	public void setEncoding(String encoding) {
-		this.encoding = encoding;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public Calendar getLastModified() {
+        return lastModified;
+    }
+
+    public void setLastModified(Calendar lastModified) {
+        this.lastModified = lastModified;
+    }
+
+    public String getMimeType() {
+        return mimeType;
+    }
+
+    public void setMimeType(String mimeType) {
+        this.mimeType = mimeType;
+    }
+
+    public String getEncoding() {
+        return encoding;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
+    }
 }

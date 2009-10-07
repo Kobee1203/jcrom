@@ -21,7 +21,6 @@ import javax.jcr.Node;
 import javax.jcr.Session;
 import net.sf.cglib.proxy.Enhancer;
 import org.jcrom.annotations.JcrFileNode;
-import org.jcrom.util.NameFilter;
 import org.jcrom.util.NodeFilter;
 
 /**

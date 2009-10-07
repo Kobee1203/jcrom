@@ -9,15 +9,12 @@ import org.jcrom.annotations.JcrUUID;
  *
  * @author Olafur Gauti Gudmundsson
  */
-@JcrNode(
-	mixinTypes= {"mix:referenceable"}
-)
+@JcrNode(mixinTypes = {"mix:referenceable"})
 public class GrandParent extends AbstractEntity implements Serializable {
-	
-	@JcrUUID String uuid;
-    
+
+    @JcrUUID String uuid;
     @JcrChildNode Parent child;
-    
+
     public GrandParent() {
     }
 
@@ -36,5 +33,4 @@ public class GrandParent extends AbstractEntity implements Serializable {
     public void setUuid(String uuid) {
         this.uuid = uuid;
     }
-
 }

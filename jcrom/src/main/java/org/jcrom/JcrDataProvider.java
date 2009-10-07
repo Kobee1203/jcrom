@@ -36,6 +36,10 @@ public interface JcrDataProvider {
 	 * @return the type of content this provider offers
 	 */
 	public TYPE getType();
+
+        public boolean isFile();
+        public boolean isBytes();
+        public boolean isStream();
 	
 	/**
 	 * Return a file.
@@ -57,16 +61,6 @@ public interface JcrDataProvider {
 	 * @return input stream, or null if type is not JcrDataProvider.TYPE.STREAM
 	 */
 	public InputStream getInputStream();
-
-    /**
-     * Return the input stream as a String.
-     * NOTE: only applies when the type is JcrDataProvider.TYPE.STREAM.
-     *
-     * @param charset the character set to use when reading from the input stream
-     * @return the String represented by the data read from the input stream
-     * @throws java.io.IOException
-     */
-    public String getAsString( String charset ) throws IOException;
     
     /**
      * Write the content out to the File supplied.

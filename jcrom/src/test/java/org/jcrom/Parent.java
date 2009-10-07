@@ -28,95 +28,83 @@ import org.jcrom.annotations.JcrUUID;
  *
  * @author Olafur Gauti Gudmundsson
  */
-@JcrNode(
-	mixinTypes= {"mix:referenceable"}
-)
+@JcrNode(mixinTypes = {"mix:referenceable"})
 public class Parent extends AbstractEntity implements Serializable {
-	
-	@JcrUUID String uuid;
-	
-	@JcrProperty List<String> tags;
-	
-	@JcrChildNode
-	private Child adoptedChild;
-	
-	@JcrChildNode
-	private List<Child> children;
-	
-	@JcrFileNode
-	private Photo passportPhoto;
-    
-    @JcrFileNode
-    private JcrFile jcrFile;
-	
-	@JcrFileNode(loadType = JcrFileNode.LoadType.BYTES)
-	private List<JcrFile> files;
-	
-	public Parent() {
-		tags = new ArrayList<String>();
-		children = new ArrayList<Child>();
-		files = new ArrayList<JcrFile>();
-	}
 
-	public String getUuid() {
-		return uuid;
-	}
+    @JcrUUID String uuid;
+    @JcrProperty List<String> tags;
 
-	public void setUuid(String uuid) {
-		this.uuid = uuid;
-	}
+    @JcrChildNode private Child adoptedChild;
+    @JcrChildNode private List<Child> children;
+    @JcrFileNode private Photo passportPhoto;
+    @JcrFileNode private JcrFile jcrFile;
+    @JcrFileNode(loadType = JcrFileNode.LoadType.BYTES) private List<JcrFile> files;
 
-	public Child getAdoptedChild() {
-		return adoptedChild;
-	}
+    public Parent() {
+        tags = new ArrayList<String>();
+        children = new ArrayList<Child>();
+        files = new ArrayList<JcrFile>();
+    }
 
-	public void setAdoptedChild(Child adoptedChild) {
-		this.adoptedChild = adoptedChild;
-	}
-	
-	public void addChild( Child child ) {
-		children.add(child);
-	}
+    public String getUuid() {
+        return uuid;
+    }
 
-	public List<Child> getChildren() {
-		return children;
-	}
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 
-	public void setChildren(List<Child> children) {
-		this.children = children;
-	}
-	
-	public Photo getPassportPhoto() {
-		return passportPhoto;
-	}
+    public Child getAdoptedChild() {
+        return adoptedChild;
+    }
 
-	public void setPassportPhoto(Photo passportPhoto) {
-		this.passportPhoto = passportPhoto;
-	}
+    public void setAdoptedChild(Child adoptedChild) {
+        this.adoptedChild = adoptedChild;
+    }
 
-	public List<JcrFile> getFiles() {
-		return files;
-	}
+    public void addChild(Child child) {
+        children.add(child);
+    }
 
-	public void setFiles(List<JcrFile> files) {
-		this.files = files;
-	}
-	
-	public void addFile( JcrFile file ) {
-		files.add(file);
-	}
+    public List<Child> getChildren() {
+        return children;
+    }
 
-	public List<String> getTags() {
-		return tags;
-	}
+    public void setChildren(List<Child> children) {
+        this.children = children;
+    }
 
-	public void setTags(List<String> tags) {
-		this.tags = tags;
-	}
-	
-	public void addTag( String tag ) {
-		tags.add(tag);
-	}
+    public Photo getPassportPhoto() {
+        return passportPhoto;
+    }
+
+    public void setPassportPhoto(Photo passportPhoto) {
+        this.passportPhoto = passportPhoto;
+    }
+
+    public List<JcrFile> getFiles() {
+        return files;
+    }
+
+    public void setFiles(List<JcrFile> files) {
+        this.files = files;
+    }
+
+    public void addFile(JcrFile file) {
+        files.add(file);
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public void addTag(String tag) {
+        tags.add(tag);
+    }
 
     public JcrFile getJcrFile() {
         return jcrFile;

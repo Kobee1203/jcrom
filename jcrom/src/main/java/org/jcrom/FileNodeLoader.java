@@ -17,20 +17,23 @@ package org.jcrom;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.jcr.Node;
+
 import net.sf.cglib.proxy.LazyLoader;
+
 import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.util.NodeFilter;
 
 /**
  * Handles lazy loading of single file node.
- *
+ * 
  * @author Olafur Gauti Gudmundsson
  */
 public class FileNodeLoader implements LazyLoader {
 
     private static final Logger logger = Logger.getLogger(FileNodeLoader.class.getName());
-    
+
     private final Class objectClass;
     private final Node fileContainer;
     private final Object parentObject;
@@ -38,21 +41,23 @@ public class FileNodeLoader implements LazyLoader {
     private final int depth;
     private final NodeFilter nodeFilter;
     private final Mapper mapper;
-    
-    FileNodeLoader( Class objectClass, Node fileContainer, Object parentObject, JcrFileNode jcrFileNode, int depth, NodeFilter nodeFilter, Mapper mapper ) {
-		this.objectClass = objectClass;
-		this.parentObject = parentObject;
+
+    FileNodeLoader(Class objectClass, Node fileContainer, Object parentObject, JcrFileNode jcrFileNode, int depth,
+            NodeFilter nodeFilter, Mapper mapper) {
+        this.objectClass = objectClass;
+        this.parentObject = parentObject;
         this.jcrFileNode = jcrFileNode;
-		this.fileContainer = fileContainer;
-		this.mapper = mapper;
-		this.depth = depth;
-		this.nodeFilter = nodeFilter;
+        this.fileContainer = fileContainer;
+        this.mapper = mapper;
+        this.depth = depth;
+        this.nodeFilter = nodeFilter;
     }
-    
-	public Object loadObject() throws Exception {
-		if ( logger.isLoggable(Level.FINE) ) {
-			logger.fine("Lazy loading file node for " + fileContainer.getPath());
-		}
-        return FileNodeMapper.getSingleFile(objectClass, fileContainer, parentObject, jcrFileNode, depth, nodeFilter, mapper);
+
+    public Object loadObject() throws Exception {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Lazy loading file node for " + fileContainer.getPath());
+        }
+        return mapper.getFileNodeMapper().getSingleFile(objectClass, fileContainer, parentObject, jcrFileNode, depth,
+                nodeFilter, mapper);
     }
 }

@@ -20,7 +20,7 @@ public class DynamicObject extends AbstractJcrEntity {
     @JcrReference(lazy=true) Map<String,List<Object>> multiReferences;
     
     @JcrFileNode Map<String,JcrFile> singleFiles;
-    @JcrFileNode Map<String,List<JcrFile>> multiFiles;
+    @JcrFileNode(loadType=JcrFileNode.LoadType.BYTES) Map<String,List<JcrFile>> multiFiles;
     
     public DynamicObject() {
         this.singleValueChildren = new HashMap<String,Object>();

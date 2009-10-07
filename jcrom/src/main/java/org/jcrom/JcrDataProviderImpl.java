@@ -15,13 +15,11 @@
  */
 package org.jcrom;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 /**
@@ -35,142 +33,136 @@ import java.io.OutputStream;
  */
 public class JcrDataProviderImpl implements JcrDataProvider {
 
-	protected final TYPE type;
-	protected final byte[] bytes;
-	protected final File file;
-	protected final InputStream inputStream;
-	protected final long contentLength;
-	
-	public JcrDataProviderImpl( TYPE type, byte[] bytes ) {
-		this.type = type;
-		this.bytes = new byte[bytes.length];
-		System.arraycopy(bytes, 0, this.bytes, 0, bytes.length);
-		this.file = null;
-		this.inputStream = null;
-		this.contentLength = bytes.length;
-	}
-	
-	public JcrDataProviderImpl( TYPE type, File file ) {
-		this.type = type;
-		this.file = file;
-		this.bytes = null;
-		this.inputStream = null;
-		this.contentLength = file.length();
-	}
-	
-	public JcrDataProviderImpl( TYPE type, InputStream inputStream ) {
-		this.type = type;
-		this.inputStream = inputStream;
-		this.bytes = null;
-		this.file = null;
-		this.contentLength = -1;
-	}
-	
-	public JcrDataProviderImpl(TYPE type, InputStream inputStream, long length) {
-		this.type = type;
-		this.inputStream = inputStream;
-		this.bytes = null;
-		this.file = null;
-		this.contentLength = length;
-	}
+    protected final TYPE type;
+    protected final byte[] bytes;
+    protected final File file;
+    protected final InputStream inputStream;
+    protected final long contentLength;
 
-	public byte[] getBytes() {
-		return bytes;
-	}
+    public JcrDataProviderImpl(byte[] bytes) {
+        this.type = TYPE.BYTES;
+        this.bytes = new byte[bytes.length];
+        System.arraycopy(bytes, 0, this.bytes, 0, bytes.length);
+        this.file = null;
+        this.inputStream = null;
+        this.contentLength = bytes.length;
+    }
 
-	public File getFile() {
-		return file;
-	}
+    public JcrDataProviderImpl(File file) {
+        this.type = TYPE.FILE;
+        this.file = file;
+        this.bytes = null;
+        this.inputStream = null;
+        this.contentLength = file.length();
+    }
 
-	public InputStream getInputStream() {
-		return inputStream;
-	}
+    public JcrDataProviderImpl(InputStream inputStream) {
+        this(inputStream, -1);
+    }
 
-	public TYPE getType() {
-		return type;
-	}
+    public JcrDataProviderImpl(InputStream inputStream, long length) {
+        this.type = TYPE.STREAM;
+        this.inputStream = inputStream;
+        this.bytes = null;
+        this.file = null;
+        this.contentLength = length;
+    }
 
-    public String getAsString( String charset ) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-        StringBuilder sb = new StringBuilder();
-        String line = null;
-        try {
-            while ((line = br.readLine()) != null) {
-                sb.append(line).append('\n');
-            }
-        } finally {
-            inputStream.close();
-        }
-        return sb.toString();
+    public boolean isBytes() {
+        return type == TYPE.BYTES;
+    }
+
+    public boolean isFile() {
+        return type == TYPE.FILE;
+    }
+
+    public boolean isStream() {
+        return type == TYPE.STREAM;
+    }
+
+    public byte[] getBytes() {
+        return bytes;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public InputStream getInputStream() {
+        return inputStream;
+    }
+
+    public TYPE getType() {
+        return type;
     }
 
     public void writeToFile(File destination) throws IOException {
-        if ( type == TYPE.BYTES ) {
+        if (type == TYPE.BYTES) {
             write(bytes, destination);
-        } else if ( type == TYPE.STREAM ) {
+        } else if (type == TYPE.STREAM) {
             write(inputStream, destination);
-        } else if ( type == TYPE.FILE ) {
+        } else if (type == TYPE.FILE) {
             write(file, destination);
         }
     }
-    
+
     protected static void write(InputStream in, File destination) throws IOException {
-		if ( !destination.exists() ) {
-			destination.createNewFile();
-		}
-        
+        if (!destination.exists()) {
+            destination.createNewFile();
+        }
+
         OutputStream out = new FileOutputStream(destination);
-		try {
-			// Transfer bytes from in to out
-			byte[] buf = new byte[1024];
-			int len;
-			while ((len = in.read(buf)) > 0) {
-				out.write(buf, 0, len);
-			}
-		} finally {
-			in.close();
-	        out.close();
-		}
+        try {
+            // Transfer bytes from in to out
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+        } finally {
+            in.close();
+            out.close();
+        }
     }
-    
-	protected static void write( byte[] bytes, File destination ) throws IOException {
 
-		if ( !destination.exists() ) {
-			destination.createNewFile();
-		}
+    protected static void write(byte[] bytes, File destination) throws IOException {
 
-		FileOutputStream fileOutputStream = new FileOutputStream(destination);
-		try {
-			fileOutputStream.write(bytes);
-		} finally {
-			fileOutputStream.close();
-		}
-	}
+        if (!destination.exists()) {
+            destination.createNewFile();
+        }
 
-	protected static void write( File source, File destination ) throws IOException {
+        FileOutputStream fileOutputStream = new FileOutputStream(destination);
+        try {
+            fileOutputStream.write(bytes);
+        } finally {
+            fileOutputStream.close();
+        }
+    }
 
-		FileInputStream in = new FileInputStream(source);
-		FileOutputStream out = new FileOutputStream(destination);
+    protected static void write(File source, File destination) throws IOException {
 
-		int doneCnt = -1, bufSize = 32768;
-		byte buf[] = new byte[bufSize];
+        FileInputStream in = new FileInputStream(source);
+        FileOutputStream out = new FileOutputStream(destination);
 
-		try {
-			while ((doneCnt = in.read(buf, 0, bufSize)) >= 0) {
-				if ( doneCnt == 0 ) {
-					Thread.yield();
+        int doneCnt = -1, bufSize = 32768;
+        byte buf[] = new byte[bufSize];
+
+        try {
+            while ((doneCnt = in.read(buf, 0, bufSize)) >= 0) {
+                if (doneCnt == 0) {
+                    Thread.yield();
                 } else {
-					out.write(buf, 0, doneCnt);
+                    out.write(buf, 0, doneCnt);
                 }
-			}
-			out.flush();
-		} finally {
-			in.close();
-			out.close();
-		}
-	}
+            }
+            out.flush();
+        } finally {
+            in.close();
+            out.close();
+        }
+    }
 
-	public long getContentLength() {
-		return this.contentLength;
-	}
+    public long getContentLength() {
+        return this.contentLength;
+    }
 }

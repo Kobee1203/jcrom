@@ -17,9 +17,12 @@ package org.jcrom;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.jcr.Node;
 import javax.jcr.Session;
+
 import net.sf.cglib.proxy.LazyLoader;
+
 import org.jcrom.util.NodeFilter;
 
 /**
@@ -28,34 +31,36 @@ import org.jcrom.util.NodeFilter;
  * @author Olafur Gauti Gudmundsson
  */
 class ChildNodeListLoader implements LazyLoader {
-	
-	private static final Logger logger = Logger.getLogger(ChildNodeListLoader.class.getName());
 
-	private final Class objectClass;
-	private final Object parentObject;
-	private final String containerPath;
-	private final Session session;
-	private final Mapper mapper;
-	private final int depth;
-	private final NodeFilter nodeFilter;
+    private static final Logger logger = Logger.getLogger(ChildNodeListLoader.class.getName());
 
-	ChildNodeListLoader( Class objectClass, Object parentObject, String containerPath, Session session, Mapper mapper,
-			int depth, NodeFilter nodeFilter ) {
-		this.objectClass = objectClass;
-		this.parentObject = parentObject;
-		this.containerPath = containerPath;
-		this.session = session;
-		this.mapper = mapper;
-		this.depth = depth;
-		this.nodeFilter = nodeFilter;
-	}
-	
-	public Object loadObject() throws Exception {
-		if ( logger.isLoggable(Level.FINE) ) {
-			logger.fine("Lazy loading children list for " + containerPath);
-		}
-		Node childrenContainer = session.getRootNode().getNode(containerPath.substring(1));
-		return ChildNodeMapper.getChildrenList(objectClass, childrenContainer, parentObject, mapper, depth, nodeFilter);
-	}
+    private final Class objectClass;
+    private final Object parentObject;
+    private final String containerPath;
+    private final Session session;
+    private final Mapper mapper;
+    private final int depth;
+    private final NodeFilter nodeFilter;
+
+    ChildNodeListLoader(Class objectClass, Object parentObject, String containerPath, Session session, Mapper mapper,
+            int depth, NodeFilter nodeFilter) {
+        this.objectClass = objectClass;
+        this.parentObject = parentObject;
+        this.containerPath = containerPath;
+        this.session = session;
+        this.mapper = mapper;
+        this.depth = depth;
+        this.nodeFilter = nodeFilter;
+    }
+
+    public Object loadObject() throws Exception {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Lazy loading children list for " + containerPath);
+        }
+        Session sessionToUse = Jcrom.getCurrentSession() != null ? Jcrom.getCurrentSession() : session;
+        Node childrenContainer =  sessionToUse.getRootNode().getNode(containerPath.substring(1));
+        return mapper.getChildNodeMapper().getChildrenList(objectClass, childrenContainer, parentObject, mapper, depth,
+                nodeFilter);
+    }
 
 }

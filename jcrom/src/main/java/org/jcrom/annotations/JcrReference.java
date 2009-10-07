@@ -22,37 +22,33 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation is used to mark fields that are to be mapped as
- * JCR reference properties.
+ * This annotation is used to mark fields that are to be mapped as JCR reference properties.
  * 
  * @author Olafur Gauti Gudmundsson
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target( { ElementType.FIELD, ElementType.ANNOTATION_TYPE })
 public @interface JcrReference {
 
     /**
-     * The name of the JCR reference property. 
-     * Defaults to the name of the field being annotated.
+     * The name of the JCR reference property. Defaults to the name of the field being annotated.
      * 
-     * @return the name of the JCR reference property 
+     * @return the name of the JCR reference property
      */
-    String name()  default "fieldName";
+    String name() default "fieldName";
 
     /**
-     * Setting this to true will turn on lazy loading for this field.
-     * The default is false.
+     * Setting this to true will turn on lazy loading for this field. The default is false.
      * 
      * @return whether to apply lazy loading to this field
      */
-    boolean lazy()  default false;
+    boolean lazy() default false;
 
     /**
-     * Setting this to true will store the reference as the path to
-     * the referenced entity in a normal String property, rather than
-     * a reference property.
+     * Setting this to true will store the reference as the path to the referenced entity in a normal String property,
+     * rather than a reference property.
      * 
      * @return whether to use path-based references
      */
-    boolean byPath()  default false;
+    boolean byPath() default false;
 }
