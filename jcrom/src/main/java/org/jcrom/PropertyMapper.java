@@ -145,7 +145,7 @@ class PropertyMapper {
         } else if (c == Locale.class) {
             return valueFactory.createValue(((Locale) fieldValue).toString());
         } else if (c.isEnum()) {
-            return valueFactory.createValue(fieldValue.toString());
+            return valueFactory.createValue(((Enum) fieldValue).name());
         }
         return null;
     }
