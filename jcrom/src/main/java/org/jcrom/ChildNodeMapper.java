@@ -17,7 +17,6 @@ package org.jcrom;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -277,9 +276,9 @@ class ChildNodeMapper {
     }
 
     List getChildrenList(Class childObjClass, Node childrenContainer, Object parentObj, Mapper mapper, int depth,
-            NodeFilter nodeFilter) throws ClassNotFoundException, InstantiationException, RepositoryException,
+            NodeFilter nodeFilter, JcrChildNode jcrChildNode) throws ClassNotFoundException, InstantiationException, RepositoryException,
             IllegalAccessException, IOException {
-        List children = new ArrayList();
+        List children = jcrChildNode.listContainerClass().newInstance();
         NodeIterator iterator = childrenContainer.getNodes();
         while (iterator.hasNext()) {
             Node childNode = iterator.nextNode();
@@ -292,7 +291,7 @@ class ChildNodeMapper {
             NodeFilter nodeFilter, JcrChildNode jcrChildNode) throws ClassNotFoundException, InstantiationException,
             RepositoryException, IllegalAccessException, IOException {
 
-        Map children = new HashMap();
+        Map children = jcrChildNode.mapContainerClass().newInstance();
         NodeIterator iterator = childrenContainer.getNodes();
         while (iterator.hasNext()) {
             Node childNode = iterator.nextNode();
@@ -301,11 +300,11 @@ class ChildNodeMapper {
                 if (jcrChildNode.lazy()) {
                     // lazy loading
                     children.put(childNode.getName(), ProxyFactory.createChildNodeListProxy(Object.class, parentObj,
-                            childNode.getSession(), childNode.getPath(), mapper, depth, nodeFilter));
+                            childNode.getSession(), childNode.getPath(), mapper, depth, nodeFilter, jcrChildNode));
                 } else {
                     // eager loading
                     children.put(childNode.getName(), getChildrenList(Object.class, childNode, parentObj, mapper,
-                            depth, nodeFilter));
+                            depth, nodeFilter, jcrChildNode));
                 }
             } else {
                 // each value in the map is a child node
@@ -359,10 +358,10 @@ class ChildNodeMapper {
                 if (jcrChildNode.lazy()) {
                     // lazy loading
                     children = ProxyFactory.createChildNodeListProxy(childObjClass, obj, node.getSession(),
-                            childrenContainer.getPath(), mapper, depth, nodeFilter);
+                            childrenContainer.getPath(), mapper, depth, nodeFilter, jcrChildNode);
                 } else {
                     // eager loading
-                    children = getChildrenList(childObjClass, childrenContainer, obj, mapper, depth, nodeFilter);
+                    children = getChildrenList(childObjClass, childrenContainer, obj, mapper, depth, nodeFilter, jcrChildNode);
                 }
                 field.set(obj, children);
 

@@ -19,7 +19,6 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -370,7 +369,7 @@ class FileNodeMapper {
     List getFileList(Class childObjClass, Node fileContainer, Object obj, JcrFileNode jcrFileNode, int depth,
             NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException,
             RepositoryException, IllegalAccessException, IOException {
-        List children = new ArrayList();
+        List children = jcrFileNode.listContainerClass().newInstance();
         NodeIterator iterator = fileContainer.getNodes();
         while (iterator.hasNext()) {
             JcrFile fileObj = (JcrFile) childObjClass.newInstance();
@@ -399,7 +398,7 @@ class FileNodeMapper {
             RepositoryException, IllegalAccessException, IOException {
 
         Class mapParamClass = ReflectionUtils.getParameterizedClass(field, 1);
-        Map children = new HashMap();
+        Map children = jcrFileNode.mapContainerClass().newInstance();
         NodeIterator iterator = fileContainer.getNodes();
         while (iterator.hasNext()) {
             Node childNode = iterator.nextNode();

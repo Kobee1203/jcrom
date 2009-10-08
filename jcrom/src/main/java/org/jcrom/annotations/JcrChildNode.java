@@ -19,6 +19,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This annotation is used to mark fields that are to be mapped as
@@ -35,41 +39,40 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface JcrChildNode {
-	
-	/**
-	 * The name of the JCR container node for the child/children. 
-	 * Defaults to the name of the field being annotated.
-	 * 
-	 * @return the name of the JCR node storing the child that the field
-	 * represents
-	 */
-	String name() default "fieldName";
-	
-	/**
-	 * The node type to be applied for the child container node.
-	 * Defaults to "nt:unstructured".
-	 * 
-	 * @return the node type to use when creating a container node for
-	 * the children
-	 */
-	String containerNodeType() default "nt:unstructured";
-    
-	/**
-	 * Mixin types to be added to the container node.
-	 * 
-	 * @return the mixin types for the child container node
-	 */
-	String[] containerMixinTypes() default {};
-	
-	/**
-	 * Setting this to true will turn on lazy loading for this field.
-	 * The default is false.
-	 * 
-	 * @return whether to apply lazy loading to this field
-	 */
-	boolean lazy() default false;
-    
-    
+
+    /**
+     * The name of the JCR container node for the child/children.
+     * Defaults to the name of the field being annotated.
+     *
+     * @return the name of the JCR node storing the child that the field
+     * represents
+     */
+    String name() default "fieldName";
+
+    /**
+     * The node type to be applied for the child container node.
+     * Defaults to "nt:unstructured".
+     *
+     * @return the node type to use when creating a container node for
+     * the children
+     */
+    String containerNodeType() default "nt:unstructured";
+
+    /**
+     * Mixin types to be added to the container node.
+     *
+     * @return the mixin types for the child container node
+     */
+    String[] containerMixinTypes() default {};
+
+    /**
+     * Setting this to true will turn on lazy loading for this field.
+     * The default is false.
+     *
+     * @return whether to apply lazy loading to this field
+     */
+    boolean lazy() default false;
+
     /**
      * Setting this to false will mean not creating a container node
      * for single child objects. This does not apply for Lists or Maps of
@@ -79,4 +82,20 @@ public @interface JcrChildNode {
      * @return whether to create a child container node
      */
     boolean createContainerNode() default true;
+
+    /**
+     * Specify the class of the list child node container.
+     *
+     * @return The class of the list container
+     * @since 1.4
+     */
+    Class<? extends List> listContainerClass() default ArrayList.class;
+
+    /**
+     * Specify the class of the map child node container.
+     *
+     * @return The class of the map container
+     * @since 1.4
+     */
+    Class<? extends Map> mapContainerClass() default HashMap.class;
 }

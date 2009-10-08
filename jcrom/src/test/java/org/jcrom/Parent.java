@@ -17,7 +17,10 @@ package org.jcrom;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.annotations.JcrNode;
@@ -40,10 +43,19 @@ public class Parent extends AbstractEntity implements Serializable {
     @JcrFileNode private JcrFile jcrFile;
     @JcrFileNode(loadType = JcrFileNode.LoadType.BYTES) private List<JcrFile> files;
 
+    @JcrChildNode(listContainerClass=LinkedList.class)
+    private List<Child> customList;
+
+    @JcrChildNode(mapContainerClass=TreeMap.class)
+    private Map<String,Object> customMap;
+
+
     public Parent() {
         tags = new ArrayList<String>();
         children = new ArrayList<Child>();
         files = new ArrayList<JcrFile>();
+        customList = new LinkedList<Child>();
+        customMap = new TreeMap<String,Object>();
     }
 
     public String getUuid() {
@@ -112,5 +124,21 @@ public class Parent extends AbstractEntity implements Serializable {
 
     public void setJcrFile(JcrFile jcrFile) {
         this.jcrFile = jcrFile;
+    }
+
+    public List getCustomList() {
+        return customList;
+    }
+
+    public void setCustomList(List customList) {
+        this.customList = customList;
+    }
+
+    public Map<String, Object> getCustomMap() {
+        return customMap;
+    }
+
+    public void setCustomMap(Map<String, Object> customMap) {
+        this.customMap = customMap;
     }
 }

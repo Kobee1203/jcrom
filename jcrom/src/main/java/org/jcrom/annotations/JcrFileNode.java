@@ -19,6 +19,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This annotation is used to mark fields that are to be mapped as
@@ -35,31 +39,51 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface JcrFileNode {
-	public enum LoadType { STREAM, BYTES }
 
-	/**
-	 * The name of the JCR container node for the file node(s). 
-	 * Defaults to the name of the field being annotated.
-	 * 
-	 * @return the name of the JCR node storing the child that the field
-	 * represents
-	 */
-	String name() default "fieldName";
-	
-	/**
-	 * Determines how to read the file when JCROM maps a JCR node to an object.
-	 * Defaults to LoadType.STREAM, but can also be set to LoadType.BYTES (in
-	 * which case the content will be read into a byte array).
-	 * 
-	 * @return a value determining how to load the File from JCR
-	 */
-	LoadType loadType() default LoadType.STREAM;
-    
-	/**
-	 * Setting this to true will turn on lazy loading for this field.
-	 * The default is false.
-	 * 
-	 * @return whether to apply lazy loading to this field
-	 */
-	boolean lazy() default false;
+    public enum LoadType {
+
+        STREAM, BYTES
+    }
+
+    /**
+     * The name of the JCR container node for the file node(s).
+     * Defaults to the name of the field being annotated.
+     *
+     * @return the name of the JCR node storing the child that the field
+     * represents
+     */
+    String name() default "fieldName";
+
+    /**
+     * Determines how to read the file when JCROM maps a JCR node to an object.
+     * Defaults to LoadType.STREAM, but can also be set to LoadType.BYTES (in
+     * which case the content will be read into a byte array).
+     *
+     * @return a value determining how to load the File from JCR
+     */
+    LoadType loadType() default LoadType.STREAM;
+
+    /**
+     * Setting this to true will turn on lazy loading for this field.
+     * The default is false.
+     *
+     * @return whether to apply lazy loading to this field
+     */
+    boolean lazy() default false;
+
+    /**
+     * Specify the class of the file list child node container.
+     *
+     * @return The class of the file list container
+     * @since 1.4
+     */
+    Class<? extends List> listContainerClass() default ArrayList.class;
+
+    /**
+     * Specify the class of the map child node container.
+     *
+     * @return The class of the map container
+     * @since 1.4
+     */
+    Class<? extends Map> mapContainerClass() default HashMap.class;
 }

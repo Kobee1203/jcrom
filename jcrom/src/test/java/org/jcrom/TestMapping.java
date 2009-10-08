@@ -24,8 +24,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.TreeMap;
 import java.util.logging.LogManager;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -1445,5 +1447,34 @@ public class TestMapping {
         Square fromNode = jcrom.fromNode(Square.class, newNode);
 
         assertTrue(square.getArea() == fromNode.getChild().getParent().getArea());
+    }
+
+    @Test
+    public void customChildContainers() throws Exception {
+        Jcrom jcrom = new Jcrom(true, true);
+        jcrom.map(Parent.class);
+
+        Node rootNode = session.getRootNode().addNode("root");
+
+        Parent parent = createParent("Daddy");
+
+        Child listChild1 = createChild("Sonny1");
+        Child listChild2 = createChild("Sonny2");
+
+        Child mapChild1 = createChild("Jane1");
+        Child mapChild2 = createChild("Jane2");
+
+        parent.getCustomList().add(listChild1);
+        parent.getCustomList().add(listChild2);
+
+        parent.getCustomMap().put(mapChild1.getName(), mapChild1);
+        parent.getCustomMap().put(mapChild2.getName(), mapChild2);
+
+        Node newNode = jcrom.addNode(rootNode, parent);
+
+        Parent fromNode = jcrom.fromNode(Parent.class, newNode);
+
+        assertTrue(fromNode.getCustomList() instanceof LinkedList);
+        assertTrue(fromNode.getCustomMap() instanceof TreeMap);
     }
 }

@@ -23,6 +23,7 @@ import javax.jcr.Session;
 
 import net.sf.cglib.proxy.LazyLoader;
 
+import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.util.NodeFilter;
 
 /**
@@ -41,9 +42,10 @@ class ChildNodeListLoader implements LazyLoader {
     private final Mapper mapper;
     private final int depth;
     private final NodeFilter nodeFilter;
+    private final JcrChildNode jcrChildNode;
 
     ChildNodeListLoader(Class objectClass, Object parentObject, String containerPath, Session session, Mapper mapper,
-            int depth, NodeFilter nodeFilter) {
+            int depth, NodeFilter nodeFilter, JcrChildNode jcrChildNode) {
         this.objectClass = objectClass;
         this.parentObject = parentObject;
         this.containerPath = containerPath;
@@ -51,6 +53,7 @@ class ChildNodeListLoader implements LazyLoader {
         this.mapper = mapper;
         this.depth = depth;
         this.nodeFilter = nodeFilter;
+        this.jcrChildNode = jcrChildNode;
     }
 
     public Object loadObject() throws Exception {
@@ -60,7 +63,7 @@ class ChildNodeListLoader implements LazyLoader {
         Session sessionToUse = Jcrom.getCurrentSession() != null ? Jcrom.getCurrentSession() : session;
         Node childrenContainer =  sessionToUse.getRootNode().getNode(containerPath.substring(1));
         return mapper.getChildNodeMapper().getChildrenList(objectClass, childrenContainer, parentObject, mapper, depth,
-                nodeFilter);
+                nodeFilter, jcrChildNode);
     }
 
 }
