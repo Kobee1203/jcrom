@@ -29,9 +29,9 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * Thanks to Vincent Giguère for providing this test case.
+ * Thanks to Vincent Gigure for providing this test case.
  *
- * @author Vincent Giguère
+ * @author Vincent Gigure
  */
 public class TestInstantiation {
 
