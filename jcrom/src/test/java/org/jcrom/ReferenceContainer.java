@@ -12,71 +12,74 @@ import org.jcrom.annotations.JcrUUID;
  *
  * @author Olafur Gauti Gudmundsson
  */
-@JcrNode(
-	mixinTypes= {"mix:referenceable"}
-)
+@JcrNode(mixinTypes = {"mix:referenceable"})
 public class ReferenceContainer {
 
-	@JcrName private String name;
-	@JcrPath private String path;
-	@JcrUUID private String uuid;
-	
-	@JcrReference private ReferencedEntity reference;
-	@JcrReference private List<ReferencedEntity> references;
-    
-	@JcrReference(byPath=true) private ReferencedEntity referenceByPath;
-	@JcrReference(byPath=true) private List<ReferencedEntity> referencesByPath;
-    
-    @JcrReference private Shape shape;
+    @JcrName
+    private String name;
+    @JcrPath
+    private String path;
+    @JcrUUID
+    private String uuid;
+    @JcrReference(lazy=true)
+    private ReferencedEntity reference;
+    @JcrReference
+    private List<ReferencedEntity> references;
+    @JcrReference(byPath = true)
+    private ReferencedEntity referenceByPath;
+    @JcrReference(byPath = true)
+    private List<ReferencedEntity> referencesByPath;
+    @JcrReference
+    private Shape shape;
 
-	public ReferenceContainer() {
-		this.references = new ArrayList<ReferencedEntity>();
+    public ReferenceContainer() {
+        this.references = new ArrayList<ReferencedEntity>();
         this.referencesByPath = new ArrayList<ReferencedEntity>();
-	}
-	
-	public String getName() {
-		return name;
-	}
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getPath() {
-		return path;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setPath(String path) {
-		this.path = path;
-	}
+    public String getPath() {
+        return path;
+    }
 
-	public String getUuid() {
-		return uuid;
-	}
+    public void setPath(String path) {
+        this.path = path;
+    }
 
-	public void setUuid(String uuid) {
-		this.uuid = uuid;
-	}
+    public String getUuid() {
+        return uuid;
+    }
 
-	public ReferencedEntity getReference() {
-		return reference;
-	}
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 
-	public void setReference(ReferencedEntity reference) {
-		this.reference = reference;
-	}
+    public ReferencedEntity getReference() {
+        return reference;
+    }
 
-	public List<ReferencedEntity> getReferences() {
-		return references;
-	}
+    public void setReference(ReferencedEntity reference) {
+        this.reference = reference;
+    }
 
-	public void setReferences(List<ReferencedEntity> references) {
-		this.references = references;
-	}
-	
-	public void addReference( ReferencedEntity ref ) {
-		references.add(ref);
-	}
+    public List<ReferencedEntity> getReferences() {
+        return references;
+    }
+
+    public void setReferences(List<ReferencedEntity> references) {
+        this.references = references;
+    }
+
+    public void addReference(ReferencedEntity ref) {
+        references.add(ref);
+    }
 
     public ReferencedEntity getReferenceByPath() {
         return referenceByPath;
@@ -93,8 +96,8 @@ public class ReferenceContainer {
     public void setReferencesByPath(List<ReferencedEntity> referencesByPath) {
         this.referencesByPath = referencesByPath;
     }
-    
-    public void addReferenceByPath( ReferencedEntity reference ) {
+
+    public void addReferenceByPath(ReferencedEntity reference) {
         referencesByPath.add(reference);
     }
 

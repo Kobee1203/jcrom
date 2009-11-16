@@ -37,6 +37,8 @@ import org.jcrom.util.ReflectionUtils;
  */
 class ChildNodeMapper {
 
+    private static final String POLICY_NODE_NAME = "rep:policy";
+
     private final Mapper mapper;
 
     public ChildNodeMapper(Mapper mapper) {
@@ -55,7 +57,11 @@ class ChildNodeMapper {
     private void removeChildren(Node containerNode) throws RepositoryException {
         NodeIterator nodeIterator = containerNode.getNodes();
         while (nodeIterator.hasNext()) {
-            nodeIterator.nextNode().remove();
+            Node currentNode = nodeIterator.nextNode();
+            // ignore the policy node
+            if (!currentNode.getName().equals(POLICY_NODE_NAME)) {
+                currentNode.remove();
+            }
         }
     }
 
@@ -282,7 +288,10 @@ class ChildNodeMapper {
         NodeIterator iterator = childrenContainer.getNodes();
         while (iterator.hasNext()) {
             Node childNode = iterator.nextNode();
-            children.add(getSingleChild(childObjClass, childNode, parentObj, mapper, depth, nodeFilter));
+            // ignore the policy node when loading child nodes
+            if (!childNode.getName().equals(POLICY_NODE_NAME)) {
+                children.add(getSingleChild(childObjClass, childNode, parentObj, mapper, depth, nodeFilter));
+            }
         }
         return children;
     }
