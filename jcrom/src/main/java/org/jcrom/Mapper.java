@@ -124,15 +124,19 @@ class Mapper {
     }
 
     Class getClassForName( String className ) {
+        return getClassForName(className, null);
+    }
+
+    Class getClassForName( String className, Class defaultClass ) {
         for ( Class c : mappedClasses ) {
             if ( className.equals(c.getCanonicalName()) ) {
                 return c;
             }
         }
         try {
-            return Class.forName(className);
+            return Class.forName(className, true, Thread.currentThread().getContextClassLoader());
         } catch ( ClassNotFoundException ex ) {
-            return null;
+            return defaultClass;
         }
     }
 
@@ -269,7 +273,7 @@ class Mapper {
 
             if (node.hasProperty(classNameProperty)) {
                 String className = node.getProperty(classNameProperty).getString();
-                Class c = Class.forName(className, true, Thread.currentThread().getContextClassLoader());
+                Class c = getClassForName(className, defaultClass);
                 if (isMapped(c)) {
                     return c;
                 } else {
