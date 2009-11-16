@@ -20,11 +20,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -118,6 +121,19 @@ class Mapper {
 
     boolean isDynamicInstantiation() {
         return dynamicInstantiation;
+    }
+
+    Class getClassForName( String className ) {
+        for ( Class c : mappedClasses ) {
+            if ( className.equals(c.getCanonicalName()) ) {
+                return c;
+            }
+        }
+        try {
+            return Class.forName(className);
+        } catch ( ClassNotFoundException ex ) {
+            return null;
+        }
     }
 
     String getCleanName(String name) {
@@ -318,6 +334,28 @@ class Mapper {
         // map the class name to a property
         JcrNode jcrNode = ReflectionUtils.getJcrNodeAnnotation(objClass);
         if (jcrNode != null && !jcrNode.classNameProperty().equals("none")) {
+            // check if the class of the object has changed
+            if ( node.hasProperty(jcrNode.classNameProperty()) ) {
+                String oldClassName = node.getProperty(jcrNode.classNameProperty()).getString();
+                if ( !oldClassName.equals(obj.getClass().getCanonicalName()) ) {
+                    // different class, so we should remove the properties of the old class
+                    Class oldClass = getClassForName(oldClassName);
+                    if ( oldClass != null ) {
+                        Class newClass = obj.getClass();
+
+                        Set<Field> oldFields = new HashSet<Field>();
+                        oldFields.addAll(Arrays.asList(ReflectionUtils.getDeclaredAndInheritedFields(oldClass, true)));
+                        oldFields.removeAll(Arrays.asList(ReflectionUtils.getDeclaredAndInheritedFields(newClass, true)));
+
+                        // remove the old fields
+                        for ( Field field : oldFields ) {
+                            if ( node.hasProperty(field.getName()) ) {
+                                node.getProperty(field.getName()).remove();
+                            }
+                        }
+                    }
+                }
+            }
             node.setProperty(jcrNode.classNameProperty(), obj.getClass().getCanonicalName());
         }
 

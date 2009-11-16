@@ -31,6 +31,7 @@ import java.util.TreeMap;
 import java.util.logging.LogManager;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.PropertyType;
@@ -1476,5 +1477,27 @@ public class TestMapping {
 
         assertTrue(fromNode.getCustomList() instanceof LinkedList);
         assertTrue(fromNode.getCustomMap() instanceof TreeMap);
+    }
+
+    @Test(expected = PathNotFoundException.class)
+    public void testNodeClassChange() throws Exception {
+        Jcrom jcrom = new Jcrom(true, true);
+        jcrom.map(Rectangle.class).map(Triangle.class);
+
+        Node rootNode = session.getRootNode().addNode("root");
+
+        // create the node
+        Triangle triangle = new Triangle(1, 1);
+        triangle.setName("test");
+        Node newNode = jcrom.addNode(rootNode, triangle);
+
+        // now switch to another class for the node
+        Rectangle rectangle = new Rectangle(2.5, 3.3);
+        rectangle.setName("test");
+        jcrom.updateNode(newNode, rectangle);
+
+        // finally make sure that the old properties have been removed,
+        // this should throw an exception:
+        newNode.getProperty("base");
     }
 }
