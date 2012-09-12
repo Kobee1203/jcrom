@@ -15,9 +15,11 @@
  */
 package org.jcrom;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.Calendar;
+
+import javax.jcr.nodetype.NodeType;
+
 import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrPath;
@@ -29,17 +31,21 @@ import org.jcrom.annotations.JcrPath;
  * <br/><br/>
  * 
  * Note that this class has an @JcrNode annotation that sets the node type
- * to "nt:file". Extending classes may override this with a custom node type
+ * to "nt:file" ( {@link javax.jcr.nodetype.NodeType#NT_FILE} ). Extending classes may override this with a custom node type
  * as required. This is useful if you want to have custom metadata fields
  * stored on the file node.
  *
  * @author Olafur Gauti Gudmundsson
  */
-@JcrNode(nodeType = "nt:file")
+@JcrNode(nodeType = NodeType.NT_FILE)
 public class JcrFile implements Serializable {
 
-    @JcrPath protected String path;
-    @JcrName protected String name;
+    private static final long serialVersionUID = 1L;
+
+    @JcrPath
+    protected String path;
+    @JcrName
+    protected String name;
 
     protected String mimeType;
     protected Calendar lastModified;
@@ -47,20 +53,6 @@ public class JcrFile implements Serializable {
     protected JcrDataProvider dataProvider;
 
     public JcrFile() {
-    }
-
-    public static JcrFile fromFile(String name, File file, String mimeType) {
-        JcrFile jcrFile = new JcrFile();
-        jcrFile.setName(name);
-
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(file.lastModified());
-
-        jcrFile.setLastModified(cal);
-        jcrFile.setMimeType(mimeType);
-        jcrFile.setDataProvider(new JcrDataProviderImpl(file));
-
-        return jcrFile;
     }
 
     public JcrDataProvider getDataProvider() {

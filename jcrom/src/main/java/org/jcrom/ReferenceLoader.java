@@ -22,49 +22,43 @@ import java.util.logging.Logger;
 import javax.jcr.Node;
 import javax.jcr.Session;
 
-import net.sf.cglib.proxy.LazyLoader;
-
 import org.jcrom.util.NodeFilter;
+import org.jcrom.util.PathUtils;
 
 /**
  * Handles lazy loading of single reference.
  * 
  * @author Olafur Gauti Gudmundsson
  */
-class ReferenceLoader implements LazyLoader {
+class ReferenceLoader extends AbstractLazyLoader {
 
     private static final Logger logger = Logger.getLogger(ReferenceLoader.class.getName());
 
-    private final Class objClass;
+    private final Class<?> objClass;
     private final Object parentObject;
-    private final Session session;
     private final String nodePath;
     private final String propertyName;
-    private final Mapper mapper;
     private final int depth;
     private final NodeFilter nodeFilter;
     private final Field field;
 
-    ReferenceLoader(Class objClass, Object parentObject, String nodePath, String propertyName, Session session,
-            Mapper mapper, int depth, NodeFilter nodeFilter, Field field) {
+    ReferenceLoader(Class<?> objClass, Object parentObject, String nodePath, String propertyName, Session session, Mapper mapper, int depth, NodeFilter nodeFilter, Field field) {
+        super(session, mapper);
         this.objClass = objClass;
         this.parentObject = parentObject;
         this.nodePath = nodePath;
         this.propertyName = propertyName;
-        this.session = session;
-        this.mapper = mapper;
         this.depth = depth;
         this.nodeFilter = nodeFilter;
         this.field = field;
     }
 
-    public Object loadObject() throws Exception {
+    @Override
+    protected Object doLoadObject(Session session, Mapper mapper) throws Exception {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("Lazy loading single reference for " + nodePath + " " + propertyName);
         }
-        Session sessionToUse = Jcrom.getCurrentSession() != null ? Jcrom.getCurrentSession() : session;
-        Node node = sessionToUse.getRootNode().getNode(nodePath.substring(1));
-        return mapper.getReferenceMapper().createReferencedObject(field, node.getProperty(propertyName).getValue(),
-                parentObject, sessionToUse, objClass, depth, nodeFilter, mapper);
+        Node node = PathUtils.getNode(nodePath, session);
+        return mapper.getReferenceMapper().createReferencedObject(field, node.getProperty(propertyName).getValue(), parentObject, session, objClass, depth, nodeFilter, mapper);
     }
 }

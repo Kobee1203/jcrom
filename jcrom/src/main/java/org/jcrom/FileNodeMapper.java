@@ -18,15 +18,20 @@ package org.jcrom;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import javax.jcr.ValueFactory;
+import javax.jcr.nodetype.NodeType;
 
 import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.annotations.JcrNode;
@@ -55,52 +60,56 @@ class FileNodeMapper {
         return name;
     }
 
-    private Node createFileFolderNode(JcrNode jcrNode, String containerName, Node parentNode, Mapper mapper)
-            throws RepositoryException {
+    private Node createFileFolderNode(JcrNode jcrNode, String containerName, Node parentNode, Mapper mapper) throws RepositoryException {
 
         if (!parentNode.hasNode(mapper.getCleanName(containerName))) {
-            if (jcrNode != null && jcrNode.nodeType().equals("nt:unstructured")) {
+            if (jcrNode != null && (jcrNode.nodeType().equals("nt:unstructured") || jcrNode.nodeType().equals(NodeType.NT_UNSTRUCTURED))) {
                 return parentNode.addNode(mapper.getCleanName(containerName));
             } else {
                 // assume it is an nt:file or extension of that, 
                 // so we create an nt:folder
-                return parentNode.addNode(mapper.getCleanName(containerName), "nt:folder");
+                return parentNode.addNode(mapper.getCleanName(containerName), NodeType.NT_FOLDER);
             }
         } else {
             return parentNode.getNode(mapper.getCleanName(containerName));
         }
     }
 
-    private <T extends JcrFile> void setFileNodeProperties(Node contentNode, T file) throws RepositoryException,
-            IOException {
-        contentNode.setProperty("jcr:mimeType", file.getMimeType());
-        contentNode.setProperty("jcr:lastModified", file.getLastModified());
+    private <T extends JcrFile> void setFileNodeProperties(Node contentNode, T file) throws RepositoryException, IOException {
+        contentNode.setProperty(Property.JCR_MIMETYPE, file.getMimeType());
+        contentNode.setProperty(Property.JCR_LAST_MODIFIED, file.getLastModified());
         if (file.getEncoding() != null) {
-            contentNode.setProperty("jcr:encoding", file.getEncoding());
+            contentNode.setProperty(Property.JCR_ENCODING, file.getEncoding());
         }
 
         // add the file data
         JcrDataProvider dataProvider = file.getDataProvider();
         if (dataProvider != null) {
+            ValueFactory valueFactory = contentNode.getSession().getValueFactory();
             if (dataProvider.isFile() && dataProvider.getFile() != null) {
-                contentNode.setProperty("jcr:data", new FileInputStream(dataProvider.getFile()));
+                //contentNode.setProperty("jcr:data", new FileInputStream(dataProvider.getFile()));
+                Binary binary = valueFactory.createBinary(new FileInputStream(dataProvider.getFile()));
+                contentNode.setProperty(Property.JCR_DATA, binary);
             } else if (dataProvider.isBytes() && dataProvider.getBytes() != null) {
-                contentNode.setProperty("jcr:data", new ByteArrayInputStream(dataProvider.getBytes()));
+                //contentNode.setProperty("jcr:data", new ByteArrayInputStream(dataProvider.getBytes()));
+                Binary binary = valueFactory.createBinary(new ByteArrayInputStream(dataProvider.getBytes()));
+                contentNode.setProperty(Property.JCR_DATA, binary);
             } else if (dataProvider.isStream() && dataProvider.getInputStream() != null) {
                 try {
-                    contentNode.setProperty("jcr:data", dataProvider.getInputStream());
-                } catch ( RepositoryException re ) {
-                    System.out.println("FILE NODE: " + contentNode.getPath() + " " + ((FileInputStream)dataProvider.getInputStream()).available());
+                    //contentNode.setProperty("jcr:data", dataProvider.getInputStream());
+                    Binary binary = valueFactory.createBinary(dataProvider.getInputStream());
+                    contentNode.setProperty(Property.JCR_DATA, binary);
+                } catch (RepositoryException re) {
+                    System.out.println("FILE NODE: " + contentNode.getPath() + " " + ((FileInputStream) dataProvider.getInputStream()).available());
                     throw re;
                 }
             }
         }
     }
 
-    private <T extends JcrFile> void addFileNode(JcrNode jcrNode, Node parentNode, T file, Mapper mapper)
-            throws IllegalAccessException, RepositoryException, IOException {
+    private <T extends JcrFile> void addFileNode(JcrNode jcrNode, Node parentNode, T file, Mapper mapper) throws IllegalAccessException, RepositoryException, IOException {
         Node fileNode;
-        if (jcrNode == null || jcrNode.nodeType().equals("nt:unstructured")) {
+        if (jcrNode == null || (jcrNode.nodeType().equals("nt:unstructured") || jcrNode.nodeType().equals(NodeType.NT_UNSTRUCTURED))) {
             fileNode = parentNode.addNode(mapper.getCleanName(file.getName()));
         } else {
             fileNode = parentNode.addNode(mapper.getCleanName(file.getName()), jcrNode.nodeType());
@@ -118,34 +127,39 @@ class FileNodeMapper {
         // update the object name and path
         file.setName(fileNode.getName());
         file.setPath(fileNode.getPath());
-        if (fileNode.hasProperty("jcr:uuid")) {
-            mapper.setUUID(file, fileNode.getUUID());
+        // Update the object identifier
+        mapper.setId(file, fileNode.getIdentifier());
+        if (fileNode.hasProperty(Property.JCR_UUID)) {
+            //mapper.setUUID(file, fileNode.getUUID());
+            mapper.setUUID(file, fileNode.getIdentifier());
         }
-        Node contentNode = fileNode.addNode("jcr:content", "nt:resource");
+        Node contentNode = fileNode.addNode(Property.JCR_CONTENT, NodeType.NT_RESOURCE);
         setFileNodeProperties(contentNode, file);
 
         mapper.addNode(fileNode, file, null, false);
     }
 
-    <T extends JcrFile> void addFileNode(Node fileNode, T file, Mapper mapper) throws IllegalAccessException,
-            RepositoryException, IOException {
+    <T extends JcrFile> void addFileNode(Node fileNode, T file, Mapper mapper) throws IllegalAccessException, RepositoryException, IOException {
+        // update the object name and path
         file.setName(fileNode.getName());
         file.setPath(fileNode.getPath());
-        if (fileNode.hasProperty("jcr:uuid")) {
-            mapper.setUUID(file, fileNode.getUUID());
+        // Update the object identifier
+        mapper.setId(file, fileNode.getIdentifier());
+        if (fileNode.hasProperty(Property.JCR_UUID)) {
+            //mapper.setUUID(file, fileNode.getUUID());
+            mapper.setUUID(file, fileNode.getIdentifier());
         }
         Node contentNode;
-        if (fileNode.hasNode("jcr:content")) {
-            contentNode = fileNode.getNode("jcr:content");
+        if (fileNode.hasNode(Property.JCR_CONTENT)) {
+            contentNode = fileNode.getNode(Property.JCR_CONTENT);
         } else {
-            contentNode = fileNode.addNode("jcr:content", "nt:resource");
+            contentNode = fileNode.addNode(Property.JCR_CONTENT, NodeType.NT_RESOURCE);
         }
         setFileNodeProperties(contentNode, file);
     }
 
-    private <T extends JcrFile> void updateFileNode(Node fileNode, T file, NodeFilter nodeFilter, int depth,
-            Mapper mapper) throws RepositoryException, IllegalAccessException, IOException {
-        Node contentNode = fileNode.getNode("jcr:content");
+    private <T extends JcrFile> void updateFileNode(Node fileNode, T file, NodeFilter nodeFilter, int depth, Mapper mapper) throws RepositoryException, IllegalAccessException, IOException {
+        Node contentNode = fileNode.getNode(Property.JCR_CONTENT);
         setFileNodeProperties(contentNode, file);
 
         mapper.updateNode(fileNode, file, file.getClass(), nodeFilter, depth + 1);
@@ -158,8 +172,7 @@ class FileNodeMapper {
         }
     }
 
-    private void addSingleFileToNode(Field field, Object obj, String nodeName, Node node, Mapper mapper, int depth,
-            NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
+    private void addSingleFileToNode(Field field, Object obj, String nodeName, Node node, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
         JcrNode fileJcrNode = ReflectionUtils.getJcrNodeAnnotation(field.getType());
         Node fileContainer = createFileFolderNode(fileJcrNode, nodeName, node, mapper);
@@ -178,8 +191,7 @@ class FileNodeMapper {
         }
     }
 
-    private void updateFileList(List children, Node fileContainer, JcrNode fileJcrNode, Mapper mapper, int depth,
-            NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
+    private void updateFileList(List<?> children, Node fileContainer, JcrNode fileJcrNode, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
         if (children != null && !children.isEmpty()) {
             if (fileContainer.hasNodes()) {
@@ -196,11 +208,9 @@ class FileNodeMapper {
                     }
                 }
                 // we must add new children, if any
-                for (int i = 0; i < children.size(); i++) {
-                    Object child = children.get(i);
+                for (Object child : children) {
                     String childPath = mapper.getNodePath(child);
-                    if (childPath == null || childPath.equals("")
-                            || !fileContainer.hasNode(mapper.getCleanName(mapper.getNodeName(child)))) {
+                    if (childPath == null || childPath.equals("") || !fileContainer.hasNode(mapper.getCleanName(mapper.getNodeName(child)))) {
                         addFileNode(fileJcrNode, fileContainer, (JcrFile) child, mapper);
                     }
                 }
@@ -216,20 +226,18 @@ class FileNodeMapper {
         }
     }
 
-    private void addMultipleFilesToNode(Field field, Object obj, String nodeName, Node node, Mapper mapper, int depth,
-            NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
+    private void addMultipleFilesToNode(Field field, Object obj, String nodeName, Node node, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
         JcrNode fileJcrNode = ReflectionUtils.getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field));
         Node fileContainer = createFileFolderNode(fileJcrNode, nodeName, node, mapper);
 
-        List children = (List) field.get(obj);
+        List<?> children = (List<?>) field.get(obj);
         updateFileList(children, fileContainer, fileJcrNode, mapper, depth, nodeFilter);
     }
 
-    private void addMapOfFilesToNode(Field field, Object obj, String nodeName, Node node, Mapper mapper, int depth,
-            NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
+    private void addMapOfFilesToNode(Field field, Object obj, String nodeName, Node node, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
-        Class fileClass;
+        Class<?> fileClass;
         if (ReflectionUtils.implementsInterface(ReflectionUtils.getParameterizedClass(field, 1), List.class)) {
             fileClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field, 1, 0);
         } else {
@@ -240,26 +248,25 @@ class FileNodeMapper {
         String cleanName = mapper.getCleanName(nodeName);
         Node fileContainer = node.hasNode(cleanName) ? node.getNode(cleanName) : node.addNode(cleanName); // this is just a nt:unstructured node
 
-        Map children = (Map) field.get(obj);
+        Map<?, ?> children = (Map<?, ?>) field.get(obj);
         if (children != null && !children.isEmpty()) {
-            Class paramClass = ReflectionUtils.getParameterizedClass(field, 1);
+            Class<?> paramClass = ReflectionUtils.getParameterizedClass(field, 1);
             if (fileContainer.hasNodes()) {
                 // nodes already exist, we need to update
-                Map mapWithCleanKeys = new HashMap();
-                Iterator it = children.keySet().iterator();
+                Map<String, String> mapWithCleanKeys = new HashMap<String, String>();
+                Iterator<?> it = children.keySet().iterator();
                 while (it.hasNext()) {
                     String key = (String) it.next();
                     String cleanKey = mapper.getCleanName(key);
                     if (fileContainer.hasNode(cleanKey)) {
                         if (ReflectionUtils.implementsInterface(paramClass, List.class)) {
                             // update the file list
-                            List childList = (List) children.get(key);
+                            List<?> childList = (List<?>) children.get(key);
                             Node listContainer = createFileFolderNode(fileJcrNode, cleanKey, fileContainer, mapper);
                             updateFileList(childList, listContainer, fileJcrNode, mapper, depth, nodeFilter);
                         } else {
                             // update the file
-                            updateFileNode(fileContainer.getNode(cleanKey), (JcrFile) children.get(key), nodeFilter,
-                                    depth, mapper);
+                            updateFileNode(fileContainer.getNode(cleanKey), (JcrFile) children.get(key), nodeFilter, depth, mapper);
                         }
                     } else {
                         // this child does not exist, so we add it
@@ -278,7 +285,7 @@ class FileNodeMapper {
                 }
             } else {
                 // no children exist, we simply add all
-                Iterator it = children.keySet().iterator();
+                Iterator<?> it = children.keySet().iterator();
                 while (it.hasNext()) {
                     String key = (String) it.next();
                     addMapFile(paramClass, fileJcrNode, fileContainer, children, key, mapper);
@@ -291,11 +298,10 @@ class FileNodeMapper {
         }
     }
 
-    private void addMapFile(Class paramClass, JcrNode fileJcrNode, Node fileContainer, Map childMap, String key,
-            Mapper mapper) throws IllegalAccessException, RepositoryException, IOException {
+    private void addMapFile(Class<?> paramClass, JcrNode fileJcrNode, Node fileContainer, Map<?, ?> childMap, String key, Mapper mapper) throws IllegalAccessException, RepositoryException, IOException {
 
         if (ReflectionUtils.implementsInterface(paramClass, List.class)) {
-            List childList = (List) childMap.get(key);
+            List<?> childList = (List<?>) childMap.get(key);
             Node listContainer = createFileFolderNode(fileJcrNode, mapper.getCleanName(key), fileContainer, mapper);
             for (int i = 0; i < childList.size(); i++) {
                 addFileNode(fileJcrNode, listContainer, (JcrFile) childList.get(i), mapper);
@@ -305,8 +311,7 @@ class FileNodeMapper {
         }
     }
 
-    private void setFiles(Field field, Object obj, Node node, Mapper mapper, int depth, NodeFilter nodeFilter)
-            throws IllegalAccessException, RepositoryException, IOException {
+    private void setFiles(Field field, Object obj, Node node, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
         String nodeName = getNodeName(field);
 
@@ -325,27 +330,28 @@ class FileNodeMapper {
         }
     }
 
-    private <T extends JcrFile> void mapNodeToFileObject(JcrFileNode jcrFileNode, T fileObj, Node fileNode,
-            NodeFilter nodeFilter, Object parentObject, int depth, Mapper mapper) throws ClassNotFoundException,
-            InstantiationException, RepositoryException, IllegalAccessException, IOException {
+    @SuppressWarnings("unchecked")
+    private <T extends JcrFile> void mapNodeToFileObject(JcrFileNode jcrFileNode, T fileObj, Node fileNode, NodeFilter nodeFilter, Object parentObject, int depth, Mapper mapper) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
-        Node contentNode = fileNode.getNode("jcr:content");
+        Node contentNode = fileNode.getNode(Property.JCR_CONTENT);
         fileObj.setName(fileNode.getName());
         fileObj.setPath(fileNode.getPath());
-        fileObj.setMimeType(contentNode.getProperty("jcr:mimeType").getString());
-        fileObj.setLastModified(contentNode.getProperty("jcr:lastModified").getDate());
-        if (contentNode.hasProperty("jcr:encoding")) {
-            fileObj.setEncoding(contentNode.getProperty("jcr:encoding").getString());
+        fileObj.setMimeType(contentNode.getProperty(Property.JCR_MIMETYPE).getString());
+        fileObj.setLastModified(contentNode.getProperty(Property.JCR_LAST_MODIFIED).getDate());
+        if (contentNode.hasProperty(Property.JCR_ENCODING)) {
+            fileObj.setEncoding(contentNode.getProperty(Property.JCR_ENCODING).getString());
         }
 
         // file data
         if (jcrFileNode == null || jcrFileNode.loadType() == JcrFileNode.LoadType.STREAM) {
-            JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(contentNode
-                    .getProperty("jcr:data").getStream(), contentNode.getProperty("jcr:data").getLength());
+            //InputStream is = contentNode.getProperty("jcr:data").getStream();
+            InputStream is = contentNode.getProperty(Property.JCR_DATA).getBinary().getStream();
+            JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(is, contentNode.getProperty(Property.JCR_DATA).getLength());
             fileObj.setDataProvider(dataProvider);
         } else if (jcrFileNode.loadType() == JcrFileNode.LoadType.BYTES) {
-            JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(Mapper
-                    .readBytes(contentNode.getProperty("jcr:data").getStream()));
+            //InputStream is = contentNode.getProperty("jcr:data").getStream();
+            InputStream is = contentNode.getProperty(Property.JCR_DATA).getBinary().getStream();
+            JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(Mapper.readBytes(is));
             fileObj.setDataProvider(dataProvider);
         }
 
@@ -354,22 +360,19 @@ class FileNodeMapper {
         fileObj = (T) mapper.mapNodeToClass(fileObj, fileNode, nodeFilter, parentObject, depth + 1);
     }
 
-    void addFiles(Field field, Object obj, Node node, Mapper mapper) throws IllegalAccessException,
-            RepositoryException, IOException {
+    void addFiles(Field field, Object obj, Node node, Mapper mapper) throws IllegalAccessException, RepositoryException, IOException {
 
         setFiles(field, obj, node, mapper, -1, null);
     }
 
-    void updateFiles(Field field, Object obj, Node node, Mapper mapper, int depth, NodeFilter nodeFilter)
-            throws IllegalAccessException, RepositoryException, IOException {
+    void updateFiles(Field field, Object obj, Node node, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
         setFiles(field, obj, node, mapper, depth, nodeFilter);
     }
 
-    List getFileList(Class childObjClass, Node fileContainer, Object obj, JcrFileNode jcrFileNode, int depth,
-            NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException,
-            RepositoryException, IllegalAccessException, IOException {
-        List children = jcrFileNode.listContainerClass().newInstance();
+    @SuppressWarnings("unchecked")
+    List<JcrFile> getFileList(Class<?> childObjClass, Node fileContainer, Object obj, JcrFileNode jcrFileNode, int depth, NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
+        List<JcrFile> children = jcrFileNode.listContainerClass().newInstance();
         NodeIterator iterator = fileContainer.getNodes();
         while (iterator.hasNext()) {
             JcrFile fileObj = (JcrFile) childObjClass.newInstance();
@@ -379,56 +382,45 @@ class FileNodeMapper {
         return children;
     }
 
-    void mapSingleFile(JcrFile fileObj, Node fileNode, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper)
-            throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException,
-            IOException {
+    void mapSingleFile(JcrFile fileObj, Node fileNode, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
         mapNodeToFileObject(null, fileObj, fileNode, nodeFilter, obj, depth, mapper);
     }
 
-    JcrFile getSingleFile(Class childObjClass, Node fileContainer, Object obj, JcrFileNode jcrFileNode, int depth,
-            NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException,
-            RepositoryException, IllegalAccessException, IOException {
+    JcrFile getSingleFile(Class<?> childObjClass, Node fileContainer, Object obj, JcrFileNode jcrFileNode, int depth, NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
         JcrFile fileObj = (JcrFile) childObjClass.newInstance();
         mapNodeToFileObject(jcrFileNode, fileObj, fileContainer.getNodes().nextNode(), nodeFilter, obj, depth, mapper);
         return fileObj;
     }
 
-    private Map getFileMap(Field field, Node fileContainer, JcrFileNode jcrFileNode, Object obj, int depth,
-            NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException,
-            RepositoryException, IllegalAccessException, IOException {
+    @SuppressWarnings("unchecked")
+    private Map<?, ?> getFileMap(Field field, Node fileContainer, JcrFileNode jcrFileNode, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
-        Class mapParamClass = ReflectionUtils.getParameterizedClass(field, 1);
-        Map children = jcrFileNode.mapContainerClass().newInstance();
+        Class<?> mapParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+        Map<Object, Object> children = jcrFileNode.mapContainerClass().newInstance();
         NodeIterator iterator = fileContainer.getNodes();
         while (iterator.hasNext()) {
             Node childNode = iterator.nextNode();
             if (ReflectionUtils.implementsInterface(mapParamClass, List.class)) {
-                Class childObjClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field, 1, 0);
+                Class<?> childObjClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field, 1, 0);
                 if (jcrFileNode.lazy()) {
                     // lazy loading
-                    children.put(childNode.getName(), ProxyFactory.createFileNodeListProxy(childObjClass,
-                            fileContainer, obj, jcrFileNode, depth, nodeFilter, mapper));
+                    children.put(childNode.getName(), ProxyFactory.createFileNodeListProxy(childObjClass, obj, fileContainer.getPath(), fileContainer.getSession(), mapper, depth, nodeFilter, jcrFileNode));
                 } else {
-                    children.put(childNode.getName(), getFileList(childObjClass, childNode, obj, jcrFileNode, depth,
-                            nodeFilter, mapper));
+                    children.put(childNode.getName(), getFileList(childObjClass, childNode, obj, jcrFileNode, depth, nodeFilter, mapper));
                 }
             } else {
                 if (jcrFileNode.lazy()) {
                     // lazy loading
-                    children.put(childNode.getName(), ProxyFactory.createFileNodeProxy(mapParamClass, fileContainer,
-                            obj, jcrFileNode, depth, nodeFilter, mapper));
+                    children.put(childNode.getName(), ProxyFactory.createFileNodeProxy(mapParamClass, obj, fileContainer.getPath(), fileContainer.getSession(), mapper, depth, nodeFilter, jcrFileNode));
                 } else {
-                    children.put(childNode.getName(), getSingleFile(mapParamClass, fileContainer, obj, jcrFileNode,
-                            depth, nodeFilter, mapper));
+                    children.put(childNode.getName(), getSingleFile(mapParamClass, fileContainer, obj, jcrFileNode, depth, nodeFilter, mapper));
                 }
             }
         }
         return children;
     }
 
-    void getFilesFromNode(Field field, Node node, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper)
-            throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException,
-            IOException {
+    void getFilesFromNode(Field field, Node node, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
         String nodeName = getNodeName(field);
         JcrFileNode jcrFileNode = mapper.getJcrom().getAnnotationReader().getAnnotation(field, JcrFileNode.class);
@@ -438,12 +430,11 @@ class FileNodeMapper {
             Node fileContainer = node.getNode(nodeName);
             if (ReflectionUtils.implementsInterface(field.getType(), List.class)) {
                 // we can expect more than one child object here
-                List children;
-                Class childObjClass = ReflectionUtils.getParameterizedClass(field);
+                List<?> children;
+                Class<?> childObjClass = ReflectionUtils.getParameterizedClass(field);
                 if (jcrFileNode.lazy()) {
                     // lazy loading
-                    children = ProxyFactory.createFileNodeListProxy(childObjClass, fileContainer, obj, jcrFileNode,
-                            depth, nodeFilter, mapper);
+                    children = ProxyFactory.createFileNodeListProxy(childObjClass, obj, fileContainer.getPath(), node.getSession(), mapper, depth, nodeFilter, jcrFileNode);
                 } else {
                     // eager loading
                     children = getFileList(childObjClass, fileContainer, obj, jcrFileNode, depth, nodeFilter, mapper);
@@ -460,12 +451,10 @@ class FileNodeMapper {
                 if (fileContainer.hasNodes()) {
                     if (jcrFileNode.lazy()) {
                         // lazy loading
-                        field.set(obj, ProxyFactory.createFileNodeProxy(field.getType(), fileContainer, obj,
-                                jcrFileNode, depth, nodeFilter, mapper));
+                        field.set(obj, ProxyFactory.createFileNodeProxy(field.getType(), obj, fileContainer.getPath(), node.getSession(), mapper, depth, nodeFilter, jcrFileNode));
                     } else {
                         // eager loading
-                        field.set(obj, getSingleFile(field.getType(), fileContainer, obj, jcrFileNode, depth,
-                                nodeFilter, mapper));
+                        field.set(obj, getSingleFile(field.getType(), fileContainer, obj, jcrFileNode, depth, nodeFilter, mapper));
                     }
                 }
             }

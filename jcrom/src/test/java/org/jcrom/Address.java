@@ -7,10 +7,14 @@ import org.jcrom.annotations.JcrProperty;
  * @author Olafur Gauti Gudmundsson
  */
 public class Address extends AbstractJcrEntity {
-    
-    @JcrProperty String street;
-    @JcrProperty String postCode;
-    
+
+    private static final long serialVersionUID = 1L;
+
+    @JcrProperty
+    String street;
+    @JcrProperty
+    String postCode;
+
     public Address() {
     }
 

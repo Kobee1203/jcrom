@@ -7,9 +7,12 @@ import org.jcrom.annotations.JcrChildNode;
  * @author Olafur Gauti Gudmundsson
  */
 public class UserProfile extends AbstractJcrEntity {
-    
-    @JcrChildNode(createContainerNode=false) Address address;
-    
+
+    private static final long serialVersionUID = 1L;
+
+    @JcrChildNode(createContainerNode = false)
+    Address address;
+
     public UserProfile() {
     }
 

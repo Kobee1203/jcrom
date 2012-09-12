@@ -24,30 +24,36 @@ import org.jcrom.annotations.JcrUUID;
  */
 public class Rectangle extends AbstractJcrEntity implements Shape {
 
-    @JcrUUID private String uuid;
-	@JcrProperty private double height;
-	@JcrProperty private double width;
-	
-	public Rectangle() {
-	}
-	
-	public Rectangle( double height, double width ) {
-		super();
-		this.height = height;
-		this.width = width;
-	}
-	
-	public double getArea() {
-		return height * width;
-	}
+    private static final long serialVersionUID = 1L;
 
-	public double getHeight() {
-		return height;
-	}
+    @JcrUUID
+    private String uuid;
+    @JcrProperty
+    private double height;
+    @JcrProperty
+    private double width;
 
-	public double getWidth() {
-		return width;
-	}
+    public Rectangle() {
+    }
+
+    public Rectangle(double height, double width) {
+        super();
+        this.height = height;
+        this.width = width;
+    }
+
+    @Override
+    public double getArea() {
+        return height * width;
+    }
+
+    public double getHeight() {
+        return height;
+    }
+
+    public double getWidth() {
+        return width;
+    }
 
     public String getUuid() {
         return uuid;
@@ -56,5 +62,5 @@ public class Rectangle extends AbstractJcrEntity implements Shape {
     public void setUuid(String uuid) {
         this.uuid = uuid;
     }
-	
+
 }

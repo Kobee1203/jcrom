@@ -8,18 +8,20 @@ import org.jcrom.annotations.JcrSerializedProperty;
  */
 public class EntityWithSerializedProperties extends AbstractJcrEntity {
 
-	@JcrSerializedProperty private Parent parent;
-	
-	public EntityWithSerializedProperties() {
-	}
+    private static final long serialVersionUID = 1L;
 
-	public Parent getParent() {
-		return parent;
-	}
+    @JcrSerializedProperty
+    private Parent parent;
 
-	public void setParent(Parent parent) {
-		this.parent = parent;
-	}
-	
-	
+    public EntityWithSerializedProperties() {
+    }
+
+    public Parent getParent() {
+        return parent;
+    }
+
+    public void setParent(Parent parent) {
+        this.parent = parent;
+    }
+
 }

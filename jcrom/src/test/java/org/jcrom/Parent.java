@@ -21,8 +21,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrFileNode;
+import org.jcrom.annotations.JcrIdentifier;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrUUID;
@@ -31,31 +33,49 @@ import org.jcrom.annotations.JcrUUID;
  *
  * @author Olafur Gauti Gudmundsson
  */
-@JcrNode(mixinTypes = {"mix:referenceable"})
+@JcrNode(mixinTypes = { "mix:referenceable" }, classNameProperty = "className")
 public class Parent extends AbstractEntity implements Serializable {
 
-    @JcrUUID String uuid;
-    @JcrProperty List<String> tags;
+    private static final long serialVersionUID = 1L;
 
-    @JcrChildNode private Child adoptedChild;
-    @JcrChildNode private List<Child> children;
-    @JcrFileNode private Photo passportPhoto;
-    @JcrFileNode private JcrFile jcrFile;
-    @JcrFileNode(loadType = JcrFileNode.LoadType.BYTES) private List<JcrFile> files;
+    @JcrIdentifier
+    String id;
+    @JcrUUID
+    String uuid;
+    @JcrProperty
+    List<String> tags;
 
-    @JcrChildNode(listContainerClass=LinkedList.class)
+    @JcrChildNode
+    private Child adoptedChild;
+    @JcrChildNode
+    private List<Child> children;
+    @JcrFileNode
+    private Photo passportPhoto;
+    @JcrFileNode
+    private JcrFile jcrFile;
+    @JcrFileNode(loadType = JcrFileNode.LoadType.BYTES)
+    private List<JcrFile> files;
+
+    @JcrChildNode(listContainerClass = LinkedList.class)
     private List<Child> customList;
 
-    @JcrChildNode(mapContainerClass=TreeMap.class)
-    private Map<String,Object> customMap;
-
+    @JcrChildNode(mapContainerClass = TreeMap.class)
+    private Map<String, Object> customMap;
 
     public Parent() {
         tags = new ArrayList<String>();
         children = new ArrayList<Child>();
         files = new ArrayList<JcrFile>();
         customList = new LinkedList<Child>();
-        customMap = new TreeMap<String,Object>();
+        customMap = new TreeMap<String, Object>();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getUuid() {
@@ -126,11 +146,11 @@ public class Parent extends AbstractEntity implements Serializable {
         this.jcrFile = jcrFile;
     }
 
-    public List getCustomList() {
+    public List<Child> getCustomList() {
         return customList;
     }
 
-    public void setCustomList(List customList) {
+    public void setCustomList(List<Child> customList) {
         this.customList = customList;
     }
 

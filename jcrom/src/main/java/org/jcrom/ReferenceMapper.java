@@ -19,10 +19,10 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
@@ -32,6 +32,7 @@ import javax.jcr.Value;
 
 import org.jcrom.annotations.JcrReference;
 import org.jcrom.util.NodeFilter;
+import org.jcrom.util.PathUtils;
 import org.jcrom.util.ReflectionUtils;
 
 /**
@@ -56,29 +57,21 @@ class ReferenceMapper {
         return name;
     }
 
-    private String relativePath(String path) {
-        if (path.charAt(0) == '/') {
-            return path.substring(1);
-        } else {
-            return path;
-        }
-    }
-
-    private List<Value> getReferenceValues(List references, Session session, JcrReference jcrReference)
-            throws IllegalAccessException, RepositoryException {
+    private List<Value> getReferenceValues(List<?> references, Session session, JcrReference jcrReference) throws IllegalAccessException, RepositoryException {
         List<Value> refValues = new ArrayList<Value>();
-        for (int i = 0; i < references.size(); i++) {
+        for (Object reference : references) {
             if (jcrReference.byPath()) {
-                String referencePath = mapper.getNodePath(references.get(i));
+                String referencePath = mapper.getNodePath(reference);
                 if (referencePath != null && !referencePath.equals("")) {
-                    if (session.getRootNode().hasNode(relativePath(referencePath))) {
+                    if (session.getRootNode().hasNode(PathUtils.relativePath(referencePath))) {
                         refValues.add(session.getValueFactory().createValue(referencePath));
                     }
                 }
             } else {
-                String referenceUUID = mapper.getNodeUUID(references.get(i));
-                if (referenceUUID != null && !referenceUUID.equals("")) {
-                    Node referencedNode = session.getNodeByUUID(referenceUUID);
+                String referenceId = mapper.getNodeId(reference);
+                if (referenceId != null && !referenceId.equals("")) {
+                    //Node referencedNode = session.getNodeByUUID(referenceUUID);
+                    Node referencedNode = PathUtils.getNodeById(referenceId, session);
                     refValues.add(session.getValueFactory().createValue(referencedNode));
                 }
             }
@@ -86,14 +79,13 @@ class ReferenceMapper {
         return refValues;
     }
 
-    private void addSingleReferenceToNode(Field field, Object obj, String propertyName, Node node)
-            throws IllegalAccessException, RepositoryException {
-        // extract the UUID from the object, load the node, and
-        // add a reference to it
+    private void addSingleReferenceToNode(Field field, Object obj, String propertyName, Node node) throws IllegalAccessException, RepositoryException {
+        // extract the Identifier from the object, load the node, and add a reference to it
         JcrReference jcrReference = mapper.getJcrom().getAnnotationReader().getAnnotation(field, JcrReference.class);
         Object referenceObject = field.get(obj);
-        if (referenceObject != null)
+        if (referenceObject != null) {
             referenceObject = mapper.clearCglib(field.get(obj));
+        }
 
         if (referenceObject != null) {
             mapSingleReference(jcrReference, referenceObject, node, propertyName);
@@ -103,19 +95,19 @@ class ReferenceMapper {
         }
     }
 
-    private void addMultipleReferencesToNode(Field field, Object obj, String propertyName, Node node)
-            throws IllegalAccessException, RepositoryException {
+    private void addMultipleReferencesToNode(Field field, Object obj, String propertyName, Node node) throws IllegalAccessException, RepositoryException {
 
         JcrReference jcrReference = mapper.getJcrom().getAnnotationReader().getAnnotation(field, JcrReference.class);
-        List references = (List) field.get(obj);
+        List<?> references = (List<?>) field.get(obj);
         if (node.hasProperty(propertyName) && !node.getProperty(propertyName).getDefinition().isMultiple()) {
             node.setProperty(propertyName, (Value) null);
-            node.save();
+            //node.save();
+            node.getSession().save();
         }
         if (references != null && !references.isEmpty()) {
             List<Value> refValues = getReferenceValues(references, node.getSession(), jcrReference);
             if (!refValues.isEmpty()) {
-                node.setProperty(propertyName, (Value[]) refValues.toArray(new Value[refValues.size()]));
+                node.setProperty(propertyName, refValues.toArray(new Value[refValues.size()]));
             } else {
                 node.setProperty(propertyName, (Value[]) null);
             }
@@ -124,21 +116,20 @@ class ReferenceMapper {
         }
     }
 
-    private void mapSingleReference(JcrReference jcrReference, Object referenceObject, Node containerNode,
-            String propertyName) throws IllegalAccessException, RepositoryException {
+    private void mapSingleReference(JcrReference jcrReference, Object referenceObject, Node containerNode, String propertyName) throws IllegalAccessException, RepositoryException {
 
         if (jcrReference.byPath()) {
             String referencePath = mapper.getNodePath(referenceObject);
             if (referencePath != null && !referencePath.equals("")) {
-                if (containerNode.getSession().getRootNode().hasNode(relativePath(referencePath))) {
-                    containerNode.setProperty(propertyName, containerNode.getSession().getValueFactory().createValue(
-                            referencePath));
+                if (containerNode.getSession().getRootNode().hasNode(PathUtils.relativePath(referencePath))) {
+                    containerNode.setProperty(propertyName, containerNode.getSession().getValueFactory().createValue(referencePath));
                 }
             }
         } else {
-            String referenceUUID = mapper.getNodeUUID(referenceObject);
-            if (referenceUUID != null && !referenceUUID.equals("")) {
-                Node referencedNode = containerNode.getSession().getNodeByUUID(referenceUUID);
+            String referenceId = mapper.getNodeId(referenceObject);
+            if (referenceId != null && !referenceId.equals("")) {
+                //Node referencedNode = containerNode.getSession().getNodeByUUID(referenceUUID);
+                Node referencedNode = PathUtils.getNodeById(referenceId, containerNode.getSession());
                 containerNode.setProperty(propertyName, referencedNode);
             } else {
                 // remove the reference
@@ -150,8 +141,7 @@ class ReferenceMapper {
     /**
      * Maps a Map<String,Object> or Map<String,List<Object>> to a JCR Node.
      */
-    private void addMapOfReferencesToNode(Field field, Object obj, String containerName, Node node)
-            throws IllegalAccessException, RepositoryException {
+    private void addMapOfReferencesToNode(Field field, Object obj, String containerName, Node node) throws IllegalAccessException, RepositoryException {
 
         JcrReference jcrReference = mapper.getJcrom().getAnnotationReader().getAnnotation(field, JcrReference.class);
 
@@ -164,30 +154,27 @@ class ReferenceMapper {
         Node referenceContainer = node.addNode(containerName);
 
         // map the references as properties on the container node
-        Map referenceMap = (Map) field.get(obj);
+        Map<?, ?> referenceMap = (Map<?, ?>) field.get(obj);
         if (referenceMap != null && !referenceMap.isEmpty()) {
-            Class paramClass = ReflectionUtils.getParameterizedClass(field, 1);
-            Iterator it = referenceMap.keySet().iterator();
-            while (it.hasNext()) {
-                String key = (String) it.next();
+            Class<?> paramClass = ReflectionUtils.getParameterizedClass(field, 1);
+            for (Map.Entry<?, ?> entry : referenceMap.entrySet()) {
+                String key = (String) entry.getKey();
                 if (ReflectionUtils.implementsInterface(paramClass, List.class)) {
-                    List references = (List) referenceMap.get(key);
-                    List<Value> refValues = getReferenceValues(references, referenceContainer.getSession(),
-                            jcrReference);
+                    List<?> references = (List<?>) entry.getValue();
+                    List<Value> refValues = getReferenceValues(references, referenceContainer.getSession(), jcrReference);
                     if (!refValues.isEmpty()) {
-                        referenceContainer.setProperty(key, (Value[]) refValues.toArray(new Value[refValues.size()]));
+                        referenceContainer.setProperty(key, refValues.toArray(new Value[refValues.size()]));
                     }
 
                 } else {
-                    Object referenceObject = referenceMap.get(key);
+                    Object referenceObject = entry.getValue();
                     mapSingleReference(jcrReference, referenceObject, referenceContainer, key);
                 }
             }
         }
     }
 
-    private void setReferenceProperties(Field field, Object obj, Node node, NodeFilter nodeFilter)
-            throws IllegalAccessException, RepositoryException {
+    private void setReferenceProperties(Field field, Object obj, Node node, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException {
 
         String propertyName = getPropertyName(field);
 
@@ -210,36 +197,34 @@ class ReferenceMapper {
         setReferenceProperties(field, obj, node, null);
     }
 
-    void updateReferences(Field field, Object obj, Node node, NodeFilter nodeFilter) throws IllegalAccessException,
-            RepositoryException {
+    void updateReferences(Field field, Object obj, Node node, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException {
         setReferenceProperties(field, obj, node, nodeFilter);
     }
 
-    private Node getSingleReferencedNode(JcrReference jcrReference, Value value, Session session)
-            throws RepositoryException {
+    private Node getSingleReferencedNode(JcrReference jcrReference, Value value, Session session) throws RepositoryException {
         if (jcrReference.byPath()) {
-            if (session.getRootNode().hasNode(relativePath(value.getString()))) {
-                return session.getRootNode().getNode(relativePath(value.getString()));
+            if (session.getRootNode().hasNode(PathUtils.relativePath(value.getString()))) {
+                return PathUtils.getNode(value.getString(), session);
             }
         } else {
-            return session.getNodeByUUID(value.getString());
+            //return session.getNodeByUUID(value.getString());
+            return PathUtils.getNodeById(value.getString(), session);
         }
         return null;
     }
 
-    Object createReferencedObject(Field field, Value value, Object obj, Session session, Class referenceObjClass,
-            int depth, NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException,
-            RepositoryException, IllegalAccessException, IOException {
+    Object createReferencedObject(Field field, Value value, Object obj, Session session, Class<?> referenceObjClass, int depth, NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
         JcrReference jcrReference = mapper.getJcrom().getAnnotationReader().getAnnotation(field, JcrReference.class);
         Node referencedNode = null;
 
         if (jcrReference.byPath()) {
-            if (session.getRootNode().hasNode(relativePath(value.getString()))) {
-                referencedNode = session.getRootNode().getNode(relativePath(value.getString()));
+            if (session.getRootNode().hasNode(PathUtils.relativePath(value.getString()))) {
+                referencedNode = PathUtils.getNode(value.getString(), session);
             }
         } else {
-            referencedNode = session.getNodeByUUID(value.getString());
+            //referencedNode = session.getNodeByUUID(value.getString());
+            referencedNode = PathUtils.getNodeById(value.getString(), session);
         }
 
         if (referencedNode != null) {
@@ -252,8 +237,9 @@ class ReferenceMapper {
                     // just store the path
                     mapper.setNodePath(referencedObject, value.getString());
                 } else {
-                    // just store the UUID
+                    // just store the Identifier
                     mapper.setUUID(referencedObject, value.getString());
+                    mapper.setId(referencedObject, value.getString());
                 }
             }
             return referencedObject;
@@ -262,31 +248,22 @@ class ReferenceMapper {
         }
     }
 
-    List getReferenceList(Field field, String propertyName, Class referenceObjClass, Node node, Object obj, int depth,
-            NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException,
-            RepositoryException, IllegalAccessException, IOException {
+    List<?> getReferenceList(Field field, String propertyName, Class<?> referenceObjClass, Node node, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
-        List references = new ArrayList();
+        List<Object> references = new ArrayList<Object>();
         if (node.hasProperty(propertyName)) {
 
             Value[] refValues;
 
             if (node.getProperty(propertyName).getDefinition().isMultiple()) {
-
                 refValues = node.getProperty(propertyName).getValues();
-
             } else {
-
                 refValues = new Value[] { node.getProperty(propertyName).getValue() };
-
             }
 
             for (Value value : refValues) {
-
-                Object referencedObject = createReferencedObject(field, value, obj, node.getSession(),
-                        referenceObjClass, depth, nodeFilter, mapper);
+                Object referencedObject = createReferencedObject(field, value, obj, node.getSession(), referenceObjClass, depth, nodeFilter, mapper);
                 references.add(referencedObject);
-
             }
 
         }
@@ -295,35 +272,27 @@ class ReferenceMapper {
 
     }
 
-    Map getReferenceMap(Field field, String containerName, Class mapParamClass, Node node, Object obj, int depth,
-            NodeFilter nodeFilter, Mapper mapper, JcrReference jcrReference) throws ClassNotFoundException,
-            InstantiationException, RepositoryException, IllegalAccessException, IOException {
+    Map<String, Object> getReferenceMap(Field field, String containerName, Class<?> mapParamClass, Node node, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper, JcrReference jcrReference) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
-        Map references = new HashMap();
+        Map<String, Object> references = new HashMap<String, Object>();
         if (node.hasNode(containerName)) {
             Node containerNode = node.getNode(containerName);
             PropertyIterator propertyIterator = containerNode.getProperties();
             while (propertyIterator.hasNext()) {
                 Property p = propertyIterator.nextProperty();
-                if (!p.getName().startsWith("jcr:")) {
+                if (!p.getName().startsWith("jcr:") && !p.getName().startsWith(NamespaceRegistry.NAMESPACE_JCR)) {
                     if (ReflectionUtils.implementsInterface(mapParamClass, List.class)) {
                         if (jcrReference.lazy()) {
-                            references.put(p.getName(), ProxyFactory.createReferenceListProxy(Object.class, obj,
-                                    containerNode.getPath(), p.getName(), node.getSession(), mapper, depth, nodeFilter,
-                                    field));
+                            references.put(p.getName(), ProxyFactory.createReferenceListProxy(Object.class, obj, containerNode.getPath(), p.getName(), node.getSession(), mapper, depth, nodeFilter, field));
                         } else {
-                            references.put(p.getName(), getReferenceList(field, p.getName(), Object.class,
-                                    containerNode, obj, depth, nodeFilter, mapper));
+                            references.put(p.getName(), getReferenceList(field, p.getName(), Object.class, containerNode, obj, depth, nodeFilter, mapper));
                         }
                     } else {
                         if (jcrReference.lazy()) {
                             Node referencedNode = getSingleReferencedNode(jcrReference, p.getValue(), node.getSession());
-                            references.put(p.getName(), ProxyFactory.createReferenceProxy(mapper.findClassFromNode(
-                                    Object.class, referencedNode), obj, containerNode.getPath(), p.getName(), node
-                                    .getSession(), mapper, depth, nodeFilter, field));
+                            references.put(p.getName(), ProxyFactory.createReferenceProxy(mapper.findClassFromNode(Object.class, referencedNode), obj, containerNode.getPath(), p.getName(), node.getSession(), mapper, depth, nodeFilter, field));
                         } else {
-                            references.put(p.getName(), createReferencedObject(field, p.getValue(), obj, containerNode
-                                    .getSession(), Object.class, depth, nodeFilter, mapper));
+                            references.put(p.getName(), createReferencedObject(field, p.getValue(), obj, containerNode.getSession(), Object.class, depth, nodeFilter, mapper));
                         }
                     }
                 }
@@ -332,43 +301,36 @@ class ReferenceMapper {
         return references;
     }
 
-    void getReferencesFromNode(Field field, Node node, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper)
-            throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException,
-            IOException {
+    void getReferencesFromNode(Field field, Node node, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
         String propertyName = getPropertyName(field);
         JcrReference jcrReference = mapper.getJcrom().getAnnotationReader().getAnnotation(field, JcrReference.class);
 
         if (ReflectionUtils.implementsInterface(field.getType(), List.class)) {
             // multiple references in a List
-            Class referenceObjClass = ReflectionUtils.getParameterizedClass(field);
+            Class<?> referenceObjClass = ReflectionUtils.getParameterizedClass(field);
             if (jcrReference.lazy()) {
                 // lazy loading
-                field.set(obj, ProxyFactory.createReferenceListProxy(referenceObjClass, obj, node.getPath(),
-                        propertyName, node.getSession(), mapper, depth, nodeFilter, field));
+                field.set(obj, ProxyFactory.createReferenceListProxy(referenceObjClass, obj, node.getPath(), propertyName, node.getSession(), mapper, depth, nodeFilter, field));
             } else {
                 // eager loading
-                field.set(obj, getReferenceList(field, propertyName, referenceObjClass, node, obj, depth, nodeFilter,
-                        mapper));
+                field.set(obj, getReferenceList(field, propertyName, referenceObjClass, node, obj, depth, nodeFilter, mapper));
             }
 
         } else if (ReflectionUtils.implementsInterface(field.getType(), Map.class)) {
             // multiple references in a Map
             // lazy loading is applied to each value in the Map
-            Class mapParamClass = ReflectionUtils.getParameterizedClass(field, 1);
-            field.set(obj, getReferenceMap(field, propertyName, mapParamClass, node, obj, depth, nodeFilter, mapper,
-                    jcrReference));
+            Class<?> mapParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+            field.set(obj, getReferenceMap(field, propertyName, mapParamClass, node, obj, depth, nodeFilter, mapper, jcrReference));
 
         } else {
             // single reference
             if (node.hasProperty(propertyName)) {
-                Class referenceObjClass = field.getType();
+                Class<?> referenceObjClass = field.getType();
                 if (jcrReference.lazy()) {
-                    field.set(obj, ProxyFactory.createReferenceProxy(referenceObjClass, obj, node.getPath(),
-                            propertyName, node.getSession(), mapper, depth, nodeFilter, field));
+                    field.set(obj, ProxyFactory.createReferenceProxy(referenceObjClass, obj, node.getPath(), propertyName, node.getSession(), mapper, depth, nodeFilter, field));
                 } else {
-                    field.set(obj, createReferencedObject(field, node.getProperty(propertyName).getValue(), obj, node
-                            .getSession(), referenceObjClass, depth, nodeFilter, mapper));
+                    field.set(obj, createReferencedObject(field, node.getProperty(propertyName).getValue(), obj, node.getSession(), referenceObjClass, depth, nodeFilter, mapper));
                 }
             }
         }

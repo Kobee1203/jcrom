@@ -8,16 +8,20 @@ import org.jcrom.annotations.JcrChildNode;
  */
 public class Square extends Rectangle {
 
-    @JcrChildNode private WithParentInterface child;
+    private static final long serialVersionUID = 1L;
 
-    public Square() {}
+    @JcrChildNode
+    private WithParentInterface child;
 
-	public Square( double height, double width ) {
-		super(height, width);
-		if ( height != width ) {
+    public Square() {
+    }
+
+    public Square(double height, double width) {
+        super(height, width);
+        if (height != width) {
             throw new IllegalArgumentException("This is not a square!");
         }
-	}
+    }
 
     public WithParentInterface getChild() {
         return child;
@@ -26,6 +30,5 @@ public class Square extends Rectangle {
     public void setChild(WithParentInterface child) {
         this.child = child;
     }
-
 
 }

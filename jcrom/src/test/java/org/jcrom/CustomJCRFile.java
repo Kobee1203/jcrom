@@ -15,6 +15,8 @@
  */
 package org.jcrom;
 
+import javax.jcr.nodetype.NodeType;
+
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrUUID;
@@ -22,45 +24,47 @@ import org.jcrom.annotations.JcrUUID;
 /**
  * Thanks to Danilo Barboza and Leander for contributing this test class.
  */
-@JcrNode(nodeType = "nt:unstructured", mixinTypes = { "mix:referenceable" })
+@JcrNode(nodeType = NodeType.NT_UNSTRUCTURED, mixinTypes = { NodeType.MIX_REFERENCEABLE })
 public class CustomJCRFile extends JcrFile {
 
-	@JcrUUID
-	private String uuid;
+    private static final long serialVersionUID = 1L;
 
-	@JcrProperty
-	private String metadata;
-    
+    @JcrUUID
+    private String uuid;
+
+    @JcrProperty
+    private String metadata;
+
     public CustomJCRFile() {
         super();
     }
 
-	/**
-	 * @return the metadata
-	 */
-	public String getMetadata() {
-		return metadata;
-	}
+    /**
+     * @return the metadata
+     */
+    public String getMetadata() {
+        return metadata;
+    }
 
-	/**
-	 * @param metadata the metadata to set
-	 */
-	public void setMetadata(String metadata) {
-		this.metadata = metadata;
-	}
+    /**
+     * @param metadata the metadata to set
+     */
+    public void setMetadata(String metadata) {
+        this.metadata = metadata;
+    }
 
-	/**
-	 * @return the uuid
-	 */
-	public String getUuid() {
-		return this.uuid;
-	}
+    /**
+     * @return the uuid
+     */
+    public String getUuid() {
+        return this.uuid;
+    }
 
-	/**
-	 * @param uuid
-	 *            the uuid to set
-	 */
-	public void setUuid(final String uuid) {
-		this.uuid = uuid;
-	}
+    /**
+     * @param uuid
+     *            the uuid to set
+     */
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
+    }
 }

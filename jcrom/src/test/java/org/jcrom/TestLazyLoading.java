@@ -1,64 +1,22 @@
 package org.jcrom;
 
-import java.io.File;
-import java.net.URL;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.LogManager;
+
 import javax.jcr.Node;
-import javax.jcr.Repository;
-import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
-import org.apache.jackrabbit.core.TransientRepository;
-import org.junit.After;
-import static org.junit.Assert.*;
-import org.junit.Before;
+
 import org.junit.Test;
 
 /**
  *
  * @author Olafur Gauti Gudmundsson
  */
-public class TestLazyLoading {
-
-    private Repository repo;
-    private Session session;
-
-    @Before
-    public void setUpRepository() throws Exception {
-        repo = (Repository) new TransientRepository();
-        session = repo.login(new SimpleCredentials("a", "b".toCharArray()));
-
-        ClassLoader loader = TestMapping.class.getClassLoader();
-        URL url = loader.getResource("logger.properties");
-        if (url == null) {
-            url = loader.getResource("/logger.properties");
-        }
-        LogManager.getLogManager().readConfiguration(url.openStream());
-    }
-
-    @After
-    public void tearDownRepository() throws Exception {
-        session.logout();
-        deleteDir(new File("repository"));
-        new File("repository.xml").delete();
-        new File("derby.log").delete();
-    }
-
-    public static boolean deleteDir(File dir) {
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
-                if (!success) {
-                    return false;
-                }
-            }
-        }
-
-        // The directory is now empty so delete it
-        return dir.delete();
-    }
+public class TestLazyLoading extends TestAbstract {
 
     @Test
     public void testLazyLoading() throws Exception {
@@ -219,5 +177,80 @@ public class TestLazyLoading {
 
         TreeNode ref2FromNode = (TreeNode) updatedNode.getSingleReferences().get(ref2.getName());
         assertTrue(ref2FromNode.getName().equals(ref2.getName()));
+    }
+
+    @Test
+    public void testLazyLoadingWithSessionFactory() throws Exception {
+
+        SessionFactory sessionFactory = new SessionFactoryImpl(repo, new SimpleCredentials(userID, password));
+
+        Jcrom jcrom = new Jcrom(true, true);
+        jcrom.map(Tree.class).map(LazyObject.class);
+        jcrom.setSessionFactory(sessionFactory);
+
+        TreeDAO dao = new TreeDAO(jcrom);
+
+        TreeNode homeNode = new TreeNode();
+        homeNode.setName("home");
+
+        TreeNode newsNode = new TreeNode();
+        newsNode.setName("news");
+
+        TreeNode productsNode = new TreeNode();
+        productsNode.setName("products");
+
+        TreeNode templateNode = new TreeNode();
+        templateNode.setName("template");
+
+        homeNode.addChild(newsNode);
+        homeNode.addChild(productsNode);
+
+        LazyInterface lazyObject1 = new LazyObject();
+        lazyObject1.setName("one");
+        lazyObject1.setString("a");
+
+        LazyInterface lazyObject2 = new LazyObject();
+        lazyObject2.setName("two");
+        lazyObject2.setString("b");
+
+        Tree tree = new Tree();
+        tree.setName("Tree");
+        tree.setPath("/");
+        tree.addChild(homeNode);
+        tree.setTemplateNode(templateNode);
+
+        tree.setLazyObject(lazyObject1);
+        tree.addLazyObject(lazyObject1);
+        tree.addLazyObject(lazyObject2);
+
+        Tree createdTree = dao.create(tree);
+        //Node treeRootNode = jcrom.addNode(session.getRootNode(), tree);
+
+        Tree loadedTree = dao.loadById(createdTree.getUuid());
+        //Tree fromNode = jcrom.fromNode(Tree.class, treeRootNode);
+        assertEquals(tree.getChildren().size(), loadedTree.getChildren().size());
+
+        assertEquals(lazyObject1.getString(), loadedTree.getLazyObject().getString());
+        assertEquals(tree.getLazyObjects().size(), loadedTree.getLazyObjects().size());
+        assertEquals(lazyObject2.getString(), loadedTree.getLazyObjects().get(1).getString());
+
+        assertNull(loadedTree.getStartNode());
+
+        TreeNode homeFromNode = loadedTree.getChildren().get(0);
+        assertTrue(homeFromNode.getChildren().size() == homeNode.getChildren().size());
+        assertTrue(homeFromNode.getChildren().get(0).getName().equals(newsNode.getName()));
+
+        // add references
+        loadedTree.addFavourite(newsNode);
+        loadedTree.setStartNode(productsNode);
+
+        loadedTree = dao.update(loadedTree);
+        //jcrom.updateNode(treeRootNode, fromNode);
+
+        Tree modifiedTree = dao.loadById(createdTree.getUuid());
+        //Tree modifiedFromNode = jcrom.fromNode(Tree.class, treeRootNode);
+        assertTrue(modifiedTree.getFavourites().size() == loadedTree.getFavourites().size());
+        assertTrue(modifiedTree.getStartNode().getName().equals(productsNode.getName()));
+        assertTrue(modifiedTree.getStartNode().getChildren().size() == productsNode.getChildren().size());
     }
 }

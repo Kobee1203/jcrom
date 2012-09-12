@@ -25,7 +25,10 @@ import java.lang.annotation.Target;
  * read from a node. If the node does not have such a UUID, then the field
  * will be left empty.
  * 
+ * @deprecated As of JCR 2.0, {@link JcrIdentifier} should be used instead.
+ * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

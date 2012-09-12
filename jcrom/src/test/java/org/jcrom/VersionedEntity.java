@@ -3,6 +3,7 @@ package org.jcrom;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import org.jcrom.annotations.JcrBaseVersionCreated;
 import org.jcrom.annotations.JcrBaseVersionName;
 import org.jcrom.annotations.JcrCheckedout;
@@ -16,6 +17,8 @@ import org.jcrom.annotations.JcrVersionName;
  * @author Olafur Gauti Gudmundsson
  */
 public class VersionedEntity extends AbstractJcrEntity implements VersionedInterface {
+
+    private static final long serialVersionUID = 1L;
 
     @JcrProperty
     private String title;
@@ -31,15 +34,15 @@ public class VersionedEntity extends AbstractJcrEntity implements VersionedInter
     private Date versionCreated;
     @JcrCheckedout
     private boolean checkedOut;
-    @JcrChildNode(containerMixinTypes = {"mix:versionable"})
+    @JcrChildNode(containerMixinTypes = { "mix:versionable" })
     List<VersionedEntity> versionedChildren;
     @JcrChildNode
     List<Child> unversionedChildren;
-    @JcrChildNode(createContainerNode = true, containerMixinTypes = {"mix:versionable"})
+    @JcrChildNode(createContainerNode = true, containerMixinTypes = { "mix:versionable" })
     VersionedEntity versionedChild1;
     @JcrChildNode(createContainerNode = true)
     VersionedEntity versionedChild2;
-    @JcrChildNode(createContainerNode = false, containerMixinTypes = {"mix:versionable"})
+    @JcrChildNode(createContainerNode = false, containerMixinTypes = { "mix:versionable" })
     VersionedEntity versionedChild3;
     @JcrChildNode(createContainerNode = false)
     VersionedEntity versionedChild4;

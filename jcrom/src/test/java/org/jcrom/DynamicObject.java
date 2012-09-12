@@ -3,6 +3,7 @@ package org.jcrom;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.annotations.JcrReference;
@@ -13,22 +14,30 @@ import org.jcrom.annotations.JcrReference;
  */
 public class DynamicObject extends AbstractJcrEntity {
 
-    @JcrChildNode(lazy=true) Map<String,Object> singleValueChildren;
-    @JcrChildNode(lazy=true) Map<String,List<Object>> multiValueChildren;
-    
-    @JcrReference(lazy=true, byPath=true) Map<String,Object> singleReferences;
-    @JcrReference(lazy=true) Map<String,List<Object>> multiReferences;
-    
-    @JcrFileNode Map<String,JcrFile> singleFiles;
-    @JcrFileNode(loadType=JcrFileNode.LoadType.BYTES) Map<String,List<JcrFile>> multiFiles;
-    
+    private static final long serialVersionUID = 1L;
+
+    @JcrChildNode(lazy = true)
+    Map<String, Object> singleValueChildren;
+    @JcrChildNode(lazy = true)
+    Map<String, List<Object>> multiValueChildren;
+
+    @JcrReference(lazy = true, byPath = true)
+    Map<String, Object> singleReferences;
+    @JcrReference(lazy = true)
+    Map<String, List<Object>> multiReferences;
+
+    @JcrFileNode
+    Map<String, JcrFile> singleFiles;
+    @JcrFileNode(loadType = JcrFileNode.LoadType.BYTES)
+    Map<String, List<JcrFile>> multiFiles;
+
     public DynamicObject() {
-        this.singleValueChildren = new HashMap<String,Object>();
-        this.multiValueChildren = new HashMap<String,List<Object>>();
-        this.singleReferences = new HashMap<String,Object>();
-        this.multiReferences = new HashMap<String,List<Object>>();
-        this.singleFiles = new HashMap<String,JcrFile>();
-        this.multiFiles = new HashMap<String,List<JcrFile>>();
+        this.singleValueChildren = new HashMap<String, Object>();
+        this.multiValueChildren = new HashMap<String, List<Object>>();
+        this.singleReferences = new HashMap<String, Object>();
+        this.multiReferences = new HashMap<String, List<Object>>();
+        this.singleFiles = new HashMap<String, JcrFile>();
+        this.multiFiles = new HashMap<String, List<JcrFile>>();
     }
 
     public Map<String, List<Object>> getMultiValueChildren() {
@@ -38,8 +47,8 @@ public class DynamicObject extends AbstractJcrEntity {
     public void setMultiValueChildren(Map<String, List<Object>> multiValueChildren) {
         this.multiValueChildren = multiValueChildren;
     }
-    
-    public void putMultiValueChild( String key, List<Object> values ) {
+
+    public void putMultiValueChild(String key, List<Object> values) {
         multiValueChildren.put(key, values);
     }
 
@@ -50,8 +59,8 @@ public class DynamicObject extends AbstractJcrEntity {
     public void setSingleValueChildren(Map<String, Object> singleValueChildren) {
         this.singleValueChildren = singleValueChildren;
     }
-    
-    public void putSingleValueChild( String key, Object value ) {
+
+    public void putSingleValueChild(String key, Object value) {
         singleValueChildren.put(key, value);
     }
 
@@ -62,8 +71,8 @@ public class DynamicObject extends AbstractJcrEntity {
     public void setMultiReferences(Map<String, List<Object>> multiReferences) {
         this.multiReferences = multiReferences;
     }
-    
-    public void putMultiReference( String key, List<Object> values ) {
+
+    public void putMultiReference(String key, List<Object> values) {
         multiReferences.put(key, values);
     }
 
@@ -74,8 +83,8 @@ public class DynamicObject extends AbstractJcrEntity {
     public void setSingleReferences(Map<String, Object> singleReferences) {
         this.singleReferences = singleReferences;
     }
-    
-    public void putSingleReference( String key, Object value ) {
+
+    public void putSingleReference(String key, Object value) {
         singleReferences.put(key, value);
     }
 
@@ -86,8 +95,8 @@ public class DynamicObject extends AbstractJcrEntity {
     public void setMultiFiles(Map<String, List<JcrFile>> multiFiles) {
         this.multiFiles = multiFiles;
     }
-    
-    public void putMultiFile( String key, List<JcrFile> values ) {
+
+    public void putMultiFile(String key, List<JcrFile> values) {
         multiFiles.put(key, values);
     }
 
@@ -98,9 +107,9 @@ public class DynamicObject extends AbstractJcrEntity {
     public void setSingleFiles(Map<String, JcrFile> singleFiles) {
         this.singleFiles = singleFiles;
     }
-    
-    public void putSingleFile( String key, JcrFile value ) {
+
+    public void putSingleFile(String key, JcrFile value) {
         singleFiles.put(key, value);
     }
-    
+
 }

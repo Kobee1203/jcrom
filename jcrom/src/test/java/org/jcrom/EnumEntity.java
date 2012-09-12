@@ -2,6 +2,7 @@ package org.jcrom;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.jcrom.annotations.JcrProperty;
 
 /**
@@ -10,12 +11,22 @@ import org.jcrom.annotations.JcrProperty;
  */
 public class EnumEntity extends AbstractJcrEntity {
 
-    public enum Suit { CLUBS, DIAMONDS, HEARTS, SPADES }
-    
-    @JcrProperty private Suit suit;
-    @JcrProperty private Suit[] suitAsArray;
-    @JcrProperty private List<Suit> suitAsList;
-    
+    private static final long serialVersionUID = 1L;
+
+    public enum Suit {
+        CLUBS,
+        DIAMONDS,
+        HEARTS,
+        SPADES
+    }
+
+    @JcrProperty
+    private Suit suit;
+    @JcrProperty
+    private Suit[] suitAsArray;
+    @JcrProperty
+    private List<Suit> suitAsList;
+
     public EnumEntity() {
         this.suitAsList = new ArrayList<Suit>();
     }
@@ -43,9 +54,9 @@ public class EnumEntity extends AbstractJcrEntity {
     public void setSuitAsList(List<Suit> suitAsList) {
         this.suitAsList = suitAsList;
     }
-    
-    public void addSuitToList( Suit suit ) {
+
+    public void addSuitToList(Suit suit) {
         suitAsList.add(suit);
     }
-    
+
 }

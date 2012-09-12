@@ -20,38 +20,41 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import javax.jcr.nodetype.NodeType;
+
 /**
  * This annotation is applied to types (classes or interfaces) that implement
  * JcrEntity, and provides the ability to specify what JCR node type to use
  * when creating a JCR node from the object being mapped, mixin types, and more.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface JcrNode {
 
-	/**
-	 * The node type to be applied for this JCR object.
-	 * Defaults to "nt:unstructured".
-	 * 
-	 * @return the node type to use when creating a JCR node for this object
-	 */
-	String nodeType() default "nt:unstructured";
-	
-	/**
-	 * Mixin types to be added to all new nodes created
-	 * from this class.
-	 * 
-	 * @return the mixin types for new nodes created from the class
-	 */
-	String[] mixinTypes() default {};
-	
-	/**
-	 * Name of a JCR property to store the full name of the class being mapped.
-	 * Value of "none" will lead to the class name not being stored.
-	 * 
-	 * @return name of a property to store the class name in
-	 */
-	String classNameProperty() default "none";
+    /**
+     * The node type to be applied for this JCR object.
+     * Defaults to "nt:unstructured" ( {@link javax.jcr.nodetype.NodeType#NT_UNSTRUCTURED} ).
+     * 
+     * @return the node type to use when creating a JCR node for this object
+     */
+    String nodeType() default NodeType.NT_UNSTRUCTURED;
+
+    /**
+     * Mixin types to be added to all new nodes created
+     * from this class.
+     * 
+     * @return the mixin types for new nodes created from the class
+     */
+    String[] mixinTypes() default {};
+
+    /**
+     * Name of a JCR property to store the full name of the class being mapped.
+     * Value of "none" will lead to the class name not being stored.
+     * 
+     * @return name of a property to store the class name in
+     */
+    String classNameProperty() default "none";
 }

@@ -39,6 +39,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+
 import org.jcrom.annotations.JcrNode;
 
 /**
@@ -56,10 +57,10 @@ public class ReflectionUtils {
      * @param returnFinalFields specifies whether to return final fields
      * @return an array of all declared and inherited fields
      */
-    public static Field[] getDeclaredAndInheritedFields(Class type, boolean returnFinalFields) {
+    public static Field[] getDeclaredAndInheritedFields(Class<?> type, boolean returnFinalFields) {
         List<Field> allFields = new ArrayList<Field>();
         allFields.addAll(getValidFields(type.getDeclaredFields(), returnFinalFields));
-        Class parent = type.getSuperclass();
+        Class<?> parent = type.getSuperclass();
         while (parent != null && parent != Object.class) {
             allFields.addAll(getValidFields(parent.getDeclaredFields(), returnFinalFields));
             parent = parent.getSuperclass();
@@ -85,12 +86,12 @@ public class ReflectionUtils {
      * @param interfaceClass the interface class we want to check against
      * @return true if type implements interfaceClass, else false
      */
-    public static boolean implementsInterface(Class type, Class interfaceClass) {
+    public static boolean implementsInterface(Class<?> type, Class<?> interfaceClass) {
         if (type.isInterface()) {
             return type == interfaceClass;
         }
 
-        for (Class ifc : type.getInterfaces()) {
+        for (Class<?> ifc : type.getInterfaces()) {
             if (ifc == interfaceClass) {
                 return true;
             }
@@ -105,12 +106,12 @@ public class ReflectionUtils {
      * @param superClass the super class we want to check against
      * @return true if type implements superClass, else false
      */
-    public static boolean extendsClass(Class type, Class superClass) {
+    public static boolean extendsClass(Class<?> type, Class<?> superClass) {
         if (type == superClass) {
             return true;
         }
 
-        Class c = type.getSuperclass();
+        Class<?> c = type.getSuperclass();
         while (c != null && c != Object.class) {
             if (c == superClass) {
                 return true;
@@ -126,19 +127,19 @@ public class ReflectionUtils {
      * @param type the class we want to check
      * @return true if the class represents a valid JCR property type
      */
-    public static boolean isPropertyType(Class type) {
+    public static boolean isPropertyType(Class<?> type) {
         return isValidMapValueType(type) || type == InputStream.class || isArrayOfType(type, byte.class);
     }
 
-    public static boolean isValidMapValueType(Class type) {
+    public static boolean isValidMapValueType(Class<?> type) {
         return type == String.class || isArrayOfType(type, String.class) || type == Date.class || isArrayOfType(type, Date.class) || type == Calendar.class || isArrayOfType(type, Calendar.class) || type == Timestamp.class || isArrayOfType(type, Timestamp.class) || type == Integer.class || isArrayOfType(type, Integer.class) || type == int.class || isArrayOfType(type, int.class) || type == Long.class || isArrayOfType(type, Long.class) || type == long.class || isArrayOfType(type, long.class) || type == Double.class || isArrayOfType(type, Double.class) || type == double.class || isArrayOfType(type, double.class) || type == Boolean.class || isArrayOfType(type, Boolean.class) || type == boolean.class || isArrayOfType(type, boolean.class) || type == Locale.class || isArrayOfType(type, Locale.class) || type.isEnum() || (type.isArray() && type.getComponentType().isEnum());
     }
 
-    private static boolean isArrayOfType(Class c, Class type) {
+    private static boolean isArrayOfType(Class<?> c, Class<?> type) {
         return c.isArray() && c.getComponentType() == type;
     }
 
-    public static boolean isDateType(Class type) {
+    public static boolean isDateType(Class<?> type) {
         return type == Date.class || type == Calendar.class || type == Timestamp.class;
     }
 
@@ -149,7 +150,7 @@ public class ReflectionUtils {
      * @return the class that parameterizes the field, or null if field is
      * not parameterized
      */
-    public static Class getParameterizedClass(Field field) {
+    public static Class<?> getParameterizedClass(Field field) {
         return getParameterizedClass(field, 0);
     }
 
@@ -162,26 +163,26 @@ public class ReflectionUtils {
      * @return the class that parameterizes the field, or null if field is
      * not parameterized
      */
-    public static Class getParameterizedClass(Field field, int index) {
+    public static Class<?> getParameterizedClass(Field field, int index) {
         if (field.getGenericType() instanceof ParameterizedType) {
             ParameterizedType ptype = (ParameterizedType) field.getGenericType();
             Type paramType = ptype.getActualTypeArguments()[index];
             if (paramType instanceof GenericArrayType) {
-                Class arrayType = (Class) ((GenericArrayType) paramType).getGenericComponentType();
+                Class<?> arrayType = (Class<?>) ((GenericArrayType) paramType).getGenericComponentType();
                 return Array.newInstance(arrayType, 0).getClass();
             } else {
                 if (paramType instanceof ParameterizedType) {
                     ParameterizedType paramPType = (ParameterizedType) paramType;
-                    return (Class) paramPType.getRawType();
+                    return (Class<?>) paramPType.getRawType();
                 } else {
-                    return (Class) paramType;
+                    return (Class<?>) paramType;
                 }
             }
         }
         return null;
     }
 
-    public static Class getTypeArgumentOfParameterizedClass(Field field, int index, int typeIndex) {
+    public static Class<?> getTypeArgumentOfParameterizedClass(Field field, int index, int typeIndex) {
         if (field.getGenericType() instanceof ParameterizedType) {
             ParameterizedType ptype = (ParameterizedType) field.getGenericType();
             Type paramType = ptype.getActualTypeArguments()[index];
@@ -190,7 +191,7 @@ public class ReflectionUtils {
                     ParameterizedType paramPType = (ParameterizedType) paramType;
                     Type paramParamType = paramPType.getActualTypeArguments()[typeIndex];
                     if (!(paramParamType instanceof ParameterizedType)) {
-                        return (Class) paramParamType;
+                        return (Class<?>) paramParamType;
                     }
                 }
             }
@@ -198,14 +199,14 @@ public class ReflectionUtils {
         return null;
     }
 
-    public static Class getParameterizedClass(Class c) {
+    public static Class<?> getParameterizedClass(Class<?> c) {
         return getParameterizedClass(c, 0);
     }
 
-    public static Class getParameterizedClass(Class c, int index) {
-        TypeVariable[] typeVars = c.getTypeParameters();
+    public static Class<?> getParameterizedClass(Class<?> c, int index) {
+        TypeVariable<?>[] typeVars = c.getTypeParameters();
         if (typeVars.length > 0) {
-            return (Class) typeVars[index].getBounds()[0];
+            return (Class<?>) typeVars[index].getBounds()[0];
         } else {
             return null;
         }
@@ -220,14 +221,14 @@ public class ReflectionUtils {
      * parameterizes the field, or is an interface that the parameterized class
      * implements, else false
      */
-    public static boolean isFieldParameterizedWithClass(Field field, Class c) {
+    public static boolean isFieldParameterizedWithClass(Field field, Class<?> c) {
         if (field.getGenericType() instanceof ParameterizedType) {
             ParameterizedType ptype = (ParameterizedType) field.getGenericType();
             for (Type type : ptype.getActualTypeArguments()) {
                 if (type == c) {
                     return true;
                 }
-                if (c.isInterface() && implementsInterface((Class) type, c)) {
+                if (c.isInterface() && implementsInterface((Class<?>) type, c)) {
                     return true;
                 }
             }
@@ -247,7 +248,7 @@ public class ReflectionUtils {
         if (field.getGenericType() instanceof ParameterizedType) {
             ParameterizedType ptype = (ParameterizedType) field.getGenericType();
             for (Type type : ptype.getActualTypeArguments()) {
-                if (isPropertyType((Class) type)) {
+                if (isPropertyType((Class<?>) type)) {
                     return true;
                 }
             }
@@ -255,22 +256,22 @@ public class ReflectionUtils {
         return false;
     }
 
-    public static JcrNode getJcrNodeAnnotation(Class c) {
+    public static JcrNode getJcrNodeAnnotation(Class<?> c) {
 
         if (c.isAnnotationPresent(JcrNode.class)) {
-            return (JcrNode) c.getAnnotation(JcrNode.class);
+            return c.getAnnotation(JcrNode.class);
         } else {
             // need to check all superclasses
-            Class parent = c.getSuperclass();
+            Class<?> parent = c.getSuperclass();
             while (parent != null && parent != Object.class) {
                 if (parent.isAnnotationPresent(JcrNode.class)) {
-                    return (JcrNode) parent.getAnnotation(JcrNode.class);
+                    return parent.getAnnotation(JcrNode.class);
                 }
 
                 // ...and interfaces that the superclass implements
-                for (Class interfaceClass : parent.getInterfaces()) {
+                for (Class<?> interfaceClass : parent.getInterfaces()) {
                     if (interfaceClass.isAnnotationPresent(JcrNode.class)) {
-                        return (JcrNode) interfaceClass.getAnnotation(JcrNode.class);
+                        return interfaceClass.getAnnotation(JcrNode.class);
                     }
                 }
 
@@ -278,9 +279,9 @@ public class ReflectionUtils {
             }
 
             // ...and all implemented interfaces
-            for (Class interfaceClass : c.getInterfaces()) {
+            for (Class<?> interfaceClass : c.getInterfaces()) {
                 if (interfaceClass.isAnnotationPresent(JcrNode.class)) {
-                    return (JcrNode) interfaceClass.getAnnotation(JcrNode.class);
+                    return interfaceClass.getAnnotation(JcrNode.class);
                 }
             }
         }
@@ -288,8 +289,8 @@ public class ReflectionUtils {
         return null;
     }
 
-    private static String stripFilenameExtension( String filename ) {
-        if ( filename.indexOf('.') != -1 ) {
+    private static String stripFilenameExtension(String filename) {
+        if (filename.indexOf('.') != -1) {
             return filename.substring(0, filename.lastIndexOf('.'));
         } else {
             return filename;
@@ -310,8 +311,7 @@ public class ReflectionUtils {
         return classes;
     }
 
-    public static Set<Class<?>> getFromJARFile(String jar, String packageName) 
-            throws IOException, FileNotFoundException, ClassNotFoundException {
+    public static Set<Class<?>> getFromJARFile(String jar, String packageName) throws IOException, FileNotFoundException, ClassNotFoundException {
         Set<Class<?>> classes = new HashSet<Class<?>>();
         JarInputStream jarFile = new JarInputStream(new FileInputStream(jar));
         JarEntry jarEntry;

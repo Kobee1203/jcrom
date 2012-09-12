@@ -15,11 +15,16 @@
  */
 package org.jcrom;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -28,71 +33,29 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.TreeMap;
-import java.util.logging.LogManager;
+
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.PropertyType;
-import javax.jcr.Repository;
-import javax.jcr.Session;
-import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
-import org.apache.jackrabbit.core.TransientRepository;
+
+import junit.framework.Assert;
+
 import org.jcrom.entities.First;
 import org.jcrom.entities.Second;
 import org.jcrom.util.NodeFilter;
-import org.junit.After;
-import org.junit.Before;
-import static org.junit.Assert.*;
+import org.jcrom.util.PathUtils;
 import org.junit.Test;
 
 /**
  *
  * @author Olafur Gauti Gudmundsson
  */
-public class TestMapping {
-
-    private Repository repo;
-    private Session session;
-
-    @Before
-    public void setUpRepository() throws Exception {
-        repo = (Repository) new TransientRepository();
-        session = repo.login(new SimpleCredentials("a", "b".toCharArray()));
-
-        ClassLoader loader = TestMapping.class.getClassLoader();
-        URL url = loader.getResource("logger.properties");
-        if (url == null) {
-            url = loader.getResource("/logger.properties");
-        }
-        LogManager.getLogManager().readConfiguration(url.openStream());
-    }
-
-    @After
-    public void tearDownRepository() throws Exception {
-        session.logout();
-        deleteDir(new File("repository"));
-        new File("repository.xml").delete();
-        new File("derby.log").delete();
-    }
-
-    public static boolean deleteDir(File dir) {
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
-                if (!success) {
-                    return false;
-                }
-            }
-        }
-
-        // The directory is now empty so delete it
-        return dir.delete();
-    }
+public class TestMapping extends TestAbstract {
 
     private Parent createParent(String name) {
         Parent parent = new Parent();
@@ -112,6 +75,27 @@ public class TestMapping {
         return parent;
     }
 
+    private Parent2 createParent2(String name) {
+        Parent2 parent2 = new Parent2();
+        parent2.setTitle(name);
+
+        return parent2;
+    }
+
+    private Parent3 createParent3(String name) {
+        Parent3 parent3 = new Parent3();
+        parent3.setTitle(name);
+
+        return parent3;
+    }
+
+    private Parent4 createParent4(String name) {
+        Parent4 parent4 = new Parent4();
+        parent4.setTitle(name);
+
+        return parent4;
+    }
+
     private Child createChild(String name) {
         Child child = new Child();
         child.setTitle(name);
@@ -123,6 +107,24 @@ public class TestMapping {
         child.setWeight(90.45);
         child.setNickName("Baby");
         return child;
+    }
+
+    private Child2 createChild2(String name) {
+        Child2 child2 = new Child2();
+        child2.setTitle(name);
+        return child2;
+    }
+
+    private Child3 createChild3(String name) {
+        Child3 child3 = new Child3();
+        child3.setTitle(name);
+        return child3;
+    }
+
+    private Child4 createChild4(String name) {
+        Child4 child4 = new Child4();
+        child4.setTitle(name);
+        return child4;
     }
 
     private GrandChild createGrandChild(String name) {
@@ -228,7 +230,7 @@ public class TestMapping {
 
             if (p.getName().equals("jcr:childVersionHistory")) {
                 System.out.println(indentation + "------- CHILD VERSION HISTORY -------");
-                printNode(node.getSession().getNodeByUUID(p.getString()), indentation + "\t");
+                printNode(node.getSession().getNodeByIdentifier(p.getString()), indentation + "\t");
                 System.out.println(indentation + "------- CHILD VERSION ENDS -------");
             }
         }
@@ -302,22 +304,22 @@ public class TestMapping {
         Jcrom jcrom = new Jcrom();
         jcrom.map(EntityWithMapChildren.class);
 
-        Integer[] myIntArr1 = {1, 2, 3};
-        Integer[] myIntArr2 = {4, 5, 6};
-        int[] myIntArr3 = {7, 8, 9};
+        Integer[] myIntArr1 = { 1, 2, 3 };
+        Integer[] myIntArr2 = { 4, 5, 6 };
+        int[] myIntArr3 = { 7, 8, 9 };
 
         int myInt1 = 1;
         int myInt2 = 2;
 
-        String[] myStringArr1 = {"a", "b", "c"};
-        String[] myStringArr2 = {"d", "e", "f"};
-        String[] myStringArr3 = {"h", "i", "j"};
+        String[] myStringArr1 = { "a", "b", "c" };
+        String[] myStringArr2 = { "d", "e", "f" };
+        String[] myStringArr3 = { "h", "i", "j" };
 
         String myString1 = "string1";
         String myString2 = "string2";
 
         Locale locale = Locale.ITALIAN;
-        Locale[] locales = {Locale.FRENCH, Locale.GERMAN};
+        Locale[] locales = { Locale.FRENCH, Locale.GERMAN };
 
         EntityWithMapChildren entity = new EntityWithMapChildren();
         entity.setName("mapEntity");
@@ -708,6 +710,58 @@ public class TestMapping {
     }
 
     @Test
+    public void versioningDAOChild5() throws Exception {
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(VersionedEntity.class);
+
+        // create the root
+        Node rootNode = session.getRootNode().addNode("content").addNode("versionedEntities");
+        VersionedDAO versionedDao = new VersionedDAO(session, jcrom);
+
+        VersionedEntity entity = new VersionedEntity();
+        entity.setTitle("MyEntity");
+        entity.setBody("First");
+        entity.setPath(rootNode.getPath());
+
+        VersionedEntity child = new VersionedEntity();
+        child.setName("child1");
+        child.setBody("child1Body");
+
+        entity.versionedChild4 = child;
+        versionedDao.create(entity);
+        assertEquals(child.getBody(), versionedDao.getVersion(entity.getPath(), "1.0").versionedChild4.getBody());
+
+        child.setTitle("child1 with new title");
+        child = versionedDao.update(child);
+        assertEquals(child.getTitle(), versionedDao.get(child.getPath()).getTitle());
+    }
+
+    @Test
+    public void versioningDAOChild6() throws Exception {
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(VersionedEntity.class);
+
+        // create the root
+        Node rootNode = session.getRootNode().addNode("content").addNode("versionedEntities");
+        VersionedDAO versionedDao = new VersionedDAO(session, jcrom);
+
+        VersionedEntity entity = new VersionedEntity();
+        entity.setTitle("MyEntity");
+        entity.setBody("First");
+        entity.setPath(rootNode.getPath());
+
+        versionedDao.create(entity);
+
+        VersionedEntity child = new VersionedEntity();
+        child.setName("child1");
+        child.setBody("child1Body");
+        child.setPath(entity.getPath());
+
+        versionedDao.create(child);
+        assertEquals(child.getBody(), versionedDao.getVersion(entity.getPath() + "/" + child.getName(), "1.0").getBody());
+    }
+
+    @Test
     public void testDAOs() throws Exception {
 
         Jcrom jcrom = new Jcrom();
@@ -741,6 +795,8 @@ public class TestMapping {
 
         Parent uuidParent = parentDao.loadByUUID(loadedParent.getUuid());
         assertTrue(uuidParent.getNickName().equals(dad.getNickName()));
+        Parent idParent = parentDao.loadById(loadedParent.getId());
+        assertTrue(idParent.getNickName().equals(dad.getNickName()));
 
         Parent loadedMom = parentDao.get(mom.getPath());
         assertTrue(loadedMom.getNickName().equals(mom.getNickName()));
@@ -776,6 +832,107 @@ public class TestMapping {
         rootDad.setName("John Smythe");
         parentDao.update(rootDad);
 
+    }
+
+    @Test
+    public void testDAOCreateNode() throws Exception {
+        Jcrom jcrom = new Jcrom(true, true);
+        jcrom.map(Parent.class);
+        jcrom.map(Parent2.class);
+        jcrom.map(Parent3.class);
+        jcrom.map(Parent4.class);
+        jcrom.map(Child4.class);
+
+        ParentDAO parentDao = new ParentDAO(session, jcrom);
+        ParentDAO2 parentDao2 = new ParentDAO2(session, jcrom);
+        ParentDAO3 parentDao3 = new ParentDAO3(session, jcrom);
+        ParentDAO4 parentDao4 = new ParentDAO4(session, jcrom);
+        ChildDAO childDao = new ChildDAO(session, jcrom);
+        ChildDAO2 childDao2 = new ChildDAO2(session, jcrom);
+        ChildDAO3 childDao3 = new ChildDAO3(session, jcrom);
+        ChildDAO4 childDao4 = new ChildDAO4(session, jcrom);
+
+        // create the root
+        Node rootNode = session.getRootNode().addNode("content").addNode("parents");
+
+        Parent2 p2 = createParent2("John Bobs 2"); // Single child
+        assertFalse(parentDao.exists(rootNode.getPath() + "/" + p2.getName()));
+        Parent3 p3 = createParent3("John Bobs 3"); // Multiple Child
+        assertFalse(parentDao.exists(rootNode.getPath() + "/" + p3.getName()));
+        Parent4 p4 = createParent4("John Bobs 4"); // Map of Child
+        assertFalse(parentDao.exists(rootNode.getPath() + "/" + p4.getName()));
+
+        parentDao2.create(p2);
+        parentDao3.create(p3);
+        parentDao4.create(p4);
+
+        session.save();
+
+        assertTrue(parentDao2.exists(p2.getPath()));
+        assertTrue(parentDao3.exists(p3.getPath()));
+        assertTrue(parentDao4.exists(p4.getPath()));
+
+        Child2 child21 = createChild2("Child21");
+        child21.setParent2(p2);
+        Child3 child31 = createChild3("Child31");
+        child31.setParent3(p3);
+        Child3 child32 = createChild3("Child32");
+        child32.setParent3(p3);
+        Child4 child41 = createChild4("Child41");
+        child41.setParent4(p4);
+        Child4 child42 = createChild4("Child42");
+        child42.setParent4(p4);
+
+        child21 = childDao2.create(child21);
+        child31 = childDao3.create(child31);
+        child32 = childDao3.create(child32);
+        child41 = childDao4.create(child41);
+        child42 = childDao4.create(child42);
+
+        p2 = parentDao2.get(p2.getPath());
+        p3 = parentDao3.get(p3.getPath());
+        p4 = parentDao4.get(p4.getPath());
+
+        assertNotNull(p2.getChild());
+        assertEquals(child21.getPath(), p2.getChild().getPath());
+        assertNotNull(p3.getChildren());
+        assertEquals(2, p3.getChildren().size());
+        assertEquals(child31.getPath(), p3.getChildren().get(0).getPath());
+        assertEquals(child32.getPath(), p3.getChildren().get(1).getPath());
+        assertNotNull(p4.getMap());
+        assertEquals(2, p4.getMap().size());
+        Child4 c41 = (Child4) p4.getMap().get(child41.getName());
+        assertEquals(child41.getPath(), c41.getPath());
+        Child4 c42 = (Child4) p4.getMap().get(child42.getName());
+        assertEquals(child42.getPath(), c42.getPath());
+
+        /******************************************/
+
+        Parent dad = createParent("John Bobs");
+        dad.setAdoptedChild(createChild("AdoptedChild1"));
+        dad.addChild(createChild("Child1"));
+        dad.addChild(createChild("Child2"));
+        assertFalse(parentDao.exists(rootNode.getPath() + "/" + dad.getName()));
+
+        Parent mom = createParent("Jane");
+        assertFalse(parentDao.exists(rootNode.getPath() + "/" + mom.getName()));
+
+        parentDao.create(dad);
+        parentDao.create(mom);
+
+        session.save();
+
+        assertTrue(parentDao.exists(dad.getPath()));
+        assertTrue(parentDao.exists(mom.getPath()));
+
+        Child c = createChild("Child3");
+        c.setParent(mom);
+        try {
+            c = childDao.create(c); // Exception, multiple child fields found
+        } catch (JcrMappingException e) {
+            return;
+        }
+        Assert.fail("The unit test must not pass here.");
     }
 
     /*
@@ -871,6 +1028,7 @@ public class TestMapping {
         jcrom.updateNode(newNode2, fromNode2);
 
         Parent fromNodeAgain = jcrom.fromNode(Parent.class, newNode2);
+        assertNotNull(fromNodeAgain);
         assertTrue(newNode2.getProperty("tags").getDefinition().isMultiple());
         assertEquals(1, newNode2.getProperty("tags").getValues().length);
     }
@@ -911,11 +1069,14 @@ public class TestMapping {
         Node rootNode = session.getRootNode().addNode("root");
 
         // map the object to node
-        String[] mixinTypes = {"mix:referenceable"};
+        String[] mixinTypes = { "mix:referenceable" };
         Node newNode = jcrom.addNode(rootNode, parent, mixinTypes);
 
         String uuid = newNode.getUUID();
         assertTrue(newNode.getUUID() != null && newNode.getUUID().length() > 0);
+        String id = newNode.getIdentifier();
+        assertTrue(newNode.getIdentifier() != null && newNode.getIdentifier().length() > 0);
+        assertEquals(uuid, id);
         assertTrue(newNode.getProperty("birthDay").getDate().getTime().equals(parent.getBirthDay()));
         assertTrue(newNode.getProperty("weight").getDouble() == parent.getWeight());
         assertTrue((int) newNode.getProperty("fingers").getDouble() == parent.getFingers());
@@ -956,8 +1117,8 @@ public class TestMapping {
         assertTrue(parentFromNode.getChildren().get(2).getGrandChildren().get(0).getTitle().equals("Adam"));
 
         // make sure that the JcrParentNode has been properly mapped
-        assertTrue(((Parent) parentFromNode.getAdoptedChild().getParent()).getTitle().equals(parent.getTitle()));
-        assertTrue(((Parent) parentFromNode.getChildren().get(0).getParent()).getTitle().equals(parent.getTitle()));
+        assertTrue(parentFromNode.getAdoptedChild().getParent().getTitle().equals(parent.getTitle()));
+        assertTrue(parentFromNode.getChildren().get(0).getParent().getTitle().equals(parent.getTitle()));
         assertTrue(parentFromNode.getChildren().get(2).getAdoptedGrandChild().getParent().getTitle().equals(child.getTitle()));
         assertTrue(parentFromNode.getChildren().get(2).getGrandChildren().get(0).getParent().getTitle().equals(child.getTitle()));
 
@@ -1042,7 +1203,7 @@ public class TestMapping {
         Person person = new Person();
         person.setName("peter");
         person.setAge(20);
-        person.setPhones(Arrays.asList(new String[]{"053453553"}));
+        person.setPhones(Arrays.asList(new String[] { "053453553" }));
 
         // add person in jcr
         Node node = jcrom.addNode(session.getRootNode(), person);
@@ -1078,7 +1239,7 @@ public class TestMapping {
 
         assertEquals("image/jpeg", fromNode.getMimeType());
         assertEquals("UTF-8", fromNode.getEncoding());
-        assertEquals(lastModified, fromNode.getLastModified());
+        assertEquals(lastModified.getTimeInMillis(), fromNode.getLastModified().getTimeInMillis());
         assertTrue(fromNode.getDataProvider().getContentLength() > 0);
     }
 
@@ -1165,8 +1326,7 @@ public class TestMapping {
     public void testSecondLevelFileUpdate() throws Exception {
 
         Jcrom jcrom = new Jcrom();
-        jcrom.map(GrandParent.class)
-                .map(Photo.class);
+        jcrom.map(GrandParent.class).map(Photo.class);
 
         GrandParent grandParent = new GrandParent();
         grandParent.setName("Charles");
@@ -1245,6 +1405,7 @@ public class TestMapping {
         Node nodeA = jcrom.addNode(rootNode, a);
 
         A fromNodeA = jcrom.fromNode(A.class, nodeA);
+        assertNotNull(fromNodeA);
     }
 
     /**
@@ -1350,8 +1511,7 @@ public class TestMapping {
         assertEquals("Mixin size is wrong.", 1, mixins.length);
         assertEquals("mix:referenceable", mixins[0].getName());
 
-        final CustomJCRFileParentNode parentFromJcr = jcrom.fromNode(
-                CustomJCRFileParentNode.class, parentNode);
+        final CustomJCRFileParentNode parentFromJcr = jcrom.fromNode(CustomJCRFileParentNode.class, parentNode);
         assertNotNull("UUID is null.", parentFromJcr.getFile().getUuid());
     }
 
@@ -1386,8 +1546,7 @@ public class TestMapping {
         assertEquals("Mixin size is wrong.", 1, mixins.length);
         assertEquals("mix:referenceable", mixins[0].getName());
 
-        final CustomJCRFile customFromJcr = jcrom.fromNode(CustomJCRFile.class,
-                customNode);
+        final CustomJCRFile customFromJcr = jcrom.fromNode(CustomJCRFile.class, customNode);
         assertNotNull("UUID is null.", customFromJcr.getUuid());
     }
 
@@ -1432,7 +1591,7 @@ public class TestMapping {
     @Test
     public void parentInterface() throws Exception {
         final Jcrom jcrom = new Jcrom(true, true);
-        jcrom.map(Square.class).map(WithParentInterface.class);
+        jcrom.map(Square.class).map(WithParentInterface.class).map(Parent.class).map(Child.class);
 
         final Node parentNode = this.session.getRootNode().addNode("mynode");
 
@@ -1448,6 +1607,22 @@ public class TestMapping {
         Square fromNode = jcrom.fromNode(Square.class, newNode);
 
         assertTrue(square.getArea() == fromNode.getChild().getParent().getArea());
+
+        // add unit test to check if we retrieve the parent node after calling method fromNode
+        WithParentInterface child2 = new WithParentInterface();
+        child2.setName("child2");
+        Node newNode2 = jcrom.addNode(newNode, child2);
+        WithParentInterface fromNode2 = jcrom.fromNode(WithParentInterface.class, newNode2);
+        assertTrue(square.getArea() == fromNode2.getParent().getArea());
+
+        Parent parent3 = createParent("daddy");
+        Child child3 = createChild("child");
+        parent3.addChild(child3);
+        Node parentNode3 = jcrom.addNode(parentNode, parent3);
+        Node childNode3 = parentNode3.getNode("children/" + PathUtils.createValidName(child3.getName()));
+        Child fromNode3 = jcrom.fromNode(Child.class, childNode3);
+        assertTrue(parent3.getHeight() == fromNode3.getParent().getHeight());
+        assertTrue(parent3.getTitle() == fromNode3.getParent().getTitle());
     }
 
     @Test

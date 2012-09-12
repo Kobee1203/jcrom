@@ -17,6 +17,7 @@ package org.jcrom;
 
 import java.io.Serializable;
 import java.util.Date;
+
 import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrPath;
@@ -26,99 +27,111 @@ import org.jcrom.annotations.JcrProperty;
  *
  * @author Olafur Gauti Gudmundsson
  */
-@JcrNode(classNameProperty="className")
+@JcrNode(classNameProperty = "className")
 public abstract class AbstractEntity implements Serializable {
 
-	@JcrPath protected String path;
-	@JcrName protected String name;
-	
-	@JcrProperty protected String title;
-	@JcrProperty protected Date birthDay;
-	@JcrProperty protected String nickName;
-	@JcrProperty protected double weight;
-	@JcrProperty protected double height;
-	@JcrProperty protected int fingers;
-	@JcrProperty protected boolean drivingLicense;
-	@JcrProperty protected long hairs;
+    private static final long serialVersionUID = 1L;
 
-	public String getTitle() {
-		return title;
-	}
+    @JcrPath
+    protected String path;
+    @JcrName
+    protected String name;
 
-	public void setTitle(String title) {
-		this.title = title;
-		this.name = title;
-	}
+    @JcrProperty
+    protected String title;
+    @JcrProperty
+    protected Date birthDay;
+    @JcrProperty
+    protected String nickName;
+    @JcrProperty
+    protected double weight;
+    @JcrProperty
+    protected double height;
+    @JcrProperty
+    protected int fingers;
+    @JcrProperty
+    protected boolean drivingLicense;
+    @JcrProperty
+    protected long hairs;
 
-	public Date getBirthDay() {
-		return birthDay;
-	}
+    public String getTitle() {
+        return title;
+    }
 
-	public void setBirthDay(Date birthDay) {
-		this.birthDay = birthDay;
-	}
+    public void setTitle(String title) {
+        this.title = title;
+        this.name = title;
+    }
 
-	public boolean isDrivingLicense() {
-		return drivingLicense;
-	}
+    public Date getBirthDay() {
+        return birthDay;
+    }
 
-	public void setDrivingLicense(boolean drivingLicense) {
-		this.drivingLicense = drivingLicense;
-	}
+    public void setBirthDay(Date birthDay) {
+        this.birthDay = birthDay;
+    }
 
-	public int getFingers() {
-		return fingers;
-	}
+    public boolean isDrivingLicense() {
+        return drivingLicense;
+    }
 
-	public void setFingers(int fingers) {
-		this.fingers = fingers;
-	}
+    public void setDrivingLicense(boolean drivingLicense) {
+        this.drivingLicense = drivingLicense;
+    }
 
-	public long getHairs() {
-		return hairs;
-	}
+    public int getFingers() {
+        return fingers;
+    }
 
-	public void setHairs(long hairs) {
-		this.hairs = hairs;
-	}
+    public void setFingers(int fingers) {
+        this.fingers = fingers;
+    }
 
-	public double getHeight() {
-		return height;
-	}
+    public long getHairs() {
+        return hairs;
+    }
 
-	public void setHeight(double height) {
-		this.height = height;
-	}
+    public void setHairs(long hairs) {
+        this.hairs = hairs;
+    }
 
-	public String getNickName() {
-		return nickName;
-	}
+    public double getHeight() {
+        return height;
+    }
 
-	public void setNickName(String nickName) {
-		this.nickName = nickName;
-	}
+    public void setHeight(double height) {
+        this.height = height;
+    }
 
-	public double getWeight() {
-		return weight;
-	}
+    public String getNickName() {
+        return nickName;
+    }
 
-	public void setWeight(double weight) {
-		this.weight = weight;
-	}
-	
-	public String getName() {
-		return name;
-	}
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
+    }
 
-	public String getPath() {
-		return path;
-	}
+    public double getWeight() {
+        return weight;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setWeight(double weight) {
+        this.weight = weight;
+    }
 
-	public void setPath(String path) {
-		this.path = path;
-	}
+    public String getName() {
+        return name;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
 }

@@ -1,6 +1,7 @@
 package org.jcrom;
 
 import java.io.Serializable;
+
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrUUID;
@@ -9,11 +10,15 @@ import org.jcrom.annotations.JcrUUID;
  *
  * @author Olafur Gauti Gudmundsson
  */
-@JcrNode(mixinTypes = {"mix:referenceable"})
+@JcrNode(mixinTypes = { "mix:referenceable" })
 public class GrandParent extends AbstractEntity implements Serializable {
 
-    @JcrUUID String uuid;
-    @JcrChildNode Parent child;
+    private static final long serialVersionUID = 1L;
+
+    @JcrUUID
+    String uuid;
+    @JcrChildNode
+    Parent child;
 
     public GrandParent() {
     }

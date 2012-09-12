@@ -8,8 +8,11 @@ import org.jcrom.annotations.JcrParentNode;
  */
 public class WithParentInterface extends AbstractJcrEntity {
 
-    @JcrParentNode private Shape parent;
-    
+    private static final long serialVersionUID = 1L;
+
+    @JcrParentNode
+    private Shape parent;
+
     public WithParentInterface() {
         super();
     }
@@ -21,5 +24,5 @@ public class WithParentInterface extends AbstractJcrEntity {
     public void setParent(Shape parent) {
         this.parent = parent;
     }
-    
+
 }

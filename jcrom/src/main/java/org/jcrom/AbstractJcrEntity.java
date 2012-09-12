@@ -16,6 +16,7 @@
 package org.jcrom;
 
 import java.io.Serializable;
+
 import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrPath;
 
@@ -27,25 +28,29 @@ import org.jcrom.annotations.JcrPath;
  */
 public abstract class AbstractJcrEntity implements Serializable {
 
-	@JcrName protected String name;
-	@JcrPath protected String path;
-	
-	public AbstractJcrEntity() {
-	}
-	
-	public void setName( String name ) {
-		this.name = name;
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public void setPath( String path ) {
-		this.path = path;
-	}
-	
-	public String getPath() {
-		return path;
-	}
+    private static final long serialVersionUID = 1L;
+
+    @JcrName
+    protected String name;
+    @JcrPath
+    protected String path;
+
+    public AbstractJcrEntity() {
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String getPath() {
+        return path;
+    }
 }

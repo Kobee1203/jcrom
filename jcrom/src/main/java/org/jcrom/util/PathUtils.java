@@ -15,44 +15,71 @@
  */
 package org.jcrom.util;
 
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
 /**
  * Contains utilities used for JCR node names and paths.
  * 
  * @author Olafur Gauti Gudmundsson
  */
 public class PathUtils {
-	
-	/**
+
+    /**
      * Replaces occurences of non-alphanumeric characters with a
      * supplied char. A non-alphanumeric character at the beginning or end
-	 * is replaced with ''.
+     * is replaced with ''.
      */
     public static String replaceNonAlphanumeric(String str, char subst) {
         StringBuffer ret = new StringBuffer(str.length());
         char[] testChars = str.toCharArray();
-		char lastChar = 'A';
+        char lastChar = 'A';
         for (int i = 0; i < testChars.length; i++) {
-            if ( Character.isLetterOrDigit(testChars[i]) 
-                    || testChars[i] == '.'
-                    || testChars[i] == ':' ) {
+            if (Character.isLetterOrDigit(testChars[i]) || testChars[i] == '.' || testChars[i] == ':') {
                 ret.append(testChars[i]);
-				lastChar = testChars[i];
-            } else if ( i > 0 && (i+1) != testChars.length && lastChar != subst ) {
-                ret.append( subst );
-				lastChar = subst;
+                lastChar = testChars[i];
+            } else if (i > 0 && (i + 1) != testChars.length && lastChar != subst) {
+                ret.append(subst);
+                lastChar = subst;
             }
         }
-		return ret.toString();
+        return ret.toString();
     }
-	
-	/**
-	 * Creates a valid JCR node name from the String supplied, by
-	 * replacing all non-alphanumeric chars.
-	 * 
-	 * @param str the input String
-	 * @return a valid JCR node name for the String
-	 */
-	public static String createValidName( String str ) {
-		return replaceNonAlphanumeric(str, '_');
-	}
+
+    /**
+     * Creates a valid JCR node name from the String supplied, by
+     * replacing all non-alphanumeric chars.
+     * 
+     * @param str the input String
+     * @return a valid JCR node name for the String
+     */
+    public static String createValidName(String str) {
+        return replaceNonAlphanumeric(str, '_');
+    }
+
+    public static Node getNode(String absolutePath, Session session) throws RepositoryException {
+        // special case, add directly to the root node
+        return absolutePath.equals("/") ? session.getRootNode() : session.getRootNode().getNode(relativePath(absolutePath));
+    }
+
+    public static NodeIterator getNodes(String absolutePath, Session session) throws RepositoryException {
+        // special case, add directly to the root node
+        return absolutePath.equals("/") ? session.getRootNode().getNodes() : session.getRootNode().getNodes(relativePath(absolutePath));
+    }
+
+    public static String relativePath(String absolutePath) {
+        if (absolutePath.charAt(0) == '/') {
+            return absolutePath.substring(1);
+        } else {
+            return absolutePath;
+        }
+    }
+
+    public static Node getNodeById(String id, Session session) throws RepositoryException {
+        // return session.getNodeByUUID(uuid);
+        return session.getNodeByIdentifier(id);
+    }
+
 }
