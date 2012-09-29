@@ -23,23 +23,26 @@ import org.jcrom.annotations.JcrProperty;
  */
 public class Circle extends AbstractJcrEntity implements Shape {
 
-	@JcrProperty private double radius;
-	
-	public Circle() {
-	}
-	
-	public Circle( double radius ) {
-		super();
-		this.radius = radius;
-	}
-	
-	public double getArea() {
-		return Math.PI * (radius * radius);
-	}
+    private static final long serialVersionUID = 1L;
 
-	public double getRadius() {
-		return radius;
-	}
+    @JcrProperty
+    private double radius;
 
-	
+    public Circle() {
+    }
+
+    public Circle(double radius) {
+        super();
+        this.radius = radius;
+    }
+
+    @Override
+    public double getArea() {
+        return Math.PI * (radius * radius);
+    }
+
+    public double getRadius() {
+        return radius;
+    }
+
 }

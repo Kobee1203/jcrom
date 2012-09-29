@@ -22,11 +22,13 @@ package org.jcrom;
  */
 public class JcrMappingException extends RuntimeException {
 
-	public JcrMappingException( String message ) {
-		super(message);
-	}
-	
-	public JcrMappingException( String message, Throwable cause ) {
-		super(message, cause);
-	}
+    private static final long serialVersionUID = 1L;
+
+    public JcrMappingException(String message) {
+        super(message);
+    }
+
+    public JcrMappingException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

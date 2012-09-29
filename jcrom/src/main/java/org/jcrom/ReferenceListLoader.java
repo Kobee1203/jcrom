@@ -22,50 +22,44 @@ import java.util.logging.Logger;
 import javax.jcr.Node;
 import javax.jcr.Session;
 
-import net.sf.cglib.proxy.LazyLoader;
-
 import org.jcrom.util.NodeFilter;
+import org.jcrom.util.PathUtils;
 
 /**
  * Handles lazy loading of reference lists.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
-public class ReferenceListLoader implements LazyLoader {
+public class ReferenceListLoader extends AbstractLazyLoader {
 
     private static final Logger logger = Logger.getLogger(ReferenceListLoader.class.getName());
 
-    private final Class objClass;
+    private final Class<?> objClass;
     private final Object parentObject;
-    private final Session session;
     private final String nodePath;
     private final String propertyName;
-    private final Mapper mapper;
     private final int depth;
     private final NodeFilter nodeFilter;
     private final Field field;
 
-    ReferenceListLoader(Class objClass, Object parentObject, String nodePath, String propertyName, Session session,
-            Mapper mapper, int depth, NodeFilter nodeFilter, Field field) {
+    ReferenceListLoader(Class<?> objClass, Object parentObject, String nodePath, String propertyName, Session session, Mapper mapper, int depth, NodeFilter nodeFilter, Field field) {
+        super(session, mapper);
         this.objClass = objClass;
         this.parentObject = parentObject;
         this.nodePath = nodePath;
         this.propertyName = propertyName;
-        this.session = session;
-        this.mapper = mapper;
         this.depth = depth;
         this.nodeFilter = nodeFilter;
         this.field = field;
     }
 
-    public Object loadObject() throws Exception {
+    @Override
+    protected Object doLoadObject(Session session, Mapper mapper) throws Exception {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("Lazy loading reference list for " + nodePath + " " + propertyName);
         }
-        Session sessionToUse = Jcrom.getCurrentSession() != null ? Jcrom.getCurrentSession() : session;
-        Node node = sessionToUse.getRootNode().getNode(nodePath.substring(1));
-        return mapper.getReferenceMapper().getReferenceList(field, propertyName, objClass, node, parentObject, depth,
-                nodeFilter, mapper);
+        Node node = PathUtils.getNode(nodePath, session);
+        return mapper.getReferenceMapper().getReferenceList(field, propertyName, objClass, node, parentObject, depth, nodeFilter, mapper);
     }
-
 }

@@ -18,61 +18,70 @@ package org.jcrom;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 
 /**
  * An interface for providing access to file content within a JcrFile instance.
  * 
  * <p>Thanks to Robin Wyles for adding content length.</p>
+ * <p>This interface extends {@link java.io.Serializable} to resolve <i><a href="http://code.google.com/p/jcrom/issues/detail?id=91">Issue 91</a></i></p>
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
-public interface JcrDataProvider {
+public interface JcrDataProvider extends Serializable {
 
-	public enum TYPE {FILE, BYTES, STREAM}
-	
-	/**
-	 * Get the type of content this provider offers.
-	 * 
-	 * @return the type of content this provider offers
-	 */
-	public TYPE getType();
+    public enum TYPE {
+        FILE,
+        BYTES,
+        STREAM
+    }
 
-        public boolean isFile();
-        public boolean isBytes();
-        public boolean isStream();
-	
-	/**
-	 * Return a file.
-	 * 
-	 * @return file, or null if type is not JcrDataProvider.TYPE.FILE
-	 */
-	public File getFile();
+    /**
+     * Get the type of content this provider offers.
+     * 
+     * @return the type of content this provider offers
+     */
+    public TYPE getType();
 
-	/**
-	 * Return a byte array.
-	 * 
-	 * @return byte array, or null if type is not JcrDataProvider.TYPE.BYTES
-	 */
-	public byte[] getBytes();
-	
-	/**
-	 * Return an input stream.
-	 * 
-	 * @return input stream, or null if type is not JcrDataProvider.TYPE.STREAM
-	 */
-	public InputStream getInputStream();
-    
+    public boolean isFile();
+
+    public boolean isBytes();
+
+    public boolean isStream();
+
+    /**
+     * Return a file.
+     * 
+     * @return file, or null if type is not JcrDataProvider.TYPE.FILE
+     */
+    public File getFile();
+
+    /**
+     * Return a byte array.
+     * 
+     * @return byte array, or null if type is not JcrDataProvider.TYPE.BYTES
+     */
+    public byte[] getBytes();
+
+    /**
+     * Return an input stream.
+     * 
+     * @return input stream, or null if type is not JcrDataProvider.TYPE.STREAM
+     */
+    public InputStream getInputStream();
+
     /**
      * Write the content out to the File supplied.
      * 
      * @param file the file in question
      */
-    public void writeToFile( File file ) throws IOException;
-    
+    public void writeToFile(File file) throws IOException;
+
     /**
      * Returns the length of the byte array / file / input stream
      * 
-     * @return
+     * @return content length in long value
      */
     public long getContentLength();
 }

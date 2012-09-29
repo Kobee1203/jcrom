@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.jcr.nodetype.NodeType;
+
 /**
  * This annotation is used to mark fields that are to be mapped as
  * JCR child nodes.
@@ -35,6 +37,7 @@ import java.util.Map;
  * on the child object.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
@@ -51,12 +54,12 @@ public @interface JcrChildNode {
 
     /**
      * The node type to be applied for the child container node.
-     * Defaults to "nt:unstructured".
+     * Defaults to "nt:unstructured" ( {@link javax.jcr.nodetype.NodeType#NT_UNSTRUCTURED} ).
      *
      * @return the node type to use when creating a container node for
      * the children
      */
-    String containerNodeType() default "nt:unstructured";
+    String containerNodeType() default NodeType.NT_UNSTRUCTURED;
 
     /**
      * Mixin types to be added to the container node.

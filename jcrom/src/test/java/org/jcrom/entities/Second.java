@@ -9,7 +9,10 @@ import org.jcrom.annotations.JcrProperty;
  */
 public class Second extends AbstractJcrEntity {
 
-    @JcrProperty private String secondString;
+    private static final long serialVersionUID = 1L;
+
+    @JcrProperty
+    private String secondString;
 
     public Second() {
         super();

@@ -22,16 +22,18 @@ import org.jcrom.annotations.JcrParentNode;
  * @author Olafur Gauti Gudmundsson
  */
 public class GrandChild extends AbstractEntity {
-	
-	@JcrParentNode
-	private Child parent;
 
-	public Child getParent() {
-		return parent;
-	}
+    private static final long serialVersionUID = 1L;
 
-	public void setParent(Child parent) {
-		this.parent = parent;
-	}
+    @JcrParentNode
+    private Child parent;
+
+    public Child getParent() {
+        return parent;
+    }
+
+    public void setParent(Child parent) {
+        this.parent = parent;
+    }
 
 }

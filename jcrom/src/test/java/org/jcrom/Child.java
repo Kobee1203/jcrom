@@ -17,6 +17,7 @@ package org.jcrom;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrParentNode;
 
@@ -26,45 +27,46 @@ import org.jcrom.annotations.JcrParentNode;
  */
 public class Child extends AbstractEntity {
 
-	@JcrParentNode
-	private Parent parent;
-	
-	@JcrChildNode
-	private GrandChild adoptedGrandChild;
-	
-	@JcrChildNode
-	private List<GrandChild> grandChildren;
-	
-	public Child() {
-		this.grandChildren = new ArrayList<GrandChild>();
-	}
+    private static final long serialVersionUID = 1L;
 
-	
-	public void addGrandChild( GrandChild grandChild ) {
-		grandChildren.add(grandChild);
-	}
-	
-	public List<GrandChild> getGrandChildren() {
-		return grandChildren;
-	}
+    @JcrParentNode
+    private Parent parent;
 
-	public void setGrandChildren(List<GrandChild> grandChildren) {
-		this.grandChildren = grandChildren;
-	}
-	
-	public Parent getParent() {
-		return parent;
-	}
-	
-	public void setParent( Parent parent ) {
-		this.parent = parent;
-	}
-	
-	public GrandChild getAdoptedGrandChild() {
-		return adoptedGrandChild;
-	}
-	
-	public void setAdoptedGrandChild( GrandChild adoptedGrandChild ) {
-		this.adoptedGrandChild = adoptedGrandChild;
-	}
+    @JcrChildNode
+    private GrandChild adoptedGrandChild;
+
+    @JcrChildNode
+    private List<GrandChild> grandChildren;
+
+    public Child() {
+        this.grandChildren = new ArrayList<GrandChild>();
+    }
+
+    public void addGrandChild(GrandChild grandChild) {
+        grandChildren.add(grandChild);
+    }
+
+    public List<GrandChild> getGrandChildren() {
+        return grandChildren;
+    }
+
+    public void setGrandChildren(List<GrandChild> grandChildren) {
+        this.grandChildren = grandChildren;
+    }
+
+    public Parent getParent() {
+        return parent;
+    }
+
+    public void setParent(Parent parent) {
+        this.parent = parent;
+    }
+
+    public GrandChild getAdoptedGrandChild() {
+        return adoptedGrandChild;
+    }
+
+    public void setAdoptedGrandChild(GrandChild adoptedGrandChild) {
+        this.adoptedGrandChild = adoptedGrandChild;
+    }
 }

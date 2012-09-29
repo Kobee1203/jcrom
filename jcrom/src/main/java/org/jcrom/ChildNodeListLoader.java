@@ -21,49 +21,44 @@ import java.util.logging.Logger;
 import javax.jcr.Node;
 import javax.jcr.Session;
 
-import net.sf.cglib.proxy.LazyLoader;
-
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.util.NodeFilter;
+import org.jcrom.util.PathUtils;
 
 /**
  * Handles lazy loading of child node lists.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
-class ChildNodeListLoader implements LazyLoader {
+class ChildNodeListLoader extends AbstractLazyLoader {
 
     private static final Logger logger = Logger.getLogger(ChildNodeListLoader.class.getName());
 
-    private final Class objectClass;
+    private final Class<?> objectClass;
     private final Object parentObject;
     private final String containerPath;
-    private final Session session;
-    private final Mapper mapper;
     private final int depth;
     private final NodeFilter nodeFilter;
     private final JcrChildNode jcrChildNode;
 
-    ChildNodeListLoader(Class objectClass, Object parentObject, String containerPath, Session session, Mapper mapper,
-            int depth, NodeFilter nodeFilter, JcrChildNode jcrChildNode) {
+    ChildNodeListLoader(Class<?> objectClass, Object parentObject, String containerPath, Session session, Mapper mapper, int depth, NodeFilter nodeFilter, JcrChildNode jcrChildNode) {
+        super(session, mapper);
         this.objectClass = objectClass;
         this.parentObject = parentObject;
         this.containerPath = containerPath;
-        this.session = session;
-        this.mapper = mapper;
         this.depth = depth;
         this.nodeFilter = nodeFilter;
         this.jcrChildNode = jcrChildNode;
     }
 
-    public Object loadObject() throws Exception {
+    @Override
+    protected Object doLoadObject(Session session, Mapper mapper) throws Exception {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("Lazy loading children list for " + containerPath);
         }
-        Session sessionToUse = Jcrom.getCurrentSession() != null ? Jcrom.getCurrentSession() : session;
-        Node childrenContainer =  sessionToUse.getRootNode().getNode(containerPath.substring(1));
-        return mapper.getChildNodeMapper().getChildrenList(objectClass, childrenContainer, parentObject, mapper, depth,
-                nodeFilter, jcrChildNode);
+        Node childrenContainer = PathUtils.getNode(containerPath, session);
+        return mapper.getChildNodeMapper().getChildrenList(objectClass, childrenContainer, parentObject, mapper, depth, nodeFilter, jcrChildNode);
     }
 
 }

@@ -19,45 +19,45 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.jcr.Node;
-
-import net.sf.cglib.proxy.LazyLoader;
+import javax.jcr.Session;
 
 import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.util.NodeFilter;
+import org.jcrom.util.PathUtils;
 
 /**
  * Handles lazy loading of file node lists.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
-class FileNodeListLoader implements LazyLoader {
+class FileNodeListLoader extends AbstractLazyLoader {
 
     private static final Logger logger = Logger.getLogger(FileNodeListLoader.class.getName());
 
-    private final Class objectClass;
-    private final Node fileContainer;
+    private final Class<?> objectClass;
+    private final String fileContainerPath;
     private final Object parentObject;
     private final JcrFileNode jcrFileNode;
     private final int depth;
     private final NodeFilter nodeFilter;
-    private final Mapper mapper;
 
-    FileNodeListLoader(Class objectClass, Node fileContainer, Object parentObject, JcrFileNode jcrFileNode, int depth,
-            NodeFilter nodeFilter, Mapper mapper) {
+    FileNodeListLoader(Class<?> objectClass, Object parentObject, String fileContainerPath, Session session, Mapper mapper, int depth, NodeFilter nodeFilter, JcrFileNode jcrFileNode) {
+        super(session, mapper);
         this.objectClass = objectClass;
         this.parentObject = parentObject;
         this.jcrFileNode = jcrFileNode;
-        this.fileContainer = fileContainer;
-        this.mapper = mapper;
+        this.fileContainerPath = fileContainerPath;
         this.depth = depth;
         this.nodeFilter = nodeFilter;
     }
 
-    public Object loadObject() throws Exception {
+    @Override
+    protected Object doLoadObject(Session session, Mapper mapper) throws Exception {
         if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Lazy loading file list for " + fileContainer.getPath());
+            logger.fine("Lazy loading file list for " + fileContainerPath);
         }
-        return mapper.getFileNodeMapper().getFileList(objectClass, fileContainer, parentObject, jcrFileNode, depth,
-                nodeFilter, mapper);
+        Node fileContainer = PathUtils.getNode(fileContainerPath, session);
+        return mapper.getFileNodeMapper().getFileList(objectClass, fileContainer, parentObject, jcrFileNode, depth, nodeFilter, mapper);
     }
 }

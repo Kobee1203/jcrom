@@ -8,17 +8,22 @@ import org.jcrom.annotations.JcrProperty;
  */
 public class LazyObject extends AbstractJcrEntity implements LazyInterface {
 
-	@JcrProperty private String s;
-	
-	public LazyObject() {
-		super();
-	}
-	
-	public void setString( String s ) {
-		this.s = s;
-	}
-	
-	public String getString() {
-		return s;
-	}
+    private static final long serialVersionUID = 1L;
+
+    @JcrProperty
+    private String s;
+
+    public LazyObject() {
+        super();
+    }
+
+    @Override
+    public void setString(String s) {
+        this.s = s;
+    }
+
+    @Override
+    public String getString() {
+        return s;
+    }
 }

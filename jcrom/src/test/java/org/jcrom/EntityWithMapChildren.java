@@ -3,6 +3,7 @@ package org.jcrom;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+
 import org.jcrom.annotations.JcrProperty;
 
 /**
@@ -11,98 +12,112 @@ import org.jcrom.annotations.JcrProperty;
  */
 public class EntityWithMapChildren extends AbstractJcrEntity {
 
-	@JcrProperty private int[] multiInt;
-	@JcrProperty private String[] multiString;
-	
-	@JcrProperty private Locale locale;
-	@JcrProperty private Locale[] multiLocale;
-	
-	@JcrProperty private Map<String,String> strings;
-	@JcrProperty private Map<String,String[]> stringArrays;
-	@JcrProperty private Map<String,Integer> integers;
-	@JcrProperty private Map<String,Integer[]> integerArrays;
-	
-	public EntityWithMapChildren() {
-		strings = new HashMap<String,String>();
-		stringArrays = new HashMap<String,String[]>();
-		integers = new HashMap<String,Integer>();
-		integerArrays = new HashMap<String,Integer[]>();
-	}
+    private static final long serialVersionUID = 1L;
 
-	public int[] getMultiInt() {
-		return multiInt;
-	}
+    @JcrProperty
+    private int[] multiInt;
+    @JcrProperty
+    private String[] multiString;
 
-	public void setMultiInt(int[] multiInt) {
-		this.multiInt = multiInt;
-	}
+    @JcrProperty
+    private Locale locale;
+    @JcrProperty
+    private Locale[] multiLocale;
 
-	public String[] getMultiString() {
-		return multiString;
-	}
+    @JcrProperty
+    private Map<String, String> strings;
+    @JcrProperty
+    private Map<String, String[]> stringArrays;
+    @JcrProperty
+    private Map<String, Integer> integers;
+    @JcrProperty
+    private Map<String, Integer[]> integerArrays;
 
-	public void setMultiString(String[] multiString) {
-		this.multiString = multiString;
-	}
+    public EntityWithMapChildren() {
+        strings = new HashMap<String, String>();
+        stringArrays = new HashMap<String, String[]>();
+        integers = new HashMap<String, Integer>();
+        integerArrays = new HashMap<String, Integer[]>();
+    }
 
-	public Map<String, Integer[]> getIntegerArrays() {
-		return integerArrays;
-	}
+    public int[] getMultiInt() {
+        return multiInt;
+    }
 
-	public void setIntegerArrays(Map<String, Integer[]> integerArrays) {
-		this.integerArrays = integerArrays;
-	}
-	public void addIntegerArray( String name, Integer[] arr ) {
-		this.integerArrays.put(name, arr);
-	}
+    public void setMultiInt(int[] multiInt) {
+        this.multiInt = multiInt;
+    }
 
-	public Map<String, Integer> getIntegers() {
-		return integers;
-	}
+    public String[] getMultiString() {
+        return multiString;
+    }
 
-	public void setIntegers(Map<String, Integer> integers) {
-		this.integers = integers;
-	}
-	public void addInteger( String name, Integer value ) {
-		this.integers.put(name, value);
-	}
+    public void setMultiString(String[] multiString) {
+        this.multiString = multiString;
+    }
 
-	public Map<String, String[]> getStringArrays() {
-		return stringArrays;
-	}
+    public Map<String, Integer[]> getIntegerArrays() {
+        return integerArrays;
+    }
 
-	public void setStringArrays(Map<String, String[]> stringArrays) {
-		this.stringArrays = stringArrays;
-	}
-	public void addStringArray( String name, String[] arr ) {
-		this.stringArrays.put(name, arr);
-	}
+    public void setIntegerArrays(Map<String, Integer[]> integerArrays) {
+        this.integerArrays = integerArrays;
+    }
 
-	public Map<String, String> getStrings() {
-		return strings;
-	}
+    public void addIntegerArray(String name, Integer[] arr) {
+        this.integerArrays.put(name, arr);
+    }
 
-	public void setStrings(Map<String, String> strings) {
-		this.strings = strings;
-	}
-	public void addString( String name, String value ) {
-		this.strings.put(name, value);
-	}
+    public Map<String, Integer> getIntegers() {
+        return integers;
+    }
 
-	public Locale getLocale() {
-		return locale;
-	}
+    public void setIntegers(Map<String, Integer> integers) {
+        this.integers = integers;
+    }
 
-	public void setLocale(Locale locale) {
-		this.locale = locale;
-	}
+    public void addInteger(String name, Integer value) {
+        this.integers.put(name, value);
+    }
 
-	public Locale[] getMultiLocale() {
-		return multiLocale;
-	}
+    public Map<String, String[]> getStringArrays() {
+        return stringArrays;
+    }
 
-	public void setMultiLocale(Locale[] multiLocale) {
-		this.multiLocale = multiLocale;
-	}
-	
+    public void setStringArrays(Map<String, String[]> stringArrays) {
+        this.stringArrays = stringArrays;
+    }
+
+    public void addStringArray(String name, String[] arr) {
+        this.stringArrays.put(name, arr);
+    }
+
+    public Map<String, String> getStrings() {
+        return strings;
+    }
+
+    public void setStrings(Map<String, String> strings) {
+        this.strings = strings;
+    }
+
+    public void addString(String name, String value) {
+        this.strings.put(name, value);
+    }
+
+    public Locale getLocale() {
+        return locale;
+    }
+
+    public void setLocale(Locale locale) {
+        this.locale = locale;
+    }
+
+    public Locale[] getMultiLocale() {
+        return multiLocale;
+    }
+
+    public void setMultiLocale(Locale[] multiLocale) {
+        this.multiLocale = multiLocale;
+    }
+
 }

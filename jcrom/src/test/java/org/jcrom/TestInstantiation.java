@@ -15,64 +15,19 @@
  */
 package org.jcrom;
 
-import java.io.File;
-import java.net.URL;
-import java.util.logging.LogManager;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import javax.jcr.Node;
-import javax.jcr.Repository;
-import javax.jcr.Session;
-import javax.jcr.SimpleCredentials;
-import org.apache.jackrabbit.core.TransientRepository;
-import org.junit.After;
-import org.junit.Before;
+
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  * Thanks to Vincent Gigure for providing this test case.
  *
  * @author Vincent Gigure
  */
-public class TestInstantiation {
-
-    private Repository repo;
-    private Session session;
-
-    @Before
-    public void setUpRepository() throws Exception {
-        repo = (Repository) new TransientRepository();
-        session = repo.login(new SimpleCredentials("a", "b".toCharArray()));
-
-        ClassLoader loader = TestMapping.class.getClassLoader();
-        URL url = loader.getResource("logger.properties");
-        if (url == null) {
-            url = loader.getResource("/logger.properties");
-        }
-        LogManager.getLogManager().readConfiguration(url.openStream());
-    }
-
-    @After
-    public void tearDownRepository() throws Exception {
-        session.logout();
-        deleteDir(new File("repository"));
-        new File("repository.xml").delete();
-        new File("derby.log").delete();
-    }
-
-    public static boolean deleteDir(File dir) {
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
-                if (!success) {
-                    return false;
-                }
-            }
-        }
-
-        // The directory is now empty so delete it
-        return dir.delete();
-    }
+public class TestInstantiation extends TestAbstract {
 
     @Test
     public void test_dynamic_map_instantiation() throws Exception {
@@ -87,8 +42,8 @@ public class TestInstantiation {
         ReferencedEntity child = new ReferencedEntity();
         child.setName("Child");
 
-        dyna.putSingleReference("childOne", jcrom.fromNode(ReferencedEntity.class, jcrom.addNode(rootNode, child, new String[]{"mix:referenceable"})));
-        dyna.putSingleReference("childTwo", jcrom.fromNode(ReferencedEntity.class, jcrom.addNode(rootNode, child, new String[]{"mix:referenceable"})));
+        dyna.putSingleReference("childOne", jcrom.fromNode(ReferencedEntity.class, jcrom.addNode(rootNode, child, new String[] { "mix:referenceable" })));
+        dyna.putSingleReference("childTwo", jcrom.fromNode(ReferencedEntity.class, jcrom.addNode(rootNode, child, new String[] { "mix:referenceable" })));
 
         assertEquals(2, dyna.getSingleReferences().size());
         assertNotNull(dyna.getSingleReferences().get("childOne"));

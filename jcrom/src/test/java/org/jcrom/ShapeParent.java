@@ -17,6 +17,7 @@ package org.jcrom;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.jcrom.annotations.JcrChildNode;
 
 /**
@@ -25,34 +26,36 @@ import org.jcrom.annotations.JcrChildNode;
  */
 public class ShapeParent extends AbstractJcrEntity {
 
-	@JcrChildNode private Shape mainShape;
-	@JcrChildNode private List<Shape> shapes;
-	
-	public ShapeParent() {
-		super();
-		this.shapes = new ArrayList<Shape>();
-	}
+    private static final long serialVersionUID = 1L;
 
-	public Shape getMainShape() {
-		return mainShape;
-	}
+    @JcrChildNode
+    private Shape mainShape;
+    @JcrChildNode
+    private List<Shape> shapes;
 
-	public void setMainShape(Shape mainShape) {
-		this.mainShape = mainShape;
-	}
+    public ShapeParent() {
+        super();
+        this.shapes = new ArrayList<Shape>();
+    }
 
-	public List<Shape> getShapes() {
-		return shapes;
-	}
-	
-	public void addShape( Shape shape ) {
-		shapes.add(shape);
-	}
+    public Shape getMainShape() {
+        return mainShape;
+    }
 
-	public void setShapes(List<Shape> shapes) {
-		this.shapes = shapes;
-	}
+    public void setMainShape(Shape mainShape) {
+        this.mainShape = mainShape;
+    }
 
-	
-	
+    public List<Shape> getShapes() {
+        return shapes;
+    }
+
+    public void addShape(Shape shape) {
+        shapes.add(shape);
+    }
+
+    public void setShapes(List<Shape> shapes) {
+        this.shapes = shapes;
+    }
+
 }

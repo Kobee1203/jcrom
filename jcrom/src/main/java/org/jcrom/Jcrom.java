@@ -20,9 +20,14 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
+
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.ReflectionUtils;
 
@@ -34,6 +39,7 @@ import org.jcrom.util.ReflectionUtils;
  * </p>
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class Jcrom {
 
@@ -43,6 +49,8 @@ public class Jcrom {
     private AnnotationReader annotationReader;
 
     private static final ThreadLocal<Session> currentSession = new ThreadLocal<Session>();
+
+    private SessionFactory sessionFactory;
 
     /**
      * Create a new Jcrom instance that cleans node names, but with dynamic instantiation turned off.
@@ -73,7 +81,7 @@ public class Jcrom {
      *            property (see @JcrNode(classNameProperty)).
      */
     public Jcrom(boolean cleanNames, boolean dynamicInstantiation) {
-        this(cleanNames, dynamicInstantiation, new HashSet<Class>());
+        this(cleanNames, dynamicInstantiation, new HashSet<Class<?>>());
     }
 
     /**
@@ -82,7 +90,7 @@ public class Jcrom {
      * @param classesToMap
      *            a set of classes to map by this instance
      */
-    public Jcrom(Set<Class> classesToMap) {
+    public Jcrom(Set<Class<?>> classesToMap) {
         this(true, false, classesToMap);
     }
 
@@ -95,7 +103,7 @@ public class Jcrom {
      * @param classesToMap
      *            a set of classes to map by this instance
      */
-    public Jcrom(boolean cleanNames, Set<Class> classesToMap) {
+    public Jcrom(boolean cleanNames, Set<Class<?>> classesToMap) {
         this(cleanNames, false, classesToMap);
     }
 
@@ -111,11 +119,11 @@ public class Jcrom {
      * @param classesToMap
      *            a set of classes to map by this instance
      */
-    public Jcrom(boolean cleanNames, boolean dynamicInstantiation, Set<Class> classesToMap) {
+    public Jcrom(boolean cleanNames, boolean dynamicInstantiation, Set<Class<?>> classesToMap) {
         this.mapper = new Mapper(cleanNames, dynamicInstantiation, this);
         this.validator = new Validator(this);
         this.annotationReader = new ReflectionAnnotationReader();
-        for (Class c : classesToMap) {
+        for (Class<?> c : classesToMap) {
             map(c);
         }
     }
@@ -128,10 +136,10 @@ public class Jcrom {
      *            the class that will be mapped
      * @return the Jcrom instance
      */
-    public synchronized Jcrom map(Class entityClass) {
+    public synchronized Jcrom map(Class<?> entityClass) {
         if (!mapper.isMapped(entityClass)) {
-            Set<Class> validClasses = validator.validate(entityClass, mapper.isDynamicInstantiation());
-            for (Class c : validClasses) {
+            Set<Class<?>> validClasses = validator.validate(entityClass, mapper.isDynamicInstantiation());
+            for (Class<?> c : validClasses) {
                 mapper.addMappedClass(c);
             }
         }
@@ -160,7 +168,7 @@ public class Jcrom {
      */
     public synchronized Jcrom mapPackage(String packageName, boolean ignoreInvalidClasses) {
         try {
-            for (Class c : ReflectionUtils.getClasses(packageName)) {
+            for (Class<?> c : ReflectionUtils.getClasses(packageName)) {
                 try {
                     map(c);
                 } catch (JcrMappingException ex) {
@@ -182,7 +190,7 @@ public class Jcrom {
      * 
      * @return all classes that are mapped by this instance
      */
-    public Set<Class> getMappedClasses() {
+    public Set<Class<?>> getMappedClasses() {
         return Collections.unmodifiableSet(mapper.getMappedClasses());
     }
 
@@ -193,7 +201,7 @@ public class Jcrom {
      *            the class we want to check
      * @return true if the class is mapped, else false
      */
-    public boolean isMapped(Class entityClass) {
+    public boolean isMapped(Class<?> entityClass) {
         return mapper.isMapped(entityClass);
     }
 
@@ -210,6 +218,24 @@ public class Jcrom {
             return mapper.getNodePath(object);
         } catch (IllegalAccessException e) {
             throw new JcrMappingException("Could not get node path from object", e);
+        }
+    }
+
+    public Object getParentObject(Object childObject) throws JcrMappingException {
+        try {
+            return mapper.getParentObject(childObject);
+        } catch (IllegalAccessException e) {
+            throw new JcrMappingException("Could not get parent object with Annotation JcrParentNode from child object", e);
+        }
+    }
+
+    public String getChildContainerPath(Object childObject, Object parentObject, Node parentNode) {
+        try {
+            return mapper.getChildContainerNodePath(childObject, parentObject, parentNode);
+        } catch (IllegalAccessException e) {
+            throw new JcrMappingException("Could not get child object with Annotation @JcrChildNode and with the type '" + childObject.getClass() + "' from parent object", e);
+        } catch (RepositoryException e) {
+            throw new JcrMappingException("Could not get child object with Annotation @JcrChildNode and with the type '" + childObject.getClass() + "' from parent object", e);
         }
     }
 
@@ -233,7 +259,7 @@ public class Jcrom {
      * @throws JcrMappingException
      */
     public <T> T fromNode(Class<T> entityClass, Node node) throws JcrMappingException {
-        return (T) fromNode(entityClass, node, "*", -1);
+        return fromNode(entityClass, node, "*", -1);
     }
 
     /**
@@ -252,8 +278,7 @@ public class Jcrom {
      * @return an instance of the JCR entity class, mapped from the node
      * @throws JcrMappingException
      */
-    public <T> T fromNode(Class<T> entityClass, Node node, String childNodeFilter, int maxDepth)
-            throws JcrMappingException {
+    public <T> T fromNode(Class<T> entityClass, Node node, String childNodeFilter, int maxDepth) throws JcrMappingException {
         return fromNode(entityClass, node, new NodeFilter(childNodeFilter, maxDepth));
     }
 
@@ -270,12 +295,13 @@ public class Jcrom {
      * @return an instance of the JCR entity class, mapped from the node
      * @throws JcrMappingException
      */
+    @SuppressWarnings("unchecked")
     public <T> T fromNode(Class<T> entityClass, Node node, NodeFilter nodeFilter) throws JcrMappingException {
         if (!mapper.isDynamicInstantiation() && !mapper.isMapped(entityClass)) {
             throw new JcrMappingException("Trying to map to an unmapped class: " + entityClass.getName());
         }
         try {
-            return (T) mapper.fromNode(entityClass, node, nodeFilter);
+            return (T) mapper.fromNodeWithParent(entityClass, node, nodeFilter);
         } catch (ClassNotFoundException e) {
             throw new JcrMappingException("Could not map Object from node", e);
         } catch (InstantiationException e) {
@@ -344,7 +370,7 @@ public class Jcrom {
      * @return the name of the updated node
      * @throws JcrMappingException
      */
-    public String updateNode(Node node, Object entity) throws JcrMappingException {
+    public Node updateNode(Node node, Object entity) throws JcrMappingException {
         return updateNode(node, entity, new NodeFilter("*", -1));
     }
 
@@ -364,7 +390,7 @@ public class Jcrom {
      * @return the name of the updated node
      * @throws JcrMappingException
      */
-    public String updateNode(Node node, Object entity, String childNodeFilter, int maxDepth) throws JcrMappingException {
+    public Node updateNode(Node node, Object entity, String childNodeFilter, int maxDepth) throws JcrMappingException {
         return updateNode(node, entity, new NodeFilter(childNodeFilter, maxDepth));
     }
 
@@ -380,7 +406,7 @@ public class Jcrom {
      * @return the name of the updated node
      * @throws JcrMappingException
      */
-    public String updateNode(Node node, Object entity, NodeFilter nodeFilter) throws JcrMappingException {
+    public Node updateNode(Node node, Object entity, NodeFilter nodeFilter) throws JcrMappingException {
 
         if (!mapper.isMapped(entity.getClass())) {
             throw new JcrMappingException("Trying to map an unmapped class: " + entity.getClass().getName());
@@ -414,4 +440,44 @@ public class Jcrom {
         return annotationReader;
     }
 
+    public void setSessionFactory(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
+
+    public SessionFactory getSessionFactory() {
+        return sessionFactory;
+    }
+
+    public void logNodeInfos(Node node) throws RepositoryException {
+        for (PropertyIterator iter = node.getProperties(); iter.hasNext();) {
+            Property p = iter.nextProperty();
+            if (p.isMultiple()) {
+                for (Value value : p.getValues()) {
+                    System.out.println(p.getName() + " = " + value.getString());
+                }
+            } else {
+                System.out.println(p.getName() + " = " + p.getValue().getString());
+            }
+        }
+        for (PropertyIterator iter = node.getReferences(); iter.hasNext();) {
+            Property p = iter.nextProperty();
+            if (p.isMultiple()) {
+                for (Value value : p.getValues()) {
+                    System.out.println(p.getName() + " = " + value.getString());
+                }
+            } else {
+                System.out.println(p.getName() + " = " + p.getValue().getString());
+            }
+        }
+        for (PropertyIterator iter = node.getWeakReferences(); iter.hasNext();) {
+            Property p = iter.nextProperty();
+            if (p.isMultiple()) {
+                for (Value value : p.getValues()) {
+                    System.out.println(p.getName() + " = " + value.getString());
+                }
+            } else {
+                System.out.println(p.getName() + " = " + p.getValue().getString());
+            }
+        }
+    }
 }

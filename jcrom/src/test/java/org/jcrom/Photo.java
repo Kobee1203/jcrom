@@ -26,60 +26,65 @@ import org.jcrom.annotations.JcrProperty;
 @JcrNode(nodeType = "nt:unstructured")
 public class Photo extends JcrFile {
 
-	@JcrProperty String originalFilename;
-	
-	@JcrProperty private long fileSize;
-	
-	@JcrProperty private String photographer;
-	
-	@JcrProperty private byte[] fileBytes;
-	
-	@JcrChildNode
-	private Parent child;
-	
-	public Photo() {
-		super();
-	}
+    private static final long serialVersionUID = 1L;
 
-	public Parent getChild() {
-		return child;
-	}
+    @JcrProperty
+    String originalFilename;
 
-	public void setChild(Parent child) {
-		this.child = child;
-	}
+    @JcrProperty
+    private long fileSize;
 
-	public long getFileSize() {
-		return fileSize;
-	}
+    @JcrProperty
+    private String photographer;
 
-	public void setFileSize(long fileSize) {
-		this.fileSize = fileSize;
-	}
+    @JcrProperty
+    private byte[] fileBytes;
 
-	public String getPhotographer() {
-		return photographer;
-	}
+    @JcrChildNode
+    private Parent child;
 
-	public void setPhotographer(String photographer) {
-		this.photographer = photographer;
-	}
+    public Photo() {
+        super();
+    }
 
-	public String getOriginalFilename() {
-		return originalFilename;
-	}
+    public Parent getChild() {
+        return child;
+    }
 
-	public void setOriginalFilename(String originalFilename) {
-		this.originalFilename = originalFilename;
-	}
+    public void setChild(Parent child) {
+        this.child = child;
+    }
 
-	public byte[] getFileBytes() {
-		return fileBytes;
-	}
+    public long getFileSize() {
+        return fileSize;
+    }
 
-	public void setFileBytes(byte[] fileBytes) {
-		this.fileBytes = fileBytes;
-	}
-	
-	
+    public void setFileSize(long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public String getPhotographer() {
+        return photographer;
+    }
+
+    public void setPhotographer(String photographer) {
+        this.photographer = photographer;
+    }
+
+    public String getOriginalFilename() {
+        return originalFilename;
+    }
+
+    public void setOriginalFilename(String originalFilename) {
+        this.originalFilename = originalFilename;
+    }
+
+    public byte[] getFileBytes() {
+        return fileBytes;
+    }
+
+    public void setFileBytes(byte[] fileBytes) {
+        this.fileBytes = fileBytes;
+    }
+
 }

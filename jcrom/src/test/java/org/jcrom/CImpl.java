@@ -8,24 +8,28 @@ import org.jcrom.annotations.JcrReference;
  */
 public class CImpl extends AbstractJcrEntity implements C {
 
-    @JcrReference(byPath=true) private A body;
+    private static final long serialVersionUID = 1L;
+
+    @JcrReference(byPath = true)
+    private A body;
 
     public CImpl() {
         this(null);
     }
 
-    public CImpl( String name ) {
+    public CImpl(String name) {
         super();
         this.name = name;
     }
 
+    @Override
     public A getA() {
         return body;
     }
 
+    @Override
     public void setA(A body) {
         this.body = body;
     }
-
 
 }

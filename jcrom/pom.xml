@@ -7,7 +7,7 @@
     <packaging>jar</packaging>
     <version>trunk</version>
     <name>jcrom</name>
-    <url>http://jcrom.org</url>
+    <url>http://code.google.com/p/jcrom/</url>
     <description>A lightweight framework for mapping Java objects to/from a Java Content Repository (JCR).</description>
     <licenses>
         <license>
@@ -27,48 +27,55 @@
         </developer>
     </developers>
     <dependencies>
-	<!-- Test dependencies -->
+        <!-- Test dependencies -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.4</version>
+            <version>4.8.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-core</artifactId>
-            <version>1.6.0</version>
+            <version>2.4.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.4.3</version>
+            <version>1.6.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-            <version>1.4.3</version>
+            <version>1.6.1</version>
             <scope>test</scope>
         </dependency>
-	
-	<!-- Compile dependencies -->
+
+        <!-- Compile dependencies -->
         <dependency>
             <groupId>javax.jcr</groupId>
             <artifactId>jcr</artifactId>
-            <version>1.0</version>
+            <version>2.0</version>
         </dependency>
         <dependency>
             <groupId>cglib</groupId>
             <artifactId>cglib</artifactId>
-            <version>2.1_3</version>
+            <version>2.2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>1.1</version>
         </dependency>
     </dependencies>
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
@@ -78,10 +85,36 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
+                <version>2.5</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.8.1</version>
+                <configuration>
+                	<encoding>UTF-8</encoding>
+                	<reportOutputDirectory>${basedir}</reportOutputDirectory>
+                	<destDir>apidocs</destDir>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+    
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.8.1</version>
+                <configuration>
+                	<encoding>UTF-8</encoding>
+                	<reportOutputDirectory>${basedir}</reportOutputDirectory>
+                	<destDir>apidocs</destDir>
+                </configuration>
+            </plugin>
+        </plugins>
+	</reporting>
 </project>

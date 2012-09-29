@@ -33,6 +33,8 @@ import java.io.OutputStream;
  */
 public class JcrDataProviderImpl implements JcrDataProvider {
 
+    private static final long serialVersionUID = 1L;
+
     protected final TYPE type;
     protected final byte[] bytes;
     protected final File file;
@@ -68,34 +70,42 @@ public class JcrDataProviderImpl implements JcrDataProvider {
         this.contentLength = length;
     }
 
+    @Override
     public boolean isBytes() {
         return type == TYPE.BYTES;
     }
 
+    @Override
     public boolean isFile() {
         return type == TYPE.FILE;
     }
 
+    @Override
     public boolean isStream() {
         return type == TYPE.STREAM;
     }
 
+    @Override
     public byte[] getBytes() {
         return bytes;
     }
 
+    @Override
     public File getFile() {
         return file;
     }
 
+    @Override
     public InputStream getInputStream() {
         return inputStream;
     }
 
+    @Override
     public TYPE getType() {
         return type;
     }
 
+    @Override
     public void writeToFile(File destination) throws IOException {
         if (type == TYPE.BYTES) {
             write(bytes, destination);
@@ -162,6 +172,7 @@ public class JcrDataProviderImpl implements JcrDataProvider {
         }
     }
 
+    @Override
     public long getContentLength() {
         return this.contentLength;
     }

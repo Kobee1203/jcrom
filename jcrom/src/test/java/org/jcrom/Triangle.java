@@ -24,6 +24,8 @@ import org.jcrom.annotations.JcrProperty;
 @JcrNode(classNameProperty = "className")
 public class Triangle extends AbstractJcrEntity implements Shape {
 
+    private static final long serialVersionUID = 1L;
+
     @JcrProperty
     private double height;
 
@@ -85,6 +87,7 @@ public class Triangle extends AbstractJcrEntity implements Shape {
      *
      * @see org.jcrom.Shape#getArea()
      */
+    @Override
     public double getArea() {
         return (0.5d * this.base) * this.height;
     }
