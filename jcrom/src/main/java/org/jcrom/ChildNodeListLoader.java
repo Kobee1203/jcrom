@@ -29,6 +29,7 @@ import org.jcrom.util.PathUtils;
  * Handles lazy loading of child node lists.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 class ChildNodeListLoader extends AbstractLazyLoader {
 

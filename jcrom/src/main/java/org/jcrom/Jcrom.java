@@ -39,6 +39,7 @@ import org.jcrom.util.ReflectionUtils;
  * </p>
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class Jcrom {
 

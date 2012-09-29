@@ -29,6 +29,7 @@ import org.jcrom.util.PathUtils;
  * Handles lazy loading of reference lists.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class ReferenceListLoader extends AbstractLazyLoader {
 

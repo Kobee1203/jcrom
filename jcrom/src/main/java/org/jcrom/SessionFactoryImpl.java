@@ -7,6 +7,14 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.observation.ObservationManager;
 
+/**
+ * Jcr Session Factory. This class is just a simple wrapper around the repository which facilitates session retrieval through a central point.
+ * 
+ * <p/>
+ * The session factory is able to add event listener definitions for each session and some utility methods.
+ * 
+ * @author Nicolas Dos Santos
+ */
 public class SessionFactoryImpl implements SessionFactory {
 
     private Repository repository;

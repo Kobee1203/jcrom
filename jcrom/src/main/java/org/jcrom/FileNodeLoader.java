@@ -29,6 +29,7 @@ import org.jcrom.util.PathUtils;
  * Handles lazy loading of single file node.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class FileNodeLoader extends AbstractLazyLoader {
 

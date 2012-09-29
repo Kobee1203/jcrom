@@ -24,6 +24,7 @@ import javax.jcr.Session;
  * Contains utilities used for JCR node names and paths.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class PathUtils {
 

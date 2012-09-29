@@ -27,6 +27,7 @@ import java.io.Serializable;
  * <p>This interface extends {@link java.io.Serializable} to resolve <i><a href="http://code.google.com/p/jcrom/issues/detail?id=91">Issue 91</a></i></p>
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public interface JcrDataProvider extends Serializable {
 

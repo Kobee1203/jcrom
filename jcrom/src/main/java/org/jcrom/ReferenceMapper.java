@@ -39,6 +39,7 @@ import org.jcrom.util.ReflectionUtils;
  * This class handles mappings of type @JcrReference
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 class ReferenceMapper {
 

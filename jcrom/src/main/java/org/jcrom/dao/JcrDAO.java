@@ -29,6 +29,7 @@ import java.util.List;
  * is a RuntimeException.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public interface JcrDAO<T> {
 

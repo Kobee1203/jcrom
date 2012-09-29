@@ -3,6 +3,11 @@ package org.jcrom;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+/**
+ * Session Factory interface. This interface describes a simplfied contract for retrieving a session.
+ * 
+ * @author Nicolas Dos Santos
+ */
 public interface SessionFactory {
 
     /**

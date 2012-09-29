@@ -6,10 +6,18 @@ import javax.jcr.Session;
 import org.jcrom.JcrMappingException;
 import org.jcrom.SessionFactory;
 
-public abstract class SessionFactoryUtils {
+/**
+ * Helper class featuring methods for JCR Session handling.
+ * 
+ * @author Nicolas Dos Santos
+ */
+public final class SessionFactoryUtils {
 
+	private SessionFactoryUtils() {
+	}
+	
     /**
-     * Get a Session from the SessionFactory
+     * Get a JCR Session from the SessionFactory
      * @param sessionFactory JCR Repository to create session with
      * @throws RepositoryException
      * @return {@link Session}
@@ -29,7 +37,7 @@ public abstract class SessionFactoryUtils {
     }
 
     /**
-     * Close the given Session
+     * Close the given JCR Session
      * @param session the Session to close
      */
     public static void releaseSession(Session session) {

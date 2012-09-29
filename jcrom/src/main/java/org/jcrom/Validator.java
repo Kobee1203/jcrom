@@ -46,6 +46,7 @@ import org.jcrom.util.ReflectionUtils;
  * This class is used by Jcrom to validate that the classes being mapped are correctly annotated as valid JCR classes.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 class Validator {
 

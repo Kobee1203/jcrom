@@ -36,6 +36,7 @@ import org.jcrom.annotations.JcrPath;
  * stored on the file node.
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(nodeType = NodeType.NT_FILE)
 public class JcrFile implements Serializable {

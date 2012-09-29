@@ -30,6 +30,7 @@ import org.jcrom.util.NodeFilter;
  * Creates CGLIB proxies for lazy loading.
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class ProxyFactory {
 

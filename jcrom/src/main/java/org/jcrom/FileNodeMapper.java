@@ -42,6 +42,7 @@ import org.jcrom.util.ReflectionUtils;
  * This class handles mappings of type @JcrFileNode
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 class FileNodeMapper {
 

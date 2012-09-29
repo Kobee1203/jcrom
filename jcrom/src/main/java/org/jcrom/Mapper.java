@@ -67,6 +67,7 @@ import org.jcrom.util.ReflectionUtils;
  * This class handles the heavy lifting of mapping a JCR node to a JCR entity object, and vice versa.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 class Mapper {
 

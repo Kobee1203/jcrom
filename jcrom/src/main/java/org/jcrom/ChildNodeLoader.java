@@ -28,6 +28,7 @@ import org.jcrom.util.PathUtils;
  * Handles lazy loading of single child node.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 class ChildNodeLoader extends AbstractLazyLoader {
 

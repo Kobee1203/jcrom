@@ -51,6 +51,7 @@ import org.jcrom.util.ReflectionUtils;
  * This class handles mappings of type @JcrProperty
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 class PropertyMapper {
 

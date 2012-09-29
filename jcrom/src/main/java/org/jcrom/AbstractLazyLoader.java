@@ -9,6 +9,11 @@ import net.sf.cglib.proxy.LazyLoader;
 
 import org.jcrom.util.SessionFactoryUtils;
 
+/**
+ * Abstract class used by lazy loading classes.
+ * 
+ * @author Nicolas Dos Santos
+ */
 public abstract class AbstractLazyLoader implements LazyLoader {
 
     private static final Logger logger = Logger.getLogger(AbstractLazyLoader.class.getName());

@@ -60,6 +60,7 @@ import org.jcrom.util.ReflectionUtils;
  * is a RuntimeException.
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 

@@ -29,6 +29,7 @@ import org.jcrom.util.PathUtils;
  * Handles lazy loading of single reference.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 class ReferenceLoader extends AbstractLazyLoader {
 
