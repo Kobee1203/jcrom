@@ -1289,6 +1289,36 @@ public class TestMapping extends TestAbstract {
         assertEquals(customFromJcr.getMetadata(), updatedFromJcr.getMetadata());
     }
 
+    /**
+     * Thanks to eltabo for contributing this test case (Issue 95).
+     * @throws Exception 
+     */
+    @Test
+    public void testJcrFileNodeFromInputStream() throws Exception {
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(Document.class);
+        jcrom.map(Parent.class);
+        jcrom.map(JcrFile.class);
+
+        Node rootNode = session.getRootNode().addNode("root");
+
+        Parent parent = createParent("Bob");
+        parent.setJcrFile(createFile("jcr_image.jpg", true));
+        Node newNode = jcrom.addNode(rootNode, parent);
+        assertNotNull(newNode);
+        assertTrue(newNode.hasNode("jcrFile/jcr_image.jpg/jcr:content"));
+
+        Node fileNode = newNode.getNode("jcrFile/jcr_image.jpg");
+        assertEquals("image/jpeg", fileNode.getNode("jcr:content").getProperty("jcr:mimeType").getString());
+        assertEquals("UTF-8", fileNode.getNode("jcr:content").getProperty("jcr:encoding").getString());
+
+        JcrFile fromNode = jcrom.fromNode(JcrFile.class, fileNode);
+
+        assertEquals("image/jpeg", fromNode.getMimeType());
+        assertEquals("UTF-8", fromNode.getEncoding());
+        assertTrue(fromNode.getDataProvider().getContentLength() > 0);
+    }
+
     @Test
     public void testNoChildContainerNode() throws Exception {
         Jcrom jcrom = new Jcrom();

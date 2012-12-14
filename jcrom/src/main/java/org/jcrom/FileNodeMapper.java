@@ -134,8 +134,8 @@ class FileNodeMapper {
             //mapper.setUUID(file, fileNode.getUUID());
             mapper.setUUID(file, fileNode.getIdentifier());
         }
-        Node contentNode = fileNode.addNode(Property.JCR_CONTENT, NodeType.NT_RESOURCE);
-        setFileNodeProperties(contentNode, file);
+        //Node contentNode = fileNode.addNode(Property.JCR_CONTENT, NodeType.NT_RESOURCE);
+        //setFileNodeProperties(contentNode, file);
 
         mapper.addNode(fileNode, file, null, false);
     }
@@ -362,12 +362,10 @@ class FileNodeMapper {
     }
 
     void addFiles(Field field, Object obj, Node node, Mapper mapper) throws IllegalAccessException, RepositoryException, IOException {
-
         setFiles(field, obj, node, mapper, -1, null);
     }
 
     void updateFiles(Field field, Object obj, Node node, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
-
         setFiles(field, obj, node, mapper, depth, nodeFilter);
     }
 
