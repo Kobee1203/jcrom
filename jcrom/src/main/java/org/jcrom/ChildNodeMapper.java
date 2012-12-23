@@ -18,6 +18,7 @@ package org.jcrom;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -361,6 +362,18 @@ class ChildNodeMapper {
                             field.set(obj, getSingleChild(childObjClass, childrenContainer.getNodes().nextNode(), obj, mapper, depth, nodeFilter));
                         } else {
                             field.set(obj, getSingleChild(childObjClass, childrenContainer, obj, mapper, depth, nodeFilter));
+                        }
+                    }
+                } else {
+                    // Issue 87: Child nodes not set to empty list/null
+                    Object fieldValue = field.get(obj);
+                    if (fieldValue != null) {
+                        if (fieldValue instanceof Collection<?>) {
+                            ((Collection<?>) fieldValue).clear();
+                        } else if (fieldValue instanceof Map<?, ?>) {
+                            ((Map<?, ?>) fieldValue).clear();
+                        } else {
+                            field.set(obj, null);
                         }
                     }
                 }
