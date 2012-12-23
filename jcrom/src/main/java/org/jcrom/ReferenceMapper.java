@@ -109,10 +109,10 @@ class ReferenceMapper {
             List<Value> refValues = getReferenceValues(references, node.getSession(), jcrReference);
             if (!refValues.isEmpty()) {
                 node.setProperty(propertyName, refValues.toArray(new Value[refValues.size()]));
-            } else {
+            } else if (node.hasProperty(propertyName)) {
                 node.setProperty(propertyName, (Value[]) null);
             }
-        } else {
+        } else if (node.hasProperty(propertyName)) {
             node.setProperty(propertyName, (Value[]) null);
         }
     }

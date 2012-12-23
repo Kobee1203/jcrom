@@ -82,6 +82,15 @@ public class TestLazyLoading extends TestAbstract {
         assertTrue(modifiedFromNode.getFavourites().size() == fromNode.getFavourites().size());
         assertTrue(modifiedFromNode.getStartNode().getName().equals(productsNode.getName()));
         assertTrue(modifiedFromNode.getStartNode().getChildren().size() == productsNode.getChildren().size());
+
+        // Additional test for Issue 94
+        // Delete favorites
+        modifiedFromNode.setFavourites(null);
+
+        jcrom.updateNode(treeRootNode, modifiedFromNode);
+
+        Tree remodifiedFromNode = jcrom.fromNode(Tree.class, treeRootNode);
+        assertTrue(remodifiedFromNode.getFavourites().isEmpty());
     }
 
     @Test
