@@ -44,6 +44,7 @@ import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 
 import org.jcrom.annotations.JcrProperty;
+import org.jcrom.annotations.JcrProtectedProperty;
 import org.jcrom.annotations.JcrSerializedProperty;
 import org.jcrom.util.ReflectionUtils;
 
@@ -61,12 +62,12 @@ class PropertyMapper {
         this.mapper = mapper;
     }
 
-    void mapPropertiesToMap(Object obj, Field field, Class<?> valueType, PropertyIterator propIterator) throws RepositoryException, IOException, IllegalAccessException {
+    void mapPropertiesToMap(Object obj, Field field, Class<?> valueType, PropertyIterator propIterator, boolean ignoreReadOnlyProperties) throws RepositoryException, IOException, IllegalAccessException {
         Map<String, Object> map = new HashMap<String, Object>();
         while (propIterator.hasNext()) {
             Property p = propIterator.nextProperty();
             // we ignore the read-only properties added by the repository
-            if (!p.getName().startsWith("jcr:") && !p.getName().startsWith(NamespaceRegistry.NAMESPACE_JCR) && !p.getName().startsWith("nt:") && !p.getName().startsWith(NamespaceRegistry.NAMESPACE_NT)) {
+            if (!ignoreReadOnlyProperties || (!p.getName().startsWith("jcr:") && !p.getName().startsWith(NamespaceRegistry.NAMESPACE_JCR) && !p.getName().startsWith("nt:") && !p.getName().startsWith(NamespaceRegistry.NAMESPACE_NT))) {
                 if (valueType.isArray()) {
                     if (p.getDefinition().isMultiple()) {
                         map.put(p.getName(), valuesToArray(valueType.getComponentType(), p.getValues()));
@@ -206,6 +207,15 @@ class PropertyMapper {
         return name;
     }
 
+    String getProtectedPropertyName(Field field) {
+        JcrProtectedProperty jcrProperty = mapper.getJcrom().getAnnotationReader().getAnnotation(field, JcrProtectedProperty.class);
+        String name = field.getName();
+        if (!jcrProperty.name().equals(Mapper.DEFAULT_FIELDNAME)) {
+            name = jcrProperty.name();
+        }
+        return name;
+    }
+
     void mapPropertyToField(Object obj, Field field, Node node) throws RepositoryException, IllegalAccessException, IOException {
         String name = getPropertyName(field);
 
@@ -214,10 +224,29 @@ class PropertyMapper {
             Class<?> valueType = ReflectionUtils.getParameterizedClass(field, 1);
             Node childrenContainer = node.getNode(name);
             PropertyIterator propIterator = childrenContainer.getProperties();
-            mapPropertiesToMap(obj, field, valueType, propIterator);
+            mapPropertiesToMap(obj, field, valueType, propIterator, true);
+        } else {
+            mapToField(name, field, obj, node);
+        }
+    }
 
-        } else if (node.hasProperty(name)) {
-            Property p = node.getProperty(name);
+    void mapProtectedPropertyToField(Object obj, Field field, Node node) throws RepositoryException, IllegalAccessException, IOException {
+        String name = getProtectedPropertyName(field);
+
+        if (ReflectionUtils.implementsInterface(field.getType(), Map.class)) {
+            // map of properties
+            Class<?> valueType = ReflectionUtils.getParameterizedClass(field, 1);
+            Node childrenContainer = node.getNode(name);
+            PropertyIterator propIterator = childrenContainer.getProperties();
+            mapPropertiesToMap(obj, field, valueType, propIterator, false);
+        } else {
+            mapToField(name, field, obj, node);
+        }
+    }
+
+    void mapToField(String propertyName, Field field, Object obj, Node node) throws RepositoryException, IllegalAccessException, IOException {
+        if (node.hasProperty(propertyName)) {
+            Property p = node.getProperty(propertyName);
 
             if (ReflectionUtils.implementsInterface(field.getType(), List.class)) {
                 // multi-value property (List)

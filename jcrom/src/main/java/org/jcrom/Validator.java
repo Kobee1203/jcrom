@@ -35,6 +35,7 @@ import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrParentNode;
 import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
+import org.jcrom.annotations.JcrProtectedProperty;
 import org.jcrom.annotations.JcrReference;
 import org.jcrom.annotations.JcrSerializedProperty;
 import org.jcrom.annotations.JcrUUID;
@@ -123,6 +124,11 @@ class Validator {
 
                 } else if (!ReflectionUtils.isPropertyType(field.getType())) {
                     throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProperty is not a valid JCR property (type is " + field.getType().getName() + ").");
+                }
+
+            } else if (field.isAnnotationPresent(JcrProtectedProperty.class)) {
+                if (!ReflectionUtils.isPropertyType(field.getType())) {
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProtectedProperty is not a valid JCR property (type is " + field.getType().getName() + ").");
                 }
 
             } else if (field.isAnnotationPresent(JcrSerializedProperty.class)) {

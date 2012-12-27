@@ -53,6 +53,7 @@ import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrParentNode;
 import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
+import org.jcrom.annotations.JcrProtectedProperty;
 import org.jcrom.annotations.JcrReference;
 import org.jcrom.annotations.JcrSerializedProperty;
 import org.jcrom.annotations.JcrUUID;
@@ -645,6 +646,9 @@ class Mapper {
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrSerializedProperty.class)) {
                 propertyMapper.mapSerializedPropertyToField(obj, field, node);
+
+            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProtectedProperty.class)) {
+                propertyMapper.mapProtectedPropertyToField(obj, field, node);
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrUUID.class)) {
                 if (node.hasProperty(Property.JCR_UUID)) {

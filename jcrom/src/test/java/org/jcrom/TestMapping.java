@@ -47,6 +47,7 @@ import junit.framework.Assert;
 
 import org.jcrom.entities.First;
 import org.jcrom.entities.Second;
+import org.jcrom.util.JcrUtils;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.PathUtils;
 import org.junit.Test;
@@ -1578,6 +1579,65 @@ public class TestMapping extends TestAbstract {
 
         final CustomJCRFile customFromJcr = jcrom.fromNode(CustomJCRFile.class, customNode);
         assertNotNull("UUID is null.", customFromJcr.getUuid());
+    }
+
+    @Test
+    public void testProtectedProperties() throws Exception {
+        final Jcrom jcrom = new Jcrom();
+        jcrom.map(ProtectedPropertyNode.class);
+
+        ProtectedPropertyNode protectedNode = new ProtectedPropertyNode();
+        protectedNode.setName("protected_node");
+        protectedNode.setCreatedBy("John Doe");
+
+        final Node rootNode = this.session.getRootNode();
+        Node createdProtectedNode = jcrom.addNode(rootNode, protectedNode);
+        this.session.save();
+
+        JcrUtils.lock(createdProtectedNode, true, false, -1, "the_locker");
+
+        ProtectedPropertyNode fromNode = jcrom.fromNode(ProtectedPropertyNode.class, createdProtectedNode);
+        assertNotNull(fromNode);
+        String createdBy = fromNode.getCreatedBy();
+        assertNotNull(createdBy);
+        Date created = fromNode.getCreated();
+        assertNotNull(created);
+        long createdTime = created.getTime();
+        String identifier = fromNode.getIdentifier();
+        assertNotNull(identifier);
+        String id = fromNode.getId();
+        assertNotNull(id);
+        assertEquals(identifier, id);
+        String lockOwner = fromNode.getLockOwner();
+        assertNotNull(lockOwner);
+        assertEquals("the_locker", lockOwner);
+        boolean lockIsDeep = fromNode.isLockIsDeep();
+        assertEquals(true, lockIsDeep);
+
+        Thread.sleep(1000);
+
+        // Properties not saved
+        fromNode.setCreated(new Date());
+        fromNode.setCreatedBy("Jane Doe");
+
+        JcrUtils.unlock(createdProtectedNode);
+
+        Node updatedProtectedNode = jcrom.updateNode(createdProtectedNode, fromNode);
+        ProtectedPropertyNode fromUpdatedNode = jcrom.fromNode(ProtectedPropertyNode.class, updatedProtectedNode);
+        Date updatedCreated = fromUpdatedNode.getCreated();
+        assertNotNull(updatedCreated);
+        assertEquals(createdBy, fromUpdatedNode.getCreatedBy());
+        assertEquals(createdTime, updatedCreated.getTime());
+        assertEquals(identifier, fromUpdatedNode.getIdentifier());
+        assertEquals(id, fromUpdatedNode.getId());
+        assertEquals(fromUpdatedNode.getIdentifier(), fromUpdatedNode.getId());
+        assertNull(fromUpdatedNode.getLockOwner());
+        assertFalse(fromUpdatedNode.isLockIsDeep());
+    }
+
+    @Test
+    public void testAdobeCQ() {
+        //
     }
 
     @Test

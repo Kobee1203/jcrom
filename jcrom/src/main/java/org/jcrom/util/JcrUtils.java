@@ -19,6 +19,7 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.lock.LockManager;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionManager;
@@ -42,6 +43,11 @@ public final class JcrUtils {
             }
         }
         return false;
+    }
+
+    public static LockManager getLockManager(Session session) throws RepositoryException {
+        LockManager lockMgr = session.getWorkspace().getLockManager();
+        return lockMgr;
     }
 
     public static VersionManager getVersionManager(Session session) throws RepositoryException {
@@ -86,6 +92,28 @@ public final class JcrUtils {
 
         } catch (RepositoryException e) {
             throw new JcrMappingException("Could not perform check-out", e);
+        }
+    }
+
+    /**
+     * @see javax.jcr.lock.LockManager#lock(String, boolean, boolean, long, String)
+     */
+    public static void lock(Node node, boolean isDeep, boolean isSessionScoped, long timeoutHint, String ownerInfo) {
+        try {
+            getLockManager(node.getSession()).lock(node.getPath(), isDeep, isSessionScoped, timeoutHint, ownerInfo);
+        } catch (RepositoryException e) {
+            throw new JcrMappingException("Could not perform lock", e);
+        }
+    }
+
+    /**
+     * @see javax.jcr.lock.LockManager#unlock(String)
+     */
+    public static void unlock(Node node) {
+        try {
+            getLockManager(node.getSession()).unlock(node.getPath());
+        } catch (RepositoryException e) {
+            throw new JcrMappingException("Could not perform unlock", e);
         }
     }
 }
