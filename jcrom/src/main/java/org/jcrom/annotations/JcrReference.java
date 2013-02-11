@@ -51,4 +51,11 @@ public @interface JcrReference {
      * @return whether to use path-based references
      */
     boolean byPath() default false;
+
+    /**
+     * Setting this to true will force a weak reference for this field. The default is false.
+     * 
+     * @return whether to force this field to use a weak reference
+     */
+    boolean weak() default false;
 }

@@ -131,7 +131,12 @@ class ReferenceMapper {
             if (referenceId != null && !referenceId.equals("")) {
                 //Node referencedNode = containerNode.getSession().getNodeByUUID(referenceUUID);
                 Node referencedNode = PathUtils.getNodeById(referenceId, containerNode.getSession());
-                containerNode.setProperty(propertyName, referencedNode);
+                if (jcrReference.weak()) {
+                    containerNode.setProperty(propertyName, containerNode.getSession().getValueFactory().createValue(referencedNode, true));
+                }
+                else {
+                	containerNode.setProperty(propertyName, referencedNode);
+                }
             } else {
                 // remove the reference
                 containerNode.setProperty(propertyName, (Value) null);
