@@ -73,7 +73,13 @@ class ReferenceMapper {
                 if (referenceId != null && !referenceId.equals("")) {
                     //Node referencedNode = session.getNodeByUUID(referenceUUID);
                     Node referencedNode = PathUtils.getNodeById(referenceId, session);
-                    refValues.add(session.getValueFactory().createValue(referencedNode));
+                    Value value;
+                    if (jcrReference.weak()) {
+                        value = session.getValueFactory().createValue(referencedNode, true);
+                    } else {
+                        value = session.getValueFactory().createValue(referencedNode);
+                    }
+                    refValues.add(value);
                 }
             }
         }
@@ -133,9 +139,8 @@ class ReferenceMapper {
                 Node referencedNode = PathUtils.getNodeById(referenceId, containerNode.getSession());
                 if (jcrReference.weak()) {
                     containerNode.setProperty(propertyName, containerNode.getSession().getValueFactory().createValue(referencedNode, true));
-                }
-                else {
-                	containerNode.setProperty(propertyName, referencedNode);
+                } else {
+                    containerNode.setProperty(propertyName, referencedNode);
                 }
             } else {
                 // remove the reference

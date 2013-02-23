@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * @author Olafur Gauti Gudmundsson
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target( { ElementType.FIELD, ElementType.ANNOTATION_TYPE })
+@Target({ ElementType.FIELD, ElementType.ANNOTATION_TYPE })
 public @interface JcrReference {
 
     /**
