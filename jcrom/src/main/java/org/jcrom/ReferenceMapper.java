@@ -30,6 +30,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.annotations.JcrReference;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.PathUtils;
@@ -253,6 +254,11 @@ class ReferenceMapper {
                     mapper.setId(referencedObject, value.getString());
                 }
             }
+            // support JcrFileNode annotation for references
+            if (field.isAnnotationPresent(JcrFileNode.class) && referencedObject instanceof JcrFile) {
+        		JcrFileNode fileNode = field.getAnnotation(JcrFileNode.class);
+        		FileNodeMapper.addFileProperties((JcrFile) referencedObject, referencedNode, fileNode, depth, nodeFilter);
+        	}
             return referencedObject;
         } else {
             return null;
