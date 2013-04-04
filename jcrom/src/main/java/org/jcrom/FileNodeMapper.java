@@ -344,16 +344,16 @@ class FileNodeMapper {
         }
 
         // file data
-        if (jcrFileNode == null || jcrFileNode.loadType() == JcrFileNode.LoadType.STREAM) {
-            //InputStream is = contentNode.getProperty("jcr:data").getStream();
-            InputStream is = contentNode.getProperty(Property.JCR_DATA).getBinary().getStream();
-            JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(is, contentNode.getProperty(Property.JCR_DATA).getLength());
-            fileObj.setDataProvider(dataProvider);
-        } else if (jcrFileNode.loadType() == JcrFileNode.LoadType.BYTES) {
-            //InputStream is = contentNode.getProperty("jcr:data").getStream();
-            InputStream is = contentNode.getProperty(Property.JCR_DATA).getBinary().getStream();
-            JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(Mapper.readBytes(is));
-            fileObj.setDataProvider(dataProvider);
+        if (nodeFilter.isIncluded("jcr:data", depth)) {
+            if (jcrFileNode == null || jcrFileNode.loadType() == JcrFileNode.LoadType.STREAM) {
+                InputStream is = contentNode.getProperty(Property.JCR_DATA).getBinary().getStream();
+                JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(is, contentNode.getProperty(Property.JCR_DATA).getLength());
+                fileObj.setDataProvider(dataProvider);
+            } else if (jcrFileNode.loadType() == JcrFileNode.LoadType.BYTES) {
+                InputStream is = contentNode.getProperty(Property.JCR_DATA).getBinary().getStream();
+                JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(Mapper.readBytes(is));
+                fileObj.setDataProvider(dataProvider);
+            }
         }
 
         // if this is a JcrFile subclass, it may contain custom properties and 

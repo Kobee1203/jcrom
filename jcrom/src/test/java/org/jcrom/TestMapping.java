@@ -1246,7 +1246,7 @@ public class TestMapping extends TestAbstract {
     }
 
     /**
-     * Thanks to Danilo Barboza for contributing this test case.
+     * Thanks to Danilo Barboza and postmaster@doubleegg.com for contributing this test case.
      * @throws Exception 
      */
     @Test
@@ -1276,6 +1276,10 @@ public class TestMapping extends TestAbstract {
         assertEquals(custom.getEncoding(), customFromJcr.getEncoding());
         assertEquals(custom.getMimeType(), customFromJcr.getMimeType());
         assertEquals(custom.getMetadata(), customFromJcr.getMetadata());
+
+        // Test filtering of jcr:data
+        CustomJCRFile filteredFromJcr = dao.get(custom.getPath(), "-jcr:data", -1);
+        assertNull(filteredFromJcr.getDataProvider());
 
         customFromJcr.setEncoding("ISO-8859-1");
         customFromJcr.setMimeType("image/gif");
@@ -1637,6 +1641,7 @@ public class TestMapping extends TestAbstract {
     }
 
     /**
+     * Thanks to postmaster@doubleegg.com for contributing this test case.
      * Tests adding a Map field to a mapped class at a later date, 
      * fails with PathNotFoundException in JCROM 2.0
      */
