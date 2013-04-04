@@ -20,6 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -1633,6 +1634,33 @@ public class TestMapping extends TestAbstract {
         assertEquals(fromUpdatedNode.getIdentifier(), fromUpdatedNode.getId());
         assertNull(fromUpdatedNode.getLockOwner());
         assertFalse(fromUpdatedNode.isLockIsDeep());
+    }
+
+    /**
+     * Tests adding a Map field to a mapped class at a later date, 
+     * fails with PathNotFoundException in JCROM 2.0
+     */
+    @Test
+    public void testAddMapToModel() throws Exception {
+        final Jcrom jcrom = new Jcrom();
+        jcrom.map(EntityToBeModified.class);
+        jcrom.map(EntityModifiedMapFieldAdded.class);
+
+        EntityToBeModified entity = new EntityToBeModified();
+        entity.setName("original");
+        entity.setPath("original");
+
+        Node originalNode = jcrom.addNode(this.session.getRootNode(), entity);
+
+        try {
+            jcrom.fromNode(EntityModifiedMapFieldAdded.class, originalNode);
+        } catch (JcrMappingException e) {
+            if (e.getCause() instanceof PathNotFoundException) {
+                fail("PathNotFoundException thrown.");
+            } else {
+                throw e;
+            }
+        }
     }
 
     @Test

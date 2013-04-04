@@ -37,6 +37,7 @@ import javax.jcr.Binary;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
@@ -222,9 +223,14 @@ class PropertyMapper {
         if (ReflectionUtils.implementsInterface(field.getType(), Map.class)) {
             // map of properties
             Class<?> valueType = ReflectionUtils.getParameterizedClass(field, 1);
-            Node childrenContainer = node.getNode(name);
-            PropertyIterator propIterator = childrenContainer.getProperties();
-            mapPropertiesToMap(obj, field, valueType, propIterator, true);
+            try {
+				Node childrenContainer = node.getNode(name);
+				PropertyIterator propIterator = childrenContainer.getProperties();
+				mapPropertiesToMap(obj, field, valueType, propIterator, true);
+            } catch (PathNotFoundException pne) {
+				// ignore here as the Field could have been added to the model
+				// since the Node was created and not yet been populated.
+			}
         } else {
             mapToField(name, field, obj, node);
         }
