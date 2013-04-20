@@ -21,4 +21,6 @@ package org.jcrom;
  */
 public class EntityToBeModified extends AbstractJcrEntity {
 
+    private static final long serialVersionUID = 1L;
+
 }
