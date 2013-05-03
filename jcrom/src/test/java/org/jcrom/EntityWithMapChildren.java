@@ -1,9 +1,11 @@
 package org.jcrom;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrProperty;
 
 /**
@@ -32,12 +34,15 @@ public class EntityWithMapChildren extends AbstractJcrEntity {
     private Map<String, Integer> integers;
     @JcrProperty
     private Map<String, Integer[]> integerArrays;
+    @JcrChildNode
+    private Map<String, Object> objects;
 
     public EntityWithMapChildren() {
         strings = new HashMap<String, String>();
         stringArrays = new HashMap<String, String[]>();
         integers = new HashMap<String, Integer>();
         integerArrays = new HashMap<String, Integer[]>();
+        objects = new LinkedHashMap<String, Object>();
     }
 
     public int[] getMultiInt() {
@@ -102,6 +107,18 @@ public class EntityWithMapChildren extends AbstractJcrEntity {
 
     public void addString(String name, String value) {
         this.strings.put(name, value);
+    }
+
+    public Map<String, Object> getObjects() {
+        return objects;
+    }
+
+    public void setObjects(Map<String, Object> objects) {
+        this.objects = objects;
+    }
+
+    public void addObject(String name, Object value) {
+        this.objects.put(name, value);
     }
 
     public Locale getLocale() {

@@ -303,8 +303,9 @@ public class TestMapping extends TestAbstract {
     @Test
     public void mapsAsChildren() throws Exception {
 
-        Jcrom jcrom = new Jcrom();
+        Jcrom jcrom = new Jcrom(true, true);
         jcrom.map(EntityWithMapChildren.class);
+        jcrom.map(Child.class);
 
         Integer[] myIntArr1 = { 1, 2, 3 };
         Integer[] myIntArr2 = { 4, 5, 6 };
@@ -335,6 +336,8 @@ public class TestMapping extends TestAbstract {
         entity.addString("myString2", myString2);
         entity.addInteger("myInt1", myInt1);
         entity.addInteger("myInt2", myInt2);
+        entity.addObject("myObject1", createChildWithName("childName1"));
+        entity.addObject("myObject2", createChildWithName("childName2"));
         entity.setLocale(locale);
         entity.setMultiLocale(locales);
 
@@ -357,10 +360,25 @@ public class TestMapping extends TestAbstract {
         assertTrue(entityFromJcr.getStringArrays().get("myStringArr1").length == myStringArr1.length);
         assertTrue(entityFromJcr.getStringArrays().get("myStringArr2").length == myStringArr2.length);
         assertTrue(entityFromJcr.getStringArrays().get("myStringArr1")[1].equals(myStringArr1[1]));
+        assertTrue(entityFromJcr.getObjects().size() == entity.getObjects().size());
+        assertTrue(entityFromJcr.getObjects().get("myObject1") instanceof Child);
+        // The node name has been replaced by the key
+        assertFalse("childName1".equals(((Child) entityFromJcr.getObjects().get("myObject1")).getName()));
+        assertEquals("myObject1", ((Child) entityFromJcr.getObjects().get("myObject1")).getName());
+        assertTrue(entityFromJcr.getObjects().get("myObject2") instanceof Child);
+        // The node name has been replaced by the key
+        assertFalse("childName2".equals(((Child) entityFromJcr.getObjects().get("myObject2")).getName()));
+        assertEquals("myObject2", ((Child) entityFromJcr.getObjects().get("myObject2")).getName());
 
         assertTrue(entityFromJcr.getLocale().equals(locale));
         assertTrue(entityFromJcr.getMultiLocale().length == entity.getMultiLocale().length);
         assertTrue(entityFromJcr.getMultiLocale()[1].equals(locales[1]));
+    }
+
+    private Child createChildWithName(String name) {
+        Child child = new Child();
+        child.setName(name);
+        return child;
     }
 
     @Test

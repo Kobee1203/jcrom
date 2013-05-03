@@ -115,8 +115,10 @@ public class TestLazyLoading extends TestAbstract {
 
         DynamicObject dynamicObj = new DynamicObject();
         dynamicObj.setName("dynamic");
-        dynamicObj.putSingleValueChild(node1.getName(), node1);
-        dynamicObj.putSingleValueChild(node2.getName(), node2);
+        String myNode1Name = "my_" + node1.getName();
+        dynamicObj.putSingleValueChild(myNode1Name, node1);
+        String myNode2Name = "my_" + node2.getName();
+        dynamicObj.putSingleValueChild(myNode2Name, node2);
         dynamicObj.putMultiValueChild("many", treeNodes);
 
         dynamicObj.putSingleFile(file1.getName(), file1);
@@ -136,10 +138,10 @@ public class TestLazyLoading extends TestAbstract {
         TreeNode node2FromList = (TreeNode) fromNode.getMultiValueChildren().get("many").get(1);
         assertEquals("multiNode2", node2FromList.getName());
 
-        TreeNode node1FromNode = (TreeNode) fromNode.getSingleValueChildren().get(node1.getName());
+        TreeNode node1FromNode = (TreeNode) fromNode.getSingleValueChildren().get(myNode1Name);
         assertTrue(node1FromNode.getName().equals(node1.getName()));
 
-        TreeNode node2FromNode = (TreeNode) fromNode.getSingleValueChildren().get(node2.getName());
+        TreeNode node2FromNode = (TreeNode) fromNode.getSingleValueChildren().get(myNode2Name);
         assertTrue(node2FromNode.getName().equals(node2.getName()));
 
         assertTrue(fromNode.getSingleFiles().size() == dynamicObj.getSingleFiles().size());
