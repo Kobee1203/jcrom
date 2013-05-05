@@ -824,7 +824,7 @@ public class TestMapping extends TestAbstract {
         // test second level update
         loadedParent.getAdoptedChild().setNickName("testing");
         loadedParent.getChildren().get(0).setNickName("hello");
-        parentDao.update(loadedParent, "*", 2);
+        parentDao.update(loadedParent, NodeFilter.INCLUDE_ALL, 2);
 
         Parent updatedParent = parentDao.get(dad.getPath());
         assertEquals(loadedParent.getAdoptedChild().getNickName(), updatedParent.getAdoptedChild().getNickName());
@@ -1193,6 +1193,14 @@ public class TestMapping extends TestAbstract {
         assertEquals(updatedParent.getChildren().size(), filteredParent.getChildren().size());
         assertEquals(updatedParent.getChildren().get(0).getNickName(), filteredParent.getChildren().get(0).getNickName());
 
+        // load with filter
+        nodeFilter = new NodeFilter(NodeFilter.PROPERTY_PREFIX + "title, " + NodeFilter.PROPERTY_PREFIX + "birthDay", NodeFilter.DEPTH_INFINITE, 1);
+        filteredParent = jcrom.fromNode(Parent.class, newNode, nodeFilter);
+        assertNotNull(filteredParent.getTitle());
+        assertNotNull(filteredParent.getBirthDay());
+        assertNull(filteredParent.getAdoptedChild());
+        assertTrue(filteredParent.getChildren().isEmpty());
+
         // move the node
         parent.setTitle("Mohammed");
         parent.setNickName("Momo");
@@ -1208,6 +1216,308 @@ public class TestMapping extends TestAbstract {
         jcrom.updateNode(adoptedChildNode, adoptedChild);
 
         assertTrue(rootNode.getNode(parent.getName()).getNode("adoptedChild").getNodes().nextNode().getProperty("nickName").getString().equals(adoptedChild.getNickName()));
+    }
+
+    @Test
+    public void testNodeFilter() throws Exception {
+        Parent parent = createParent("John Mugabe");
+
+        // adopt a child
+        Child adoptedChild = createChild("Mubi");
+        parent.setAdoptedChild(adoptedChild);
+
+        // add children
+        parent.addChild(createChild("Jane"));
+        parent.addChild(createChild("Julie"));
+
+        Child child = createChild("Robert");
+        parent.addChild(child);
+
+        // add grand children
+        child.setAdoptedGrandChild(createGrandChild("Jim"));
+        child.addGrandChild(createGrandChild("Adam"));
+
+        // add a passport photo
+        Photo photo = createPhoto("jcr_passport.jpg");
+        parent.setPassportPhoto(photo);
+
+        // multiple files
+        for (int i = 0; i < 3; i++) {
+            parent.addFile(createFile("jcr_image" + i + ".jpg"));
+        }
+
+        // map to node
+        Jcrom jcrom = new Jcrom();
+        jcrom.map(Parent.class); // this should automatically map the other classes, since they are referenced
+
+        Node rootNode = session.getRootNode().addNode("root");
+
+        // map the object to node
+        String[] mixinTypes = { "mix:referenceable" };
+        Node newNode = jcrom.addNode(rootNode, parent, mixinTypes);
+
+        Parent parentFromNode = jcrom.fromNode(Parent.class, newNode);
+
+        // load with filter all inclusion
+        NodeFilter nodeFilter = new NodeFilter(NodeFilter.INCLUDE_ALL);
+        Parent filteredParent = jcrom.fromNode(Parent.class, newNode, nodeFilter);
+
+        assertEquals(parentFromNode.getTitle(), filteredParent.getTitle());
+        assertNotNull(filteredParent.getBirthDay());
+        assertEquals(parentFromNode.getBirthDay().getTime(), filteredParent.getBirthDay().getTime());
+        assertEquals(0, Double.compare(parentFromNode.getHeight(), filteredParent.getHeight()));
+        assertEquals(parentFromNode.getChildren().size(), filteredParent.getChildren().size());
+        assertEquals(parentFromNode.getChildren().get(0).getNickName(), filteredParent.getChildren().get(0).getNickName());
+        assertNotNull(filteredParent.getAdoptedChild());
+        assertEquals(parentFromNode.getAdoptedChild().getNickName(), filteredParent.getAdoptedChild().getNickName());
+
+        // load with filter all exclusion
+        nodeFilter = new NodeFilter(NodeFilter.EXCLUDE_ALL);
+        filteredParent = jcrom.fromNode(Parent.class, newNode, nodeFilter);
+
+        assertNull(filteredParent.getTitle());
+        assertNull(filteredParent.getBirthDay());
+        assertNull(filteredParent.getNickName());
+        assertNull(filteredParent.getAdoptedChild());
+        assertTrue(filteredParent.getCustomList().isEmpty());
+        assertTrue(filteredParent.getChildren().isEmpty());
+
+        // load with filter inclusion
+        nodeFilter = new NodeFilter("children", NodeFilter.DEPTH_INFINITE, 1);
+        filteredParent = jcrom.fromNode(Parent.class, newNode, nodeFilter);
+
+        assertNull(filteredParent.getAdoptedChild());
+        assertEquals(parentFromNode.getChildren().size(), filteredParent.getChildren().size());
+        assertEquals(parentFromNode.getChildren().get(0).getNickName(), filteredParent.getChildren().get(0).getNickName());
+
+        // load with filter exclusion
+        nodeFilter = new NodeFilter("-children", NodeFilter.DEPTH_INFINITE, 1);
+        filteredParent = jcrom.fromNode(Parent.class, newNode, nodeFilter);
+
+        assertTrue(filteredParent.getChildren().isEmpty());
+        assertNotNull(filteredParent.getAdoptedChild());
+        assertEquals(parentFromNode.getAdoptedChild().getNickName(), filteredParent.getAdoptedChild().getNickName());
+
+        // load with filter property inclusion
+        nodeFilter = new NodeFilter(NodeFilter.PROPERTY_PREFIX + "title, " + NodeFilter.PROPERTY_PREFIX + "birthDay", 0);
+        filteredParent = jcrom.fromNode(Parent.class, newNode, nodeFilter);
+        assertEquals(parentFromNode.getTitle(), filteredParent.getTitle());
+        assertNotNull(filteredParent.getBirthDay());
+        assertEquals(parentFromNode.getBirthDay().getTime(), filteredParent.getBirthDay().getTime());
+        assertNull(filteredParent.getAdoptedChild());
+        assertTrue(filteredParent.getChildren().isEmpty());
+
+        // load with filter property exclusion
+        nodeFilter = new NodeFilter("-" + NodeFilter.PROPERTY_PREFIX + "title, " + NodeFilter.PROPERTY_PREFIX + "birthDay", 1);
+        filteredParent = jcrom.fromNode(Parent.class, newNode, nodeFilter);
+        assertNull(filteredParent.getTitle());
+        assertNull(filteredParent.getBirthDay());
+        assertEquals(0, Double.compare(parentFromNode.getHeight(), filteredParent.getHeight()));
+        assertEquals(parentFromNode.getChildren().size(), filteredParent.getChildren().size());
+        assertEquals(parentFromNode.getChildren().get(0).getNickName(), filteredParent.getChildren().get(0).getNickName());
+        assertNotNull(filteredParent.getAdoptedChild());
+        assertEquals(parentFromNode.getAdoptedChild().getNickName(), filteredParent.getAdoptedChild().getNickName());
+
+        // load with filter property exclusion
+        nodeFilter = new NodeFilter("-" + NodeFilter.PROPERTY_PREFIX + "title, " + NodeFilter.PROPERTY_PREFIX + "birthDay", 0);
+        filteredParent = jcrom.fromNode(Parent.class, newNode, nodeFilter);
+        assertNull(filteredParent.getTitle());
+        assertNull(filteredParent.getBirthDay());
+        assertEquals(0, Double.compare(parentFromNode.getHeight(), filteredParent.getHeight()));
+        assertTrue(filteredParent.getChildren().isEmpty());
+        assertNull(filteredParent.getAdoptedChild());
+
+        // -------------------------------
+        // UPDATE NODE WITH FILTER
+        // -------------------------------
+
+        parent = jcrom.fromNode(Parent.class, newNode);
+        String parentTitle = "Jane Mugabe";
+        parent.setTitle(parentTitle);
+        parent.setBirthDay(new Date());
+        parent.setDrivingLicense(true);
+        parent.setFingers(20);
+        parent.setHairs(2L);
+        parent.setHeight(2.80);
+        parent.setWeight(62.22);
+        parent.setNickName("Mammy");
+
+        parent.getTags().clear();
+        parent.addTag("mother");
+        parent.addTag("parent");
+
+        // adopt a child
+        parent.setAdoptedChild(createChild("Mubo"));
+
+        // add children
+        parent.getChildren().clear();
+        parent.addChild(createChild("John"));
+        parent.addChild(createChild("Raphaël"));
+
+        child = createChild("Robert");
+        parent.addChild(child);
+
+        // add grand children
+        child.setAdoptedGrandChild(createGrandChild("Steve"));
+        child.addGrandChild(createGrandChild("Eve"));
+
+        // add a passport photo
+        parent.setPassportPhoto(createPhoto("jcr_new_passport.jpg"));
+
+        // multiple files
+        parent.getFiles().clear();
+        for (int i = 10; i < 13; i++) {
+            parent.addFile(createFile("jcr_image" + i + ".jpg"));
+        }
+
+        // update with filter all inclusion
+        nodeFilter = new NodeFilter(NodeFilter.INCLUDE_ALL);
+        Node updateNode = jcrom.updateNode(newNode, parent, nodeFilter);
+
+        Parent updateParentFromNode = jcrom.fromNode(Parent.class, updateNode);
+        assertEquals(parent.getTitle(), updateParentFromNode.getTitle());
+        assertEquals(parent.getBirthDay(), updateParentFromNode.getBirthDay());
+        assertEquals(parent.isDrivingLicense(), updateParentFromNode.isDrivingLicense());
+        assertEquals(parent.getFingers(), updateParentFromNode.getFingers());
+        assertEquals(parent.getHairs(), updateParentFromNode.getHairs());
+        assertEquals(0, Double.compare(parent.getHeight(), updateParentFromNode.getHeight()));
+        assertEquals(0, Double.compare(parent.getWeight(), updateParentFromNode.getWeight()));
+        assertEquals(parent.getNickName(), updateParentFromNode.getNickName());
+        assertEquals(2, updateParentFromNode.getTags().size());
+        assertNotNull(updateParentFromNode.getAdoptedChild());
+        assertEquals(parent.getAdoptedChild().getTitle(), updateParentFromNode.getAdoptedChild().getTitle());
+        assertEquals(parent.getChildren().size(), updateParentFromNode.getChildren().size());
+
+        Parent noUpdateParent = jcrom.fromNode(Parent.class, updateNode);
+        noUpdateParent.setTitle("Bob Nalyd");
+        noUpdateParent.setBirthDay(null);
+        noUpdateParent.setDrivingLicense(false);
+        noUpdateParent.setFingers(-1);
+        noUpdateParent.setHairs(-1L);
+        noUpdateParent.setHeight(-1);
+        noUpdateParent.setWeight(-1);
+        noUpdateParent.setNickName("Noname");
+        noUpdateParent.getTags().clear();
+        // adopt a child
+        noUpdateParent.setAdoptedChild(null);
+        // add children
+        noUpdateParent.getChildren().clear();
+        // add a passport photo
+        noUpdateParent.setPassportPhoto(null);
+        // multiple files
+        noUpdateParent.getFiles().clear();
+
+        // update with filter all inclusion
+        nodeFilter = new NodeFilter(NodeFilter.EXCLUDE_ALL);
+        updateNode = jcrom.updateNode(updateNode, noUpdateParent, nodeFilter);
+
+        updateParentFromNode = jcrom.fromNode(Parent.class, updateNode);
+        assertEquals(parent.getTitle(), updateParentFromNode.getTitle());
+        assertEquals(parent.getBirthDay(), updateParentFromNode.getBirthDay());
+        assertEquals(parent.isDrivingLicense(), updateParentFromNode.isDrivingLicense());
+        assertEquals(parent.getFingers(), updateParentFromNode.getFingers());
+        assertEquals(parent.getHairs(), updateParentFromNode.getHairs());
+        assertEquals(0, Double.compare(parent.getHeight(), updateParentFromNode.getHeight()));
+        assertEquals(0, Double.compare(parent.getWeight(), updateParentFromNode.getWeight()));
+        assertEquals(parent.getNickName(), updateParentFromNode.getNickName());
+        assertEquals(parent.getTags().size(), updateParentFromNode.getTags().size());
+        assertNotNull(updateParentFromNode.getAdoptedChild());
+        assertEquals(parent.getAdoptedChild().getTitle(), updateParentFromNode.getAdoptedChild().getTitle());
+        assertEquals(parent.getChildren().size(), updateParentFromNode.getChildren().size());
+
+        parent = jcrom.fromNode(Parent.class, updateNode);
+        parent.setTitle("title not updated");
+        parent.addTag("tag not added");
+        parent.addChild(createChild("Nico"));
+        // update with filter inclusion
+        nodeFilter = new NodeFilter("children", NodeFilter.DEPTH_INFINITE, 1);
+
+        updateNode = jcrom.updateNode(updateNode, parent, nodeFilter);
+        updateParentFromNode = jcrom.fromNode(Parent.class, updateNode);
+        assertEquals(parentTitle, updateParentFromNode.getTitle());
+        assertEquals(parent.getBirthDay(), updateParentFromNode.getBirthDay());
+        assertEquals(parent.isDrivingLicense(), updateParentFromNode.isDrivingLicense());
+        assertEquals(parent.getFingers(), updateParentFromNode.getFingers());
+        assertEquals(parent.getHairs(), updateParentFromNode.getHairs());
+        assertEquals(0, Double.compare(parent.getHeight(), updateParentFromNode.getHeight()));
+        assertEquals(0, Double.compare(parent.getWeight(), updateParentFromNode.getWeight()));
+        assertEquals(parent.getNickName(), updateParentFromNode.getNickName());
+        assertEquals(parent.getTags().size() - 1, updateParentFromNode.getTags().size());
+        assertNotNull(updateParentFromNode.getAdoptedChild());
+        assertEquals(parent.getAdoptedChild().getTitle(), updateParentFromNode.getAdoptedChild().getTitle());
+        assertEquals(parent.getChildren().size(), updateParentFromNode.getChildren().size());
+
+        parent = jcrom.fromNode(Parent.class, updateNode);
+        parent.setTitle("title updated");
+        parent.addTag("tag added");
+        parent.addChild(createChild("Nico"));
+        // update with filter exclusion
+        nodeFilter = new NodeFilter("-children", NodeFilter.DEPTH_INFINITE, 1);
+
+        updateNode = jcrom.updateNode(updateNode, parent, nodeFilter);
+        updateParentFromNode = jcrom.fromNode(Parent.class, updateNode);
+        assertEquals(parent.getTitle(), updateParentFromNode.getTitle());
+        assertEquals(parent.getBirthDay(), updateParentFromNode.getBirthDay());
+        assertEquals(parent.isDrivingLicense(), updateParentFromNode.isDrivingLicense());
+        assertEquals(parent.getFingers(), updateParentFromNode.getFingers());
+        assertEquals(parent.getHairs(), updateParentFromNode.getHairs());
+        assertEquals(0, Double.compare(parent.getHeight(), updateParentFromNode.getHeight()));
+        assertEquals(0, Double.compare(parent.getWeight(), updateParentFromNode.getWeight()));
+        assertEquals(parent.getNickName(), updateParentFromNode.getNickName());
+        assertEquals(parent.getTags().size(), updateParentFromNode.getTags().size());
+        assertNotNull(updateParentFromNode.getAdoptedChild());
+        assertEquals(parent.getAdoptedChild().getTitle(), updateParentFromNode.getAdoptedChild().getTitle());
+        assertEquals(parent.getChildren().size() - 1, updateParentFromNode.getChildren().size());
+
+        parent = jcrom.fromNode(Parent.class, updateNode);
+        String updateTitle = "new title updated";
+        parent.setTitle(updateTitle);
+        Calendar cal = Calendar.getInstance();
+        cal.set(1981, Calendar.MARCH, 12, 0, 0, 0);
+        Date updateBirthDay = cal.getTime();
+        parent.setBirthDay(updateBirthDay);
+        parent.addTag("new tag added");
+        parent.addChild(createChild("Nico"));
+        // update with filter property inclusion
+        nodeFilter = new NodeFilter(NodeFilter.PROPERTY_PREFIX + "title, " + NodeFilter.PROPERTY_PREFIX + "birthDay", NodeFilter.DEPTH_INFINITE, 1);
+
+        updateNode = jcrom.updateNode(updateNode, parent, nodeFilter);
+        updateParentFromNode = jcrom.fromNode(Parent.class, updateNode);
+        assertEquals(updateTitle, updateParentFromNode.getTitle());
+        assertEquals(parent.getBirthDay(), updateParentFromNode.getBirthDay());
+        assertEquals(parent.isDrivingLicense(), updateParentFromNode.isDrivingLicense());
+        assertEquals(parent.getFingers(), updateParentFromNode.getFingers());
+        assertEquals(parent.getHairs(), updateParentFromNode.getHairs());
+        assertEquals(0, Double.compare(parent.getHeight(), updateParentFromNode.getHeight()));
+        assertEquals(0, Double.compare(parent.getWeight(), updateParentFromNode.getWeight()));
+        assertEquals(parent.getNickName(), updateParentFromNode.getNickName());
+        assertEquals(parent.getTags().size() - 1, updateParentFromNode.getTags().size());
+        assertNotNull(updateParentFromNode.getAdoptedChild());
+        assertEquals(parent.getAdoptedChild().getTitle(), updateParentFromNode.getAdoptedChild().getTitle());
+        assertEquals(parent.getChildren().size() - 1, updateParentFromNode.getChildren().size());
+
+        parent = jcrom.fromNode(Parent.class, updateNode);
+        parent.setTitle("new title not updated");
+        parent.setBirthDay(new Date());
+        parent.addTag("new tag added");
+        parent.addChild(createChild("Nico"));
+        // update with filter property exclusion
+        nodeFilter = new NodeFilter("-" + NodeFilter.PROPERTY_PREFIX + "title, " + NodeFilter.PROPERTY_PREFIX + "birthDay", NodeFilter.DEPTH_INFINITE, 1);
+
+        updateNode = jcrom.updateNode(updateNode, parent, nodeFilter);
+        updateParentFromNode = jcrom.fromNode(Parent.class, updateNode);
+        assertEquals(updateTitle, updateParentFromNode.getTitle());
+        assertEquals(updateBirthDay, updateParentFromNode.getBirthDay());
+        assertEquals(parent.isDrivingLicense(), updateParentFromNode.isDrivingLicense());
+        assertEquals(parent.getFingers(), updateParentFromNode.getFingers());
+        assertEquals(parent.getHairs(), updateParentFromNode.getHairs());
+        assertEquals(0, Double.compare(parent.getHeight(), updateParentFromNode.getHeight()));
+        assertEquals(0, Double.compare(parent.getWeight(), updateParentFromNode.getWeight()));
+        assertEquals(parent.getNickName(), updateParentFromNode.getNickName());
+        assertEquals(parent.getTags().size(), updateParentFromNode.getTags().size());
+        assertNotNull(updateParentFromNode.getAdoptedChild());
+        assertEquals(parent.getAdoptedChild().getTitle(), updateParentFromNode.getAdoptedChild().getTitle());
+        assertEquals(parent.getChildren().size(), updateParentFromNode.getChildren().size());
     }
 
     /**
@@ -1296,7 +1606,7 @@ public class TestMapping extends TestAbstract {
         assertEquals(custom.getMetadata(), customFromJcr.getMetadata());
 
         // Test filtering of jcr:data
-        CustomJCRFile filteredFromJcr = dao.get(custom.getPath(), "-jcr:data", -1);
+        CustomJCRFile filteredFromJcr = dao.get(custom.getPath(), "-jcr:data", NodeFilter.DEPTH_INFINITE);
         assertNull(filteredFromJcr.getDataProvider());
 
         customFromJcr.setEncoding("ISO-8859-1");
@@ -1754,7 +2064,7 @@ public class TestMapping extends TestAbstract {
         child2.setName("child2");
         Node newNode2 = jcrom.addNode(newNode, child2);
         WithParentInterface fromNode2 = jcrom.fromNode(WithParentInterface.class, newNode2);
-        assertTrue(square.getArea() == fromNode2.getParent().getArea());
+        assertEquals(0, Double.compare(square.getArea(), fromNode2.getParent().getArea()));
 
         Parent parent3 = createParent("daddy");
         Child child3 = createChild("child");

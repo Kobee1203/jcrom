@@ -36,72 +36,72 @@ import java.util.Set;
  */
 public class NameFilter {
 
-	private final String filterStr;
-	private final boolean exclusion;
-	private final boolean all;
-	private final Set<String> names;
+    private final String filterStr;
+    private final boolean exclusion;
+    private final boolean all;
+    private final Set<String> names;
 
-	public NameFilter( String filterStr ) {
-		this.filterStr = filterStr;
-		names = new HashSet<String>();
-		if ( filterStr == null ) {
-			exclusion = false;
-			all = true;
-		} else {
+    public NameFilter(String filterStr) {
+        this.filterStr = filterStr;
+        names = new HashSet<String>();
+        if (filterStr == null) {
+            exclusion = false;
+            all = true;
+        } else {
 
-			filterStr = filterStr.trim();
-			if ( filterStr.startsWith("-") ) {
-				filterStr = filterStr.substring(1);
-				// exclusion filter
-				exclusion = true;
-				all = false;
-				addToSet(filterStr);
-			} else if ( filterStr.equals("none") ) {
-				exclusion = true;
-				all = true;
-			} else {
-				// inclusion filter
-				exclusion = false;
-				if ( filterStr.equals("*") ) {
-					all = true;
-				} else {
-					all = false;
-					addToSet(filterStr);
-				}
-			}
-		}
-	}
+            filterStr = filterStr.trim();
+            if (filterStr.startsWith("-")) {
+                filterStr = filterStr.substring(1);
+                // exclusion filter
+                exclusion = true;
+                all = false;
+                addToSet(filterStr);
+            } else if (filterStr.equals(NodeFilter.EXCLUDE_ALL)) {
+                exclusion = true;
+                all = true;
+            } else {
+                // inclusion filter
+                exclusion = false;
+                if (filterStr.equals(NodeFilter.INCLUDE_ALL)) {
+                    all = true;
+                } else {
+                    all = false;
+                    addToSet(filterStr);
+                }
+            }
+        }
+    }
 
-	public String getFilterStr() {
-		return filterStr;
-	}
+    public String getFilterStr() {
+        return filterStr;
+    }
 
-	private void addToSet( String filterStr ) {
-		String[] nameArray = filterStr.split(",");
-		for ( String nodeName : nameArray ) {
-			names.add(nodeName);
-		}
-	}
+    private void addToSet(String filterStr) {
+        String[] nameArray = filterStr.split(",");
+        for (String nodeName : nameArray) {
+            names.add(nodeName.trim());
+        }
+    }
 
-	/**
-	 * Check whether the name supplied gets through the filter.
-	 * 
-	 * @param name the name to check
-	 * @return true if the name gets through the filter, else false
-	 */
-	public boolean isIncluded( String name ) {
-		if ( exclusion ) {
-			if ( all ) {
-				return false;
-			} else {
-				return !names.contains(name);
-			}
-		} else {
-			if ( all ) {
-				return true;
-			} else {
-				return names.contains(name);
-			}
-		}
-	}
+    /**
+     * Check whether the name supplied gets through the filter.
+     * 
+     * @param name the name to check
+     * @return true if the name gets through the filter, else false
+     */
+    public boolean isIncluded(String name) {
+        if (exclusion) {
+            if (all) {
+                return false;
+            } else {
+                return !names.contains(name);
+            }
+        } else {
+            if (all) {
+                return true;
+            } else {
+                return names.contains(name);
+            }
+        }
+    }
 }

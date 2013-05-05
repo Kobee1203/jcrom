@@ -47,6 +47,7 @@ import javax.jcr.ValueFactory;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrProtectedProperty;
 import org.jcrom.annotations.JcrSerializedProperty;
+import org.jcrom.util.NodeFilter;
 import org.jcrom.util.ReflectionUtils;
 
 /**
@@ -93,13 +94,15 @@ class PropertyMapper {
         return arr;
     }
 
-    void mapSerializedPropertyToField(Object obj, Field field, Node node) throws RepositoryException, IOException, IllegalAccessException, ClassNotFoundException {
-
+    void mapSerializedPropertyToField(Object obj, Field field, Node node, int depth, NodeFilter nodeFilter) throws RepositoryException, IOException, IllegalAccessException, ClassNotFoundException {
         String propertyName = getSerializedPropertyName(field);
-        if (node.hasProperty(propertyName)) {
-            Property p = node.getProperty(propertyName);
-            //field.set(obj, deserialize(p.getStream()));
-            field.set(obj, deserialize(p.getBinary().getStream()));
+
+        if (nodeFilter == null || nodeFilter.isIncluded(NodeFilter.PROPERTY_PREFIX + field.getName(), node, depth)) {
+            if (node.hasProperty(propertyName)) {
+                Property p = node.getProperty(propertyName);
+                //field.set(obj, deserialize(p.getStream()));
+                field.set(obj, deserialize(p.getBinary().getStream()));
+            }
         }
     }
 
@@ -217,22 +220,24 @@ class PropertyMapper {
         return name;
     }
 
-    void mapPropertyToField(Object obj, Field field, Node node) throws RepositoryException, IllegalAccessException, IOException {
+    void mapPropertyToField(Object obj, Field field, Node node, int depth, NodeFilter nodeFilter) throws RepositoryException, IllegalAccessException, IOException {
         String name = getPropertyName(field);
 
-        if (ReflectionUtils.implementsInterface(field.getType(), Map.class)) {
-            // map of properties
-            Class<?> valueType = ReflectionUtils.getParameterizedClass(field, 1);
-            try {
-				Node childrenContainer = node.getNode(name);
-				PropertyIterator propIterator = childrenContainer.getProperties();
-				mapPropertiesToMap(obj, field, valueType, propIterator, true);
-            } catch (PathNotFoundException pne) {
-				// ignore here as the Field could have been added to the model
-				// since the Node was created and not yet been populated.
-			}
-        } else {
-            mapToField(name, field, obj, node);
+        if (nodeFilter == null || nodeFilter.isIncluded(NodeFilter.PROPERTY_PREFIX + field.getName(), node, depth)) {
+            if (ReflectionUtils.implementsInterface(field.getType(), Map.class)) {
+                // map of properties
+                Class<?> valueType = ReflectionUtils.getParameterizedClass(field, 1);
+                try {
+                    Node childrenContainer = node.getNode(name);
+                    PropertyIterator propIterator = childrenContainer.getProperties();
+                    mapPropertiesToMap(obj, field, valueType, propIterator, true);
+                } catch (PathNotFoundException pne) {
+                    // ignore here as the Field could have been added to the model
+                    // since the Node was created and not yet been populated.
+                }
+            } else {
+                mapToField(name, field, obj, node);
+            }
         }
     }
 
@@ -308,20 +313,31 @@ class PropertyMapper {
         }
     }
 
-    void mapSerializedFieldToProperty(Field field, Object obj, Node node) throws IllegalAccessException, RepositoryException, IOException {
+    private void mapSerializedFieldToProperty(Field field, Object obj, Node node, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
         String propertyName = getSerializedPropertyName(field);
         Object fieldValue = field.get(obj);
-        if (fieldValue != null) {
-            // serialize and store
-            //node.setProperty(propertyName, new ByteArrayInputStream(serialize(fieldValue)));
-            ValueFactory valueFactory = node.getSession().getValueFactory();
-            Binary binary = valueFactory.createBinary(new ByteArrayInputStream(serialize(fieldValue)));
-            node.setProperty(propertyName, binary);
-        } else {
-            // remove the value
-            node.setProperty(propertyName, (Value) null);
+        // make sure that this property is supposed to be updated
+        if (nodeFilter == null || nodeFilter.isIncluded(NodeFilter.PROPERTY_PREFIX + field.getName(), node, depth)) {
+            if (fieldValue != null) {
+                // serialize and store
+                //node.setProperty(propertyName, new ByteArrayInputStream(serialize(fieldValue)));
+                ValueFactory valueFactory = node.getSession().getValueFactory();
+                Binary binary = valueFactory.createBinary(new ByteArrayInputStream(serialize(fieldValue)));
+                node.setProperty(propertyName, binary);
+            } else {
+                // remove the value
+                node.setProperty(propertyName, (Value) null);
+            }
         }
+    }
+
+    void addSerializedProperty(Field field, Object obj, Node node) throws RepositoryException, IllegalAccessException, IOException {
+        mapSerializedFieldToProperty(field, obj, node, NodeFilter.DEPTH_INFINITE, null);
+    }
+
+    void updateSerializedProperty(Field field, Object obj, Node node, int depth, NodeFilter nodeFilter) throws RepositoryException, IllegalAccessException, IOException {
+        mapSerializedFieldToProperty(field, obj, node, depth, nodeFilter);
     }
 
     @SuppressWarnings("unchecked")
@@ -343,17 +359,28 @@ class PropertyMapper {
         }
     }
 
-    void mapFieldToProperty(Field field, Object obj, Node node, Mapper mapper) throws RepositoryException, IllegalAccessException {
+    private void mapFieldToProperty(Field field, Object obj, Node node, int depth, NodeFilter nodeFilter, Mapper mapper) throws RepositoryException, IllegalAccessException {
 
         String name = getPropertyName(field);
-        if (ReflectionUtils.implementsInterface(field.getType(), Map.class)) {
-            // this is a Map child, where we map the key/value pairs as properties
-            addChildMap(field, obj, node, name, mapper);
-        } else {
-            // normal property
-            Class<?> paramClass = ReflectionUtils.implementsInterface(field.getType(), List.class) ? ReflectionUtils.getParameterizedClass(field) : null;
-            mapToProperty(name, field.getType(), paramClass, field.get(obj), node);
+        // make sure that this property is supposed to be updated
+        if (nodeFilter == null || nodeFilter.isIncluded(NodeFilter.PROPERTY_PREFIX + field.getName(), node, depth)) {
+            if (ReflectionUtils.implementsInterface(field.getType(), Map.class)) {
+                // this is a Map child, where we map the key/value pairs as properties
+                addChildMap(field, obj, node, name, mapper);
+            } else {
+                // normal property
+                Class<?> paramClass = ReflectionUtils.implementsInterface(field.getType(), List.class) ? ReflectionUtils.getParameterizedClass(field) : null;
+                mapToProperty(name, field.getType(), paramClass, field.get(obj), node);
+            }
         }
+    }
+
+    void addProperty(Field field, Object obj, Node node, Mapper mapper) throws RepositoryException, IllegalAccessException {
+        mapFieldToProperty(field, obj, node, NodeFilter.DEPTH_INFINITE, null, mapper);
+    }
+
+    void updateProperty(Field field, Object obj, Node node, int depth, NodeFilter nodeFilter, Mapper mapper) throws RepositoryException, IllegalAccessException {
+        mapFieldToProperty(field, obj, node, depth, nodeFilter, mapper);
     }
 
     void mapToProperty(String propertyName, Class<?> type, Class<?> paramClass, Object propertyValue, Node node) throws RepositoryException {

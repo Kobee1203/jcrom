@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import javax.jcr.Node;
 import javax.jcr.SimpleCredentials;
 
+import org.jcrom.util.NodeFilter;
 import org.junit.Test;
 
 /**
@@ -92,7 +93,7 @@ public class TestReferenceHistory extends TestAbstract {
         // now search the for
         //Node directoryANode = session.getNodeByUUID(directoryA.getUuid());
         Node directoryANode = session.getNodeByIdentifier(directoryA.getId());
-        Folder folder = jcrom.fromNode(Folder.class, directoryANode, "*", 3);
+        Folder folder = jcrom.fromNode(Folder.class, directoryANode, NodeFilter.INCLUDE_ALL, 3);
 
         assertEquals("Wrong child count of Directory_A.", 2, folder.getChildren().size());
         for (HierarchyNode h : folder.getChildren()) {

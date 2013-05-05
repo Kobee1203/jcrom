@@ -259,7 +259,7 @@ class ChildNodeMapper {
 
     void addChildren(Field field, Object entity, Node node, Mapper mapper) throws IllegalAccessException, RepositoryException, IOException {
 
-        setChildren(field, entity, node, -1, null, mapper);
+        setChildren(field, entity, node, NodeFilter.DEPTH_INFINITE, null, mapper);
     }
 
     void updateChildren(Field field, Object obj, Node node, int depth, NodeFilter nodeFilter, Mapper mapper) throws IllegalAccessException, RepositoryException, IOException {
@@ -325,7 +325,7 @@ class ChildNodeMapper {
 
         boolean childHasNodes = node.hasNode(nodeName) && (node.getNode(nodeName).hasNodes() || node.getNode(nodeName).hasProperty(Property.JCR_CHILD_VERSION_HISTORY));
 
-        if (node.hasNode(nodeName) && (childHasNodes || (!jcrChildNode.createContainerNode() && !ReflectionUtils.implementsInterface(field.getType(), List.class) && !ReflectionUtils.implementsInterface(field.getType(), Map.class))) && nodeFilter.isIncluded(field.getName(), depth)) {
+        if (node.hasNode(nodeName) && (childHasNodes || (!jcrChildNode.createContainerNode() && !ReflectionUtils.implementsInterface(field.getType(), List.class) && !ReflectionUtils.implementsInterface(field.getType(), Map.class))) && nodeFilter.isIncluded(nodeName, depth)) {
 
             // child nodes are almost always stored inside a container node
             Node childrenContainer = node.getNode(nodeName);

@@ -40,6 +40,7 @@ import org.jcrom.JcrMappingException;
 import org.jcrom.Jcrom;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.util.JcrUtils;
+import org.jcrom.util.NodeFilter;
 import org.jcrom.util.PathUtils;
 import org.jcrom.util.ReflectionUtils;
 
@@ -262,7 +263,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 
     @Override
     public T update(T entity) {
-        return update(entity, "*", -1);
+        return update(entity, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     @Override
@@ -279,12 +280,12 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
     @Override
     @Deprecated
     public T updateByUUID(T entity, String uuid) {
-        return updateById(entity, uuid, "*", -1);
+        return updateById(entity, uuid, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     @Override
     public T updateById(T entity, String id) {
-        return updateById(entity, id, "*", -1);
+        return updateById(entity, id, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     @Override
@@ -444,7 +445,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 
     @Override
     public T get(String path) {
-        return get(path, "*", -1);
+        return get(path, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     @Override
@@ -464,12 +465,12 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 
     @Override
     public List<T> getAll(String path) {
-        return getAll(path, "*", -1);
+        return getAll(path, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     @Override
     public List<T> getAll(String path, long startIndex, long resultSize) {
-        return getAll(path, "*", -1, startIndex, resultSize);
+        return getAll(path, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE, startIndex, resultSize);
     }
 
     @Override
@@ -495,12 +496,12 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
     @Override
     @Deprecated
     public T loadByUUID(String uuid) {
-        return loadById(uuid, "*", -1);
+        return loadById(uuid, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     @Override
     public T loadById(String id) {
-        return loadById(id, "*", -1);
+        return loadById(id, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     @Override
@@ -522,7 +523,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 
     @Override
     public T getVersion(String path, String versionName) {
-        return getVersion(path, versionName, "*", -1);
+        return getVersion(path, versionName, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     @Override
@@ -537,12 +538,12 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
     @Override
     @Deprecated
     public T getVersionByUUID(String uuid, String versionName) {
-        return getVersionById(uuid, versionName, "*", -1);
+        return getVersionById(uuid, versionName, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     @Override
     public T getVersionById(String id, String versionName) {
-        return getVersionById(id, versionName, "*", -1);
+        return getVersionById(id, versionName, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     @Override
@@ -697,7 +698,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
     @Override
     public List<T> getVersionList(String path) {
         try {
-            return getVersionList(getNode(path), "*", -1);
+            return getVersionList(getNode(path), NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
         } catch (RepositoryException e) {
             throw new JcrMappingException("Could not get version list", e);
         }
@@ -731,7 +732,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
     public List<T> getVersionListById(String id) {
         try {
             Node node = getNodeById(id);
-            return getVersionList(node, "*", -1);
+            return getVersionList(node, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
         } catch (RepositoryException e) {
             throw new JcrMappingException("Could not get version list", e);
         }
@@ -831,12 +832,12 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
 
     @Override
     public List<T> findAll(String rootPath) {
-        return findAll(rootPath, "*", -1);
+        return findAll(rootPath, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     @Override
     public List<T> findAll(String rootPath, long startIndex, long resultSize) {
-        return findAll(rootPath, "*", -1, startIndex, resultSize);
+        return findAll(rootPath, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE, startIndex, resultSize);
     }
 
     @Override

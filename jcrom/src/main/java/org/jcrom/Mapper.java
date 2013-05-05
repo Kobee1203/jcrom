@@ -321,7 +321,7 @@ class Mapper {
             Class<?> parentClass = findClassFromNode(Object.class, parentNode);
             if (parentClass != null && !parentClass.equals(Object.class)) {
                 // Gets parent object without children
-                parentObj = fromNode(parentClass, parentNode, new NodeFilter("*", 0));
+                parentObj = fromNode(parentClass, parentNode, new NodeFilter(NodeFilter.INCLUDE_ALL, 0));
                 break;
             }
             try {
@@ -462,11 +462,11 @@ class Mapper {
         for (Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass, true)) {
             field.setAccessible(true);
 
-            if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProperty.class)) {
-                propertyMapper.mapFieldToProperty(field, obj, node, this);
+            if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProperty.class) && nodeFilter.isDepthPropertyIncluded(depth)) {
+                propertyMapper.updateProperty(field, obj, node, depth, nodeFilter, this);
 
-            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrSerializedProperty.class)) {
-                propertyMapper.mapSerializedFieldToProperty(field, obj, node);
+            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrSerializedProperty.class) && nodeFilter.isDepthPropertyIncluded(depth)) {
+                propertyMapper.updateSerializedProperty(field, obj, node, depth, nodeFilter);
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrChildNode.class) && nodeFilter.isDepthIncluded(depth)) {
                 // child nodes
@@ -583,10 +583,10 @@ class Mapper {
             field.setAccessible(true);
 
             if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProperty.class)) {
-                propertyMapper.mapFieldToProperty(field, entity, node, this);
+                propertyMapper.addProperty(field, entity, node, this);
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrSerializedProperty.class)) {
-                propertyMapper.mapSerializedFieldToProperty(field, entity, node);
+                propertyMapper.addSerializedProperty(field, entity, node);
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrChildNode.class)) {
                 childNodeMapper.addChildren(field, entity, node, this);
@@ -641,11 +641,11 @@ class Mapper {
         for (Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass(), false)) {
             field.setAccessible(true);
 
-            if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProperty.class)) {
-                propertyMapper.mapPropertyToField(obj, field, node);
+            if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProperty.class) && nodeFilter.isDepthPropertyIncluded(depth)) {
+                propertyMapper.mapPropertyToField(obj, field, node, depth, nodeFilter);
 
-            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrSerializedProperty.class)) {
-                propertyMapper.mapSerializedPropertyToField(obj, field, node);
+            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrSerializedProperty.class) && nodeFilter.isDepthPropertyIncluded(depth)) {
+                propertyMapper.mapSerializedPropertyToField(obj, field, node, depth, nodeFilter);
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProtectedProperty.class)) {
                 propertyMapper.mapProtectedPropertyToField(obj, field, node);

@@ -15,9 +15,12 @@
  */
 package org.jcrom;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.jcrom.util.NameFilter;
+import org.jcrom.util.NodeFilter;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -25,28 +28,28 @@ import static org.junit.Assert.*;
  */
 public class TestFilters {
 
-	@Test
-	public void testInclusionFilter() {
-		
-		NameFilter incFilter = new NameFilter("comments,images");
-		assertTrue(incFilter.isIncluded("comments"));
-		assertTrue(incFilter.isIncluded("images"));
-		assertFalse(incFilter.isIncluded("something"));
-		
-		NameFilter allowAll = new NameFilter("*");
-		assertTrue(allowAll.isIncluded("something"));
-	}
-	
-	@Test
-	public void testExclusionFilter() {
-		
-		NameFilter excFilter = new NameFilter("-comments,images");
-		assertTrue(excFilter.isIncluded("something"));
-		assertFalse(excFilter.isIncluded("comments"));
-		assertFalse(excFilter.isIncluded("images"));
-		
-		NameFilter allowNone = new NameFilter("none");
-		assertFalse(allowNone.isIncluded("something"));
-		assertFalse(allowNone.isIncluded("none"));
-	}
+    @Test
+    public void testInclusionFilter() {
+
+        NameFilter incFilter = new NameFilter("comments,images");
+        assertTrue(incFilter.isIncluded("comments"));
+        assertTrue(incFilter.isIncluded("images"));
+        assertFalse(incFilter.isIncluded("something"));
+
+        NameFilter allowAll = new NameFilter(NodeFilter.INCLUDE_ALL);
+        assertTrue(allowAll.isIncluded("something"));
+    }
+
+    @Test
+    public void testExclusionFilter() {
+
+        NameFilter excFilter = new NameFilter("-comments,images");
+        assertTrue(excFilter.isIncluded("something"));
+        assertFalse(excFilter.isIncluded("comments"));
+        assertFalse(excFilter.isIncluded("images"));
+
+        NameFilter allowNone = new NameFilter(NodeFilter.EXCLUDE_ALL);
+        assertFalse(allowNone.isIncluded("something"));
+        assertFalse(allowNone.isIncluded("none"));
+    }
 }

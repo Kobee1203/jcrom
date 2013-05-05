@@ -16,8 +16,11 @@
 package org.jcrom;
 
 import java.util.List;
+
 import javax.jcr.Session;
+
 import org.jcrom.dao.AbstractJcrDAO;
+import org.jcrom.util.NodeFilter;
 
 /**
  *
@@ -25,13 +28,13 @@ import org.jcrom.dao.AbstractJcrDAO;
  */
 public class ParentDAO extends AbstractJcrDAO<Parent> {
 
-	private static final String[] MIXIN_TYPES = {"mix:referenceable"};
-	
-	public ParentDAO( Session session, Jcrom jcrom ) {
-		super(Parent.class, session, jcrom, MIXIN_TYPES);
-	}
-	
-	public List<Parent> findByLicense() throws Exception {
-		return super.findByXPath("/jcr:root/content/parents/*[@drivingLicense = 'true']", "*", -1);
-	}
+    private static final String[] MIXIN_TYPES = { "mix:referenceable" };
+
+    public ParentDAO(Session session, Jcrom jcrom) {
+        super(Parent.class, session, jcrom, MIXIN_TYPES);
+    }
+
+    public List<Parent> findByLicense() throws Exception {
+        return super.findByXPath("/jcr:root/content/parents/*[@drivingLicense = 'true']", NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
+    }
 }

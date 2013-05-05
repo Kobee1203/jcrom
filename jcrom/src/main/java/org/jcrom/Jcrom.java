@@ -259,7 +259,7 @@ public class Jcrom {
      * @throws JcrMappingException
      */
     public <T> T fromNode(Class<T> entityClass, Node node) throws JcrMappingException {
-        return fromNode(entityClass, node, "*", -1);
+        return fromNode(entityClass, node, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
     }
 
     /**
@@ -371,7 +371,7 @@ public class Jcrom {
      * @throws JcrMappingException
      */
     public Node updateNode(Node node, Object entity) throws JcrMappingException {
-        return updateNode(node, entity, new NodeFilter("*", -1));
+        return updateNode(node, entity, new NodeFilter(NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE));
     }
 
     /**

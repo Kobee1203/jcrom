@@ -362,7 +362,7 @@ class FileNodeMapper {
     }
 
     void addFiles(Field field, Object obj, Node node, Mapper mapper) throws IllegalAccessException, RepositoryException, IOException {
-        setFiles(field, obj, node, mapper, -1, null);
+        setFiles(field, obj, node, mapper, NodeFilter.DEPTH_INFINITE, null);
     }
 
     void updateFiles(Field field, Object obj, Node node, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
@@ -390,33 +390,32 @@ class FileNodeMapper {
         mapNodeToFileObject(jcrFileNode, fileObj, fileContainer.getNodes().nextNode(), nodeFilter, obj, depth, mapper);
         return fileObj;
     }
-    
-    // Add file properties to another node, e.g. reference node
-    static void addFileProperties( JcrFile fileObj, Node fileNode, JcrFileNode jcrFileNode, int depth, NodeFilter nodeFilter) 
-            throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
-    	Node contentNode = fileNode.getNode("jcr:content");
-		fileObj.setName(fileNode.getName());
-		//fileObj.setPath(fileNode.getPath());
-		fileObj.setMimeType( contentNode.getProperty("jcr:mimeType").getString() );
-		fileObj.setLastModified( contentNode.getProperty("jcr:lastModified").getDate() );
-		if ( contentNode.hasProperty("jcr:encoding") ) {
-			fileObj.setEncoding(contentNode.getProperty("jcr:encoding").getString());
-		}
-		
-		// file data
-		if (nodeFilter.isIncluded("jcr:data", depth)) {
-	        if (jcrFileNode == null || jcrFileNode.loadType() == JcrFileNode.LoadType.STREAM ) {
+    // Add file properties to another node, e.g. reference node
+    static void addFileProperties(JcrFile fileObj, Node fileNode, JcrFileNode jcrFileNode, int depth, NodeFilter nodeFilter) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
+
+        Node contentNode = fileNode.getNode("jcr:content");
+        fileObj.setName(fileNode.getName());
+        //fileObj.setPath(fileNode.getPath());
+        fileObj.setMimeType(contentNode.getProperty("jcr:mimeType").getString());
+        fileObj.setLastModified(contentNode.getProperty("jcr:lastModified").getDate());
+        if (contentNode.hasProperty("jcr:encoding")) {
+            fileObj.setEncoding(contentNode.getProperty("jcr:encoding").getString());
+        }
+
+        // file data
+        if (nodeFilter.isIncluded("jcr:data", depth)) {
+            if (jcrFileNode == null || jcrFileNode.loadType() == JcrFileNode.LoadType.STREAM) {
                 InputStream is = contentNode.getProperty(Property.JCR_DATA).getBinary().getStream();
                 JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(is, contentNode.getProperty(Property.JCR_DATA).getLength());
                 fileObj.setDataProvider(dataProvider);
-	        } else if ( jcrFileNode.loadType() == JcrFileNode.LoadType.BYTES ) {
-	        	InputStream is = contentNode.getProperty(Property.JCR_DATA).getBinary().getStream();
-	            JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(Mapper.readBytes(is));
-				fileObj.setDataProvider(dataProvider);
-			}
-		}
-        
+            } else if (jcrFileNode.loadType() == JcrFileNode.LoadType.BYTES) {
+                InputStream is = contentNode.getProperty(Property.JCR_DATA).getBinary().getStream();
+                JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(Mapper.readBytes(is));
+                fileObj.setDataProvider(dataProvider);
+            }
+        }
+
     }
 
     @SuppressWarnings("unchecked")
