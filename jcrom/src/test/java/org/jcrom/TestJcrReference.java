@@ -114,7 +114,7 @@ public class TestJcrReference extends TestAbstract {
     }
 
     @Test(expected = ReferentialIntegrityException.class)
-    public void test() throws JcrMappingException, RepositoryException {
+    public void testNoReferentialIntegrity() throws JcrMappingException, RepositoryException {
         System.out.println("no referential integrity using default reference");
 
         // initialise jcrom

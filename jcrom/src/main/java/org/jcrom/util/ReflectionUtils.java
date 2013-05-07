@@ -47,7 +47,10 @@ import org.jcrom.annotations.JcrNode;
  * 
  * @author Olafur Gauti Gudmundsson
  */
-public class ReflectionUtils {
+public final class ReflectionUtils {
+
+    private ReflectionUtils() {
+    }
 
     /**
      * Get an array of all fields declared in the supplied class,

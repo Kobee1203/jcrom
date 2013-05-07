@@ -26,7 +26,10 @@ import javax.jcr.Session;
  * @author Olafur Gauti Gudmundsson
  * @author Nicolas Dos Santos
  */
-public class PathUtils {
+public final class PathUtils {
+
+    private PathUtils() {
+    }
 
     /**
      * Replaces occurences of non-alphanumeric characters with a
