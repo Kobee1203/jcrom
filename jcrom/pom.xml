@@ -1,16 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <groupId>org.jcrom</groupId>
     <artifactId>jcrom</artifactId>
     <packaging>jar</packaging>
     <version>2.0.1-SNAPSHOT</version>
     <name>jcrom</name>
-    
+
     <url>http://code.google.com/p/jcrom/</url>
     <description>A lightweight framework for mapping Java objects to/from a Java Content Repository (JCR).</description>
-    
+
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -18,7 +18,7 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    
+
     <developers>
         <developer>
             <id>oli.gauti</id>
@@ -30,12 +30,12 @@
         </developer>
     </developers>
 
-    <scm>
-        <url>https://${project.artifactId}.googlecode.com/svn/tags/${project.artifactId}-${project.version}</url>
-        <connection>scm:svn:https://${project.artifactId}.googlecode.com/svn/tags/${project.artifactId}-${project.version}</connection>
-        <developerConnection>scm:svn:https://${project.artifactId}.googlecode.com/svn/tags/${project.artifactId}-${project.version}</developerConnection>
-    </scm>
-    
+    <properties>
+        <project-name>jcrom</project-name>
+        <java.version>1.6</java.version>
+        <encoding>UTF-8</encoding>
+    </properties>
+
     <dependencies>
         <!-- Test dependencies -->
         <dependency>
@@ -95,6 +95,7 @@
             <version>1.1</version>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -102,9 +103,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                    <encoding>UTF-8</encoding>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${encoding}</encoding>
                 </configuration>
             </plugin>
             <plugin>
@@ -112,7 +113,7 @@
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>2.5</version>
                 <configuration>
-                    <encoding>UTF-8</encoding>
+                    <encoding>${encoding}</encoding>
                 </configuration>
             </plugin>
             <plugin>
@@ -120,14 +121,66 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.8.1</version>
                 <configuration>
-                	<encoding>UTF-8</encoding>
+                	<encoding>${encoding}</encoding>
                 	<reportOutputDirectory>${basedir}</reportOutputDirectory>
                 	<destDir>apidocs</destDir>
                 </configuration>
             </plugin>
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.0</version>
+                <configuration>
+                    <tagBase>https://${project-name}.googlecode.com/svn/tags</tagBase>
+                    <goals>deploy gcupload:gcupload</goals>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.riedelcastro</groupId>
+                <artifactId>gcupload-maven-plugin</artifactId>
+                <version>0.9</version>
+                <configuration>
+                    <projectName>jcrom</projectName>
+                    <uploads>
+                        <upload>
+                            <extensions>jar</extensions>
+                            <labels>Type-Library,Featured</labels>
+                            <summary>JCROM ${project.version} binary</summary>
+                        </upload>
+                    </uploads>
+                </configuration>
+            </plugin>
         </plugins>
+
+        <extensions>
+            <extension>
+                <groupId>org.jvnet.wagon-svn</groupId>
+                <artifactId>wagon-svn</artifactId>
+                <version>1.12</version>
+            </extension>
+        </extensions>
     </build>
-    
+
+    <scm>
+        <url>https://${project-name}.googlecode.com/svn/trunk</url>
+        <connection>scm:svn:https://${project-name}.googlecode.com/svn/trunk</connection>
+        <developerConnection>scm:svn:https://${project-name}.googlecode.com/svn/trunk</developerConnection>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>googlecode-releases</id>
+            <name>Google Code Releases Repository</name>
+            <uniqueVersion>false</uniqueVersion>
+            <url>svn:https://${project-name}.googlecode.com/svn/repo/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>googlecode-snapshots</id>
+            <name>Google Code Snapshots Repository</name>
+            <uniqueVersion>false</uniqueVersion>
+            <url>svn:https://${project-name}.googlecode.com/svn/repo/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <reporting>
         <plugins>
             <plugin>
@@ -135,7 +188,7 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.8.1</version>
                 <configuration>
-                	<encoding>UTF-8</encoding>
+                	<encoding>${encoding}</encoding>
                 	<reportOutputDirectory>${basedir}</reportOutputDirectory>
                 	<destDir>apidocs</destDir>
                 </configuration>
