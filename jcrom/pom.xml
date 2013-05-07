@@ -1,14 +1,16 @@
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    
     <groupId>org.jcrom</groupId>
     <artifactId>jcrom</artifactId>
     <packaging>jar</packaging>
     <version>2.0.1-SNAPSHOT</version>
     <name>jcrom</name>
+    
     <url>http://code.google.com/p/jcrom/</url>
     <description>A lightweight framework for mapping Java objects to/from a Java Content Repository (JCR).</description>
+    
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -16,10 +18,7 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    <scm>
-        <url>http://code.google.com/p/jcrom/source/browse</url>
-        <connection>http://jcrom.googlecode.com/svn/trunk/</connection>
-    </scm>
+    
     <developers>
         <developer>
             <id>oli.gauti</id>
@@ -30,6 +29,13 @@
             <name>Nicolas Dos Santos</name>
         </developer>
     </developers>
+
+    <scm>
+        <url>https://${project.artifactId}.googlecode.com/svn/tags/${project.artifactId}-${project.version}</url>
+        <connection>scm:svn:https://${project.artifactId}.googlecode.com/svn/tags/${project.artifactId}-${project.version}</connection>
+        <developerConnection>scm:svn:https://${project.artifactId}.googlecode.com/svn/tags/${project.artifactId}-${project.version}</developerConnection>
+    </scm>
+    
     <dependencies>
         <!-- Test dependencies -->
         <dependency>
