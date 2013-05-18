@@ -28,6 +28,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import org.jcrom.annotations.JcrNode;
+import org.jcrom.callback.JcromCallback;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.ReflectionUtils;
 
@@ -259,7 +261,7 @@ public class Jcrom {
      * @throws JcrMappingException
      */
     public <T> T fromNode(Class<T> entityClass, Node node) throws JcrMappingException {
-        return fromNode(entityClass, node, NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
+        return fromNode(entityClass, node, null);
     }
 
     /**
@@ -344,11 +346,34 @@ public class Jcrom {
      * @throws JcrMappingException
      */
     public Node addNode(Node parentNode, Object entity, String[] mixinTypes) throws JcrMappingException {
+        return addNode(parentNode, entity, mixinTypes, null);
+    }
+
+    /**
+     * Maps the entity supplied to a JCR node, and adds that node as a child to the parent node supplied.
+     * 
+     * @param parentNode
+     *            the parent node to which the entity node will be added
+     * @param entity
+     *            the entity to be mapped to the JCR node
+     * @param mixinTypes
+     *            an array of mixin type that will be added to the new node
+     * @param action 
+     *            callback object that specifies the Jcrom actions: 
+     *            <ul>
+     *              <li>{@link JcromCallback#doAddNode(Node, String, JcrNode, Object)},</li>
+     *              <li>{@link JcromCallback#doAddMixinTypes(Node, String[], JcrNode, Object)},</li>
+     *              <li>{@link JcromCallback#doComplete(Object, Node)},</li>
+     *            </ul>
+     * @return the newly created JCR node
+     * @throws JcrMappingException
+     */
+    public Node addNode(Node parentNode, Object entity, String[] mixinTypes, JcromCallback action) throws JcrMappingException {
         if (!mapper.isMapped(entity.getClass())) {
             throw new JcrMappingException("Trying to map an unmapped class: " + entity.getClass().getName());
         }
         try {
-            return mapper.addNode(parentNode, entity, mixinTypes);
+            return mapper.addNode(parentNode, entity, mixinTypes, action);
         } catch (RepositoryException e) {
             throw new JcrMappingException("Could not create node from object", e);
         } catch (IllegalAccessException e) {
@@ -367,11 +392,11 @@ public class Jcrom {
      *            the JCR node to be updated
      * @param entity
      *            the entity that will be mapped to the existing node
-     * @return the name of the updated node
+     * @return the updated node
      * @throws JcrMappingException
      */
     public Node updateNode(Node node, Object entity) throws JcrMappingException {
-        return updateNode(node, entity, new NodeFilter(NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE));
+        return updateNode(node, entity, null, null);
     }
 
     /**
@@ -387,11 +412,11 @@ public class Jcrom {
      * @param maxDepth
      *            the maximum depth of updated child nodes (0 means no child nodes are updated, while a negative value
      *            means that no restrictions are set on the depth).
-     * @return the name of the updated node
+     * @return the updated node
      * @throws JcrMappingException
      */
     public Node updateNode(Node node, Object entity, String childNodeFilter, int maxDepth) throws JcrMappingException {
-        return updateNode(node, entity, new NodeFilter(childNodeFilter, maxDepth));
+        return updateNode(node, entity, new NodeFilter(childNodeFilter, maxDepth), null);
     }
 
     /**
@@ -403,16 +428,34 @@ public class Jcrom {
      *            the entity that will be mapped to the existing node
      * @param nodeFilter
      *            the NodeFilter to apply when updating child nodes and references
-     * @return the name of the updated node
+     * @return the updated node
      * @throws JcrMappingException
      */
     public Node updateNode(Node node, Object entity, NodeFilter nodeFilter) throws JcrMappingException {
+        return updateNode(node, entity, nodeFilter, null);
+    }
+
+    /**
+     * Update an existing JCR node with the entity supplied.
+     * 
+     * @param node
+     *            the JCR node to be updated
+     * @param entity
+     *            the entity that will be mapped to the existing node
+     * @param nodeFilter
+     *            the NodeFilter to apply when updating child nodes and references
+     * @param action 
+     *            callback object that specifies the Jcrom actions
+     * @return the updated node
+     * @throws JcrMappingException
+     */
+    public Node updateNode(Node node, Object entity, NodeFilter nodeFilter, JcromCallback action) throws JcrMappingException {
 
         if (!mapper.isMapped(entity.getClass())) {
             throw new JcrMappingException("Trying to map an unmapped class: " + entity.getClass().getName());
         }
         try {
-            return mapper.updateNode(node, entity, nodeFilter);
+            return mapper.updateNode(node, entity, nodeFilter, action);
         } catch (RepositoryException e) {
             throw new JcrMappingException("Could not update node from object", e);
         } catch (IllegalAccessException e) {

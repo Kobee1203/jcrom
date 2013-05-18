@@ -23,15 +23,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.StringTokenizer;
 
 import javax.jcr.Binary;
 import javax.jcr.NamespaceRegistry;
@@ -47,6 +43,7 @@ import javax.jcr.ValueFactory;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrProtectedProperty;
 import org.jcrom.annotations.JcrSerializedProperty;
+import org.jcrom.util.JcrUtils;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.ReflectionUtils;
 
@@ -79,7 +76,7 @@ class PropertyMapper {
                         map.put(p.getName(), valuesToArray(valueType.getComponentType(), values));
                     }
                 } else {
-                    map.put(p.getName(), getValue(valueType, p.getValue()));
+                    map.put(p.getName(), JcrUtils.getValue(valueType, p.getValue()));
                 }
             }
         }
@@ -89,7 +86,7 @@ class PropertyMapper {
     private Object[] valuesToArray(Class<?> type, Value[] values) throws RepositoryException, IOException {
         Object[] arr = (Object[]) Array.newInstance(type, values.length);
         for (int i = 0; i < values.length; i++) {
-            arr[i] = getValue(type, values[i]);
+            arr[i] = JcrUtils.getValue(type, values[i]);
         }
         return arr;
     }
@@ -104,93 +101,6 @@ class PropertyMapper {
                 field.set(obj, deserialize(p.getBinary().getStream()));
             }
         }
-    }
-
-    /**
-     * Parses given locale string to Locale object. If the string is empty or null then the we return null.
-     * 
-     * @param localeString
-     *            a string containing locale in <code>language_country_variant</code> format.
-     * @return Locale
-     */
-    private Locale parseLocale(String localeString) {
-        if (localeString != null && localeString.length() > 0) {
-            StringTokenizer st = new StringTokenizer(localeString, "_");
-            String language = st.hasMoreElements() ? st.nextToken() : Locale.getDefault().getLanguage();
-            String country = st.hasMoreElements() ? st.nextToken() : "";
-            String variant = st.hasMoreElements() ? st.nextToken() : "";
-            return new Locale(language, country, variant);
-        }
-        return null;
-    }
-
-    Value createValue(Class<?> c, Object fieldValue, ValueFactory valueFactory) throws RepositoryException {
-        if (c == String.class) {
-            return valueFactory.createValue((String) fieldValue);
-        } else if (c == Date.class) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime((Date) fieldValue);
-            return valueFactory.createValue(cal);
-        } else if (c == Timestamp.class) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTimeInMillis(((Timestamp) fieldValue).getTime());
-            return valueFactory.createValue(cal);
-        } else if (c == Calendar.class) {
-            return valueFactory.createValue((Calendar) fieldValue);
-        } else if (c == InputStream.class) {
-            //return valueFactory.createValue((InputStream) fieldValue);
-            Binary binary = valueFactory.createBinary((InputStream) fieldValue);
-            return valueFactory.createValue(binary);
-        } else if (c.isArray() && c.getComponentType() == byte.class) {
-            //return valueFactory.createValue(new ByteArrayInputStream((byte[]) fieldValue));
-            Binary binary = valueFactory.createBinary(new ByteArrayInputStream((byte[]) fieldValue));
-            return valueFactory.createValue(binary);
-        } else if (c == Integer.class || c == int.class) {
-            return valueFactory.createValue((Integer) fieldValue);
-        } else if (c == Long.class || c == long.class) {
-            return valueFactory.createValue((Long) fieldValue);
-        } else if (c == Double.class || c == double.class) {
-            return valueFactory.createValue((Double) fieldValue);
-        } else if (c == Boolean.class || c == boolean.class) {
-            return valueFactory.createValue((Boolean) fieldValue);
-        } else if (c == Locale.class) {
-            return valueFactory.createValue(((Locale) fieldValue).toString());
-        } else if (c.isEnum()) {
-            return valueFactory.createValue(((Enum<?>) fieldValue).name());
-        }
-        return null;
-    }
-
-    Object getValue(Class<?> c, Value value) throws RepositoryException, IOException {
-        if (c == String.class) {
-            return value.getString();
-        } else if (c == Date.class) {
-            return value.getDate().getTime();
-        } else if (c == Timestamp.class) {
-            return new Timestamp(value.getDate().getTimeInMillis());
-        } else if (c == Calendar.class) {
-            return value.getDate();
-        } else if (c == InputStream.class) {
-            //return value.getStream();
-            return value.getBinary().getStream();
-        } else if (c.isArray() && c.getComponentType() == byte.class) {
-            // byte array...we need to read from the stream
-            //return Mapper.readBytes(value.getStream());
-            return Mapper.readBytes(value.getBinary().getStream());
-        } else if (c == Integer.class || c == int.class) {
-            return (int) value.getDouble();
-        } else if (c == Long.class || c == long.class) {
-            return value.getLong();
-        } else if (c == Double.class || c == double.class) {
-            return value.getDouble();
-        } else if (c == Boolean.class || c == boolean.class) {
-            return value.getBoolean();
-        } else if (c == Locale.class) {
-            return parseLocale(value.getString());
-        } else if (c.isEnum()) {
-            return Enum.valueOf((Class<? extends Enum>) c, value.getString());
-        }
-        return null;
     }
 
     String getSerializedPropertyName(Field field) {
@@ -264,7 +174,7 @@ class PropertyMapper {
                 List<Object> properties = new ArrayList<Object>();
                 Class<?> paramClass = ReflectionUtils.getParameterizedClass(field);
                 for (Value value : p.getValues()) {
-                    properties.add(getValue(paramClass, value));
+                    properties.add(JcrUtils.getValue(paramClass, value));
                 }
                 field.set(obj, properties);
 
@@ -298,7 +208,7 @@ class PropertyMapper {
                 } else if (field.getType().getComponentType() == Locale.class) {
                     Locale[] arr = new Locale[values.length];
                     for (int i = 0; i < values.length; i++) {
-                        arr[i] = parseLocale(values[i].getString());
+                        arr[i] = JcrUtils.parseLocale(values[i].getString());
                     }
                     field.set(obj, arr);
                 } else {
@@ -308,7 +218,7 @@ class PropertyMapper {
 
             } else {
                 // single-value property
-                field.set(obj, getValue(field.getType(), p.getValue()));
+                field.set(obj, JcrUtils.getValue(field.getType(), p.getValue()));
             }
         }
     }
@@ -396,7 +306,7 @@ class PropertyMapper {
                 if (!fieldValues.isEmpty()) {
                     Value[] values = new Value[fieldValues.size()];
                     for (int i = 0; i < fieldValues.size(); i++) {
-                        values[i] = createValue(paramClass, fieldValues.get(i), valueFactory);
+                        values[i] = JcrUtils.createValue(paramClass, fieldValues.get(i), valueFactory);
                     }
                     node.setProperty(propertyName, values);
                 } else {
@@ -410,38 +320,38 @@ class PropertyMapper {
                     int[] ints = (int[]) propertyValue;
                     values = new Value[ints.length];
                     for (int i = 0; i < ints.length; i++) {
-                        values[i] = createValue(int.class, ints[i], valueFactory);
+                        values[i] = JcrUtils.createValue(int.class, ints[i], valueFactory);
                     }
                 } else if (type.getComponentType() == long.class) {
                     long[] longs = (long[]) propertyValue;
                     values = new Value[longs.length];
                     for (int i = 0; i < longs.length; i++) {
-                        values[i] = createValue(long.class, longs[i], valueFactory);
+                        values[i] = JcrUtils.createValue(long.class, longs[i], valueFactory);
                     }
                 } else if (type.getComponentType() == double.class) {
                     double[] doubles = (double[]) propertyValue;
                     values = new Value[doubles.length];
                     for (int i = 0; i < doubles.length; i++) {
-                        values[i] = createValue(double.class, doubles[i], valueFactory);
+                        values[i] = JcrUtils.createValue(double.class, doubles[i], valueFactory);
                     }
                 } else if (type.getComponentType() == boolean.class) {
                     boolean[] booleans = (boolean[]) propertyValue;
                     values = new Value[booleans.length];
                     for (int i = 0; i < booleans.length; i++) {
-                        values[i] = createValue(boolean.class, booleans[i], valueFactory);
+                        values[i] = JcrUtils.createValue(boolean.class, booleans[i], valueFactory);
                     }
                 } else if (type.getComponentType() == Locale.class) {
                     Locale[] locales = (Locale[]) propertyValue;
                     values = new Value[locales.length];
                     for (int i = 0; i < locales.length; i++) {
-                        values[i] = createValue(Locale.class, locales[i], valueFactory);
+                        values[i] = JcrUtils.createValue(Locale.class, locales[i], valueFactory);
                     }
                 } else {
                     // Object
                     Object[] objects = (Object[]) propertyValue;
                     values = new Value[objects.length];
                     for (int i = 0; i < objects.length; i++) {
-                        values[i] = createValue(type.getComponentType(), objects[i], valueFactory);
+                        values[i] = JcrUtils.createValue(type.getComponentType(), objects[i], valueFactory);
                     }
 
                 }
@@ -449,7 +359,7 @@ class PropertyMapper {
 
             } else {
                 // single-value property
-                Value value = createValue(type, propertyValue, valueFactory);
+                Value value = JcrUtils.createValue(type, propertyValue, valueFactory);
                 if (value != null) {
                     node.setProperty(propertyName, value);
                 }

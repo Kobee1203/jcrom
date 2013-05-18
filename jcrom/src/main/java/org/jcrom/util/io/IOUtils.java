@@ -34,7 +34,7 @@ import java.io.Writer;
  * 
  * <p>This class provides static utility methods for input/output operations.</p>
  */
-public class IOUtils {
+public final class IOUtils {
 
     /**
      * The Unix directory separator character.
@@ -77,11 +77,7 @@ public class IOUtils {
      */
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
 
-    /**
-     * Instances should NOT be constructed in standard programming.
-     */
-    public IOUtils() {
-        super();
+    private IOUtils() {
     }
 
     /**

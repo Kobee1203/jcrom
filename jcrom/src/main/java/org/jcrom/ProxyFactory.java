@@ -32,7 +32,10 @@ import org.jcrom.util.NodeFilter;
  * @author Olafur Gauti Gudmundsson
  * @author Nicolas Dos Santos
  */
-public class ProxyFactory {
+public final class ProxyFactory {
+
+    private ProxyFactory() {
+    }
 
     @SuppressWarnings("unchecked")
     public static <T> T createChildNodeProxy(Class<T> c, Object parentObj, String containerPath, Session session, Mapper mapper, int depth, NodeFilter nodeFilter, boolean pathIsContainer) {

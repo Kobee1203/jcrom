@@ -15,9 +15,7 @@
  */
 package org.jcrom;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.sql.Timestamp;
@@ -59,6 +57,8 @@ import org.jcrom.annotations.JcrSerializedProperty;
 import org.jcrom.annotations.JcrUUID;
 import org.jcrom.annotations.JcrVersionCreated;
 import org.jcrom.annotations.JcrVersionName;
+import org.jcrom.callback.DefaultJcromCallback;
+import org.jcrom.callback.JcromCallback;
 import org.jcrom.util.JcrUtils;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.PathUtils;
@@ -371,6 +371,8 @@ class Mapper {
      *            the JCR node from which to create the object
      * @param nodeFilter
      *            the NodeFilter to be applied
+     * @param action 
+     *            callback object that specifies the Jcr action
      * @return an instance of the JCR entity class, mapped from the node
      * @throws java.lang.Exception
      */
@@ -379,6 +381,10 @@ class Mapper {
         Object obj = createInstanceForNode(entityClass, node);
 
         Object parentObj = findParentObjectFromNode(node);
+
+        if (nodeFilter == null) {
+            nodeFilter = new NodeFilter(NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
+        }
 
         if (ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class)) {
             // special handling of JcrFile objects
@@ -402,6 +408,11 @@ class Mapper {
     Object fromNode(Class<?> entityClass, Node node, NodeFilter nodeFilter) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
         history.set(new HashMap<HistoryKey, Object>());
         Object obj = createInstanceForNode(entityClass, node);
+
+        if (nodeFilter == null) {
+            nodeFilter = new NodeFilter(NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
+        }
+
         if (ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class)) {
             // special handling of JcrFile objects
             fileNodeMapper.mapSingleFile((JcrFile) obj, node, null, 0, nodeFilter, this);
@@ -412,149 +423,46 @@ class Mapper {
     }
 
     /**
-     * @param node
-     * @param entity
-     * @param childNodeFilter
-     * @param maxDepth
-     * @throws java.lang.Exception
-     */
-    Node updateNode(Node node, Object entity, NodeFilter nodeFilter) throws RepositoryException, IllegalAccessException, IOException {
-        return updateNode(node, entity, entity.getClass(), nodeFilter, 0);
-    }
-
-    Node updateNode(Node node, Object obj, Class<?> objClass, NodeFilter nodeFilter, int depth) throws RepositoryException, IllegalAccessException, IOException {
-
-        obj = clearCglib(obj);
-
-        // map the class name to a property
-        JcrNode jcrNode = ReflectionUtils.getJcrNodeAnnotation(objClass);
-        if (jcrNode != null && !jcrNode.classNameProperty().equals("none")) {
-            // check if the class of the object has changed
-            if (node.hasProperty(jcrNode.classNameProperty())) {
-                String oldClassName = node.getProperty(jcrNode.classNameProperty()).getString();
-                if (!oldClassName.equals(obj.getClass().getCanonicalName())) {
-                    // different class, so we should remove the properties of the old class
-                    Class<?> oldClass = getClassForName(oldClassName);
-                    if (oldClass != null) {
-                        Class<?> newClass = obj.getClass();
-
-                        Set<Field> oldFields = new HashSet<Field>();
-                        oldFields.addAll(Arrays.asList(ReflectionUtils.getDeclaredAndInheritedFields(oldClass, true)));
-                        oldFields.removeAll(Arrays.asList(ReflectionUtils.getDeclaredAndInheritedFields(newClass, true)));
-
-                        // remove the old fields
-                        for (Field field : oldFields) {
-                            if (node.hasProperty(field.getName())) {
-                                node.getProperty(field.getName()).remove();
-                            }
-                        }
-                    }
-                }
-            }
-            node.setProperty(jcrNode.classNameProperty(), obj.getClass().getCanonicalName());
-        }
-
-        // special handling of JcrFile objects
-        if (ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class) && depth == 0) {
-            fileNodeMapper.addFileNode(node, (JcrFile) obj, this);
-        }
-
-        for (Field field : ReflectionUtils.getDeclaredAndInheritedFields(objClass, true)) {
-            field.setAccessible(true);
-
-            if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProperty.class) && nodeFilter.isDepthPropertyIncluded(depth)) {
-                propertyMapper.updateProperty(field, obj, node, depth, nodeFilter, this);
-
-            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrSerializedProperty.class) && nodeFilter.isDepthPropertyIncluded(depth)) {
-                propertyMapper.updateSerializedProperty(field, obj, node, depth, nodeFilter);
-
-            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrChildNode.class) && nodeFilter.isDepthIncluded(depth)) {
-                // child nodes
-                childNodeMapper.updateChildren(field, obj, node, depth, nodeFilter, this);
-
-            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrReference.class)) {
-                // references
-                referenceMapper.updateReferences(field, obj, node, nodeFilter);
-
-            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrFileNode.class) && nodeFilter.isDepthIncluded(depth)) {
-                // file nodes
-                fileNodeMapper.updateFiles(field, obj, node, this, depth, nodeFilter);
-            }
-        }
-
-        // if name is different, then we move the node
-        if (!node.getName().equals(getCleanName(getNodeName(obj)))) {
-            boolean isVersionable = JcrUtils.hasMixinType(node, "mix:versionable") || JcrUtils.hasMixinType(node, NodeType.MIX_VERSIONABLE);
-            Node parent = node.getParent();
-
-            if (isVersionable) {
-                if (JcrUtils.hasMixinType(parent, "mix:versionable") || JcrUtils.hasMixinType(parent, NodeType.MIX_VERSIONABLE)) {
-                    JcrUtils.checkout(parent);
-                }
-            }
-
-            if (parent.getPath().equals("/")) {
-                // special case: moving a root node
-                node.getSession().move(node.getPath(), parent.getPath() + getCleanName(getNodeName(obj)));
-            } else {
-                node.getSession().move(node.getPath(), parent.getPath() + "/" + getCleanName(getNodeName(obj)));
-            }
-
-            if (isVersionable) {
-                if ((JcrUtils.hasMixinType(parent, "mix:versionable") || JcrUtils.hasMixinType(parent, NodeType.MIX_VERSIONABLE)) && parent.isCheckedOut()) {
-                    // Save session changes before checking-in the parent node
-                    node.getSession().save();
-                    JcrUtils.checkin(parent);
-                }
-            }
-
-            // update the object name and path
-            setNodeName(obj, node.getName());
-            setNodePath(obj, node.getPath());
-        }
-
-        return node;
-    }
-
-    /**
+     * Transforms the entity supplied to a JCR node, and adds that node as a child to the parent node supplied.
+     * 
      * @param parentNode
+     *            the parent node to which the entity node will be added
      * @param entity
+     *            the entity to be mapped to the JCR node
+     * @param mixinTypes
+     *            an array of mixin type that will be added to the new node
+     * @param action 
+     *            callback object that specifies the Jcrom actions: 
+     *            <ul>
+     *              <li>{@link JcromCallback#doAddNode(Node, String, JcrNode, Object)},</li>
+     *              <li>{@link JcromCallback#doAddMixinTypes(Node, String[], JcrNode, Object)},</li>
+     *              <li>{@link JcromCallback#doComplete(Object, Node)},</li>
+     *            </ul>
+     * @return the newly created JCR node
      * @throws java.lang.Exception
      */
-    Node addNode(Node parentNode, Object entity, String[] mixinTypes) throws IllegalAccessException, RepositoryException, IOException {
-        return addNode(parentNode, entity, mixinTypes, true);
+    Node addNode(Node parentNode, Object entity, String[] mixinTypes, JcromCallback action) throws IllegalAccessException, RepositoryException, IOException {
+        return addNode(parentNode, entity, mixinTypes, true, action);
     }
 
-    Node addNode(Node parentNode, Object entity, String[] mixinTypes, boolean createNode) throws IllegalAccessException, RepositoryException, IOException {
+    Node addNode(Node parentNode, Object entity, String[] mixinTypes, boolean createNode, JcromCallback action) throws IllegalAccessException, RepositoryException, IOException {
 
         entity = clearCglib(entity);
+
+        if (action == null) {
+            action = new DefaultJcromCallback(jcrom);
+        }
 
         // create the child node
         Node node;
         JcrNode jcrNode = ReflectionUtils.getJcrNodeAnnotation(entity.getClass());
         if (createNode) {
-            // check if we should use a specific node type
-            if (jcrNode == null || (jcrNode.nodeType().equals("nt:unstructured") || jcrNode.nodeType().equals(NodeType.NT_UNSTRUCTURED))) {
-                node = parentNode.addNode(getCleanName(getNodeName(entity)));
-            } else {
-                node = parentNode.addNode(getCleanName(getNodeName(entity)), jcrNode.nodeType());
-            }
-            // add the mixin types
-            if (mixinTypes != null) {
-                for (String mixinType : mixinTypes) {
-                    if (node.canAddMixin(mixinType)) {
-                        node.addMixin(mixinType);
-                    }
-                }
-            }
-            // add annotated mixin types
-            if (jcrNode != null && jcrNode.mixinTypes() != null) {
-                for (String mixinType : jcrNode.mixinTypes()) {
-                    if (node.canAddMixin(mixinType)) {
-                        node.addMixin(mixinType);
-                    }
-                }
-            }
+            // add node
+            String nodeName = getCleanName(getNodeName(entity));
+            node = action.doAddNode(parentNode, nodeName, jcrNode, entity);
+
+            // add mixin types
+            action.doAddMixinTypes(node, mixinTypes, jcrNode, entity);
 
             // update the object id, name and path
             setId(entity, node.getIdentifier());
@@ -564,14 +472,13 @@ class Mapper {
                 // setUUID(entity, node.getUUID());
                 setUUID(entity, node.getIdentifier());
             }
-
         } else {
             node = parentNode;
         }
 
-        // map the class name to a property
+        // add class name to property
         if (jcrNode != null && !jcrNode.classNameProperty().equals("none")) {
-            node.setProperty(jcrNode.classNameProperty(), entity.getClass().getCanonicalName());
+            action.doAddClassNameToProperty(node, jcrNode, entity);
         }
 
         // special handling of JcrFile objects
@@ -598,6 +505,130 @@ class Mapper {
                 fileNodeMapper.addFiles(field, entity, node, this);
             }
         }
+
+        // complete the addition of the new node
+        action.doComplete(entity, node);
+
+        return node;
+    }
+
+    /**
+     * Update an existing JCR node with the entity supplied.
+     * 
+     * @param node
+     *            the JCR node to be updated
+     * @param entity
+     *            the entity that will be mapped to the existing node
+     * @param nodeFilter
+     *            the NodeFilter to apply when updating child nodes and references
+     * @param action 
+     *            callback object that specifies the Jcrom actions
+     * @return the updated node
+     * @throws java.lang.Exception
+     */
+    Node updateNode(Node node, Object entity, NodeFilter nodeFilter, JcromCallback action) throws RepositoryException, IllegalAccessException, IOException {
+        return updateNode(node, entity, entity.getClass(), nodeFilter, 0, action);
+    }
+
+    Node updateNode(Node node, Object entity, Class<?> entityClass, NodeFilter nodeFilter, int depth, JcromCallback action) throws RepositoryException, IllegalAccessException, IOException {
+
+        entity = clearCglib(entity);
+
+        if (nodeFilter == null) {
+            nodeFilter = new NodeFilter(NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
+        }
+
+        if (action == null) {
+            action = new DefaultJcromCallback(jcrom);
+        }
+
+        // map the class name to a property
+        JcrNode jcrNode = ReflectionUtils.getJcrNodeAnnotation(entityClass);
+        if (jcrNode != null && !jcrNode.classNameProperty().equals("none")) {
+            // check if the class of the object has changed
+            if (node.hasProperty(jcrNode.classNameProperty())) {
+                String oldClassName = node.getProperty(jcrNode.classNameProperty()).getString();
+                if (!oldClassName.equals(entity.getClass().getCanonicalName())) {
+                    // different class, so we should remove the properties of the old class
+                    Class<?> oldClass = getClassForName(oldClassName);
+                    if (oldClass != null) {
+                        Class<?> newClass = entity.getClass();
+
+                        Set<Field> oldFields = new HashSet<Field>();
+                        oldFields.addAll(Arrays.asList(ReflectionUtils.getDeclaredAndInheritedFields(oldClass, true)));
+                        oldFields.removeAll(Arrays.asList(ReflectionUtils.getDeclaredAndInheritedFields(newClass, true)));
+
+                        // remove the old fields
+                        for (Field field : oldFields) {
+                            if (node.hasProperty(field.getName())) {
+                                node.getProperty(field.getName()).remove();
+                            }
+                        }
+                    }
+                }
+            }
+            action.doUpdateClassNameToProperty(node, jcrNode, entity);
+        }
+
+        // special handling of JcrFile objects
+        if (ReflectionUtils.extendsClass(entity.getClass(), JcrFile.class) && depth == 0) {
+            fileNodeMapper.addFileNode(node, (JcrFile) entity, this);
+        }
+
+        for (Field field : ReflectionUtils.getDeclaredAndInheritedFields(entityClass, true)) {
+            field.setAccessible(true);
+
+            if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProperty.class) && nodeFilter.isDepthPropertyIncluded(depth)) {
+                propertyMapper.updateProperty(field, entity, node, depth, nodeFilter, this);
+
+            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrSerializedProperty.class) && nodeFilter.isDepthPropertyIncluded(depth)) {
+                propertyMapper.updateSerializedProperty(field, entity, node, depth, nodeFilter);
+
+            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrChildNode.class) && nodeFilter.isDepthIncluded(depth)) {
+                // child nodes
+                childNodeMapper.updateChildren(field, entity, node, depth, nodeFilter, this);
+
+            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrReference.class)) {
+                // references
+                referenceMapper.updateReferences(field, entity, node, nodeFilter);
+
+            } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrFileNode.class) && nodeFilter.isDepthIncluded(depth)) {
+                // file nodes
+                fileNodeMapper.updateFiles(field, entity, node, this, depth, nodeFilter);
+            }
+        }
+
+        // if name is different, then we move the node
+        if (!node.getName().equals(getCleanName(getNodeName(entity)))) {
+            boolean isVersionable = JcrUtils.hasMixinType(node, "mix:versionable") || JcrUtils.hasMixinType(node, NodeType.MIX_VERSIONABLE);
+            Node parentNode = node.getParent();
+
+            if (isVersionable) {
+                if (JcrUtils.hasMixinType(parentNode, "mix:versionable") || JcrUtils.hasMixinType(parentNode, NodeType.MIX_VERSIONABLE)) {
+                    JcrUtils.checkout(parentNode);
+                }
+            }
+
+            // move node
+            String nodeName = getCleanName(getNodeName(entity));
+            action.doMoveNode(parentNode, node, nodeName, jcrNode, entity);
+
+            if (isVersionable) {
+                if ((JcrUtils.hasMixinType(parentNode, "mix:versionable") || JcrUtils.hasMixinType(parentNode, NodeType.MIX_VERSIONABLE)) && parentNode.isCheckedOut()) {
+                    // Save session changes before checking-in the parent node
+                    node.getSession().save();
+                    JcrUtils.checkin(parentNode);
+                }
+            }
+
+            // update the object name and path
+            setNodeName(entity, node.getName());
+            setNodePath(entity, node.getPath());
+        }
+
+        // complete the update of the node
+        action.doComplete(entity, node);
+
         return node;
     }
 
@@ -670,7 +701,7 @@ class Mapper {
                 if (isVersionable(node)) {
                     //Version baseVersion = node.getBaseVersion();
                     Version baseVersion = getVersionManager(node).getBaseVersion(node.getPath());
-                    field.set(obj, propertyMapper.getValue(field.getType(), node.getSession().getValueFactory().createValue(baseVersion.getCreated())));
+                    field.set(obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(baseVersion.getCreated())));
                 }
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrVersionName.class)) {
@@ -686,12 +717,12 @@ class Mapper {
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrVersionCreated.class)) {
                 if (node.getParent() != null && node.getParent().isNodeType(NodeType.NT_VERSION)) {
                     Version version = (Version) node.getParent();
-                    field.set(obj, propertyMapper.getValue(field.getType(), node.getSession().getValueFactory().createValue(version.getCreated())));
+                    field.set(obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(version.getCreated())));
                 } else if (isVersionable(node)) {
                     // if we're not browsing version history, then this must be the base version
                     //Version baseVersion = node.getBaseVersion();
                     Version baseVersion = getVersionManager(node).getBaseVersion(node.getPath());
-                    field.set(obj, propertyMapper.getValue(field.getType(), node.getSession().getValueFactory().createValue(baseVersion.getCreated())));
+                    field.set(obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(baseVersion.getCreated())));
                 }
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrCheckedout.class)) {
@@ -699,7 +730,7 @@ class Mapper {
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrCreated.class)) {
                 if (node.hasProperty(Property.JCR_CREATED)) {
-                    field.set(obj, propertyMapper.getValue(field.getType(), node.getProperty(Property.JCR_CREATED).getValue()));
+                    field.set(obj, JcrUtils.getValue(field.getType(), node.getProperty(Property.JCR_CREATED).getValue()));
                 }
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrParentNode.class)) {
@@ -722,22 +753,6 @@ class Mapper {
             }
         }
         return obj;
-    }
-
-    static byte[] readBytes(InputStream in) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            // Transfer bytes from in to out
-            byte[] buf = new byte[1024];
-            int len;
-            while ((len = in.read(buf)) > 0) {
-                out.write(buf, 0, len);
-            }
-        } finally {
-            in.close();
-            out.close();
-        }
-        return out.toByteArray();
     }
 
     static VersionManager getVersionManager(Node node) throws RepositoryException {

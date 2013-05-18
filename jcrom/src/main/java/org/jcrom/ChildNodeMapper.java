@@ -93,12 +93,12 @@ class ChildNodeMapper {
             if (!childContainer.hasNodes()) {
                 if (field.get(obj) != null) {
                     // add the node if it does not exist
-                    mapper.addNode(childContainer, field.get(obj), null);
+                    mapper.addNode(childContainer, field.get(obj), null, null);
                 }
             } else {
                 if (field.get(obj) != null) {
                     Object childObj = field.get(obj);
-                    mapper.updateNode(childContainer.getNodes().nextNode(), childObj, childObj.getClass(), nodeFilter, depth + 1);
+                    mapper.updateNode(childContainer.getNodes().nextNode(), childObj, childObj.getClass(), nodeFilter, depth + 1, null);
                 } else {
                     // field is now null, so we remove the child node
                     removeChildren(childContainer);
@@ -111,13 +111,13 @@ class ChildNodeMapper {
                 if (field.get(obj) != null) {
                     Object childObj = field.get(obj);
                     mapper.setNodeName(childObj, nodeName);
-                    mapper.addNode(node, childObj, null);
+                    mapper.addNode(node, childObj, null, null);
                 }
             } else {
                 if (field.get(obj) != null) {
                     Object childObj = field.get(obj);
                     mapper.setNodeName(childObj, nodeName);
-                    mapper.updateNode(node.getNode(nodeName), childObj, childObj.getClass(), nodeFilter, depth + 1);
+                    mapper.updateNode(node.getNode(nodeName), childObj, childObj.getClass(), nodeFilter, depth + 1, null);
                 } else {
                     NodeIterator nodeIterator = node.getNodes(nodeName);
                     while (nodeIterator.hasNext()) {
@@ -143,7 +143,7 @@ class ChildNodeMapper {
                         // this child was not found, so we remove it
                         child.remove();
                     } else {
-                        mapper.updateNode(child, childEntity, childEntity.getClass(), nodeFilter, depth + 1);
+                        mapper.updateNode(child, childEntity, childEntity.getClass(), nodeFilter, depth + 1, null);
                     }
                 }
                 // we must add new children, if any
@@ -151,13 +151,13 @@ class ChildNodeMapper {
                     Object child = children.get(i);
                     String childPath = mapper.getNodePath(child);
                     if (childPath == null || childPath.equals("") || !childContainer.hasNode(mapper.getCleanName(mapper.getNodeName(child)))) {
-                        mapper.addNode(childContainer, child, null);
+                        mapper.addNode(childContainer, child, null, null);
                     }
                 }
             } else {
                 // no children exist, we add
                 for (int i = 0; i < children.size(); i++) {
-                    mapper.addNode(childContainer, children.get(i), null);
+                    mapper.addNode(childContainer, children.get(i), null, null);
                 }
             }
         } else {
@@ -188,11 +188,11 @@ class ChildNodeMapper {
                             Node listContainer = childContainer.addNode(cleanKey);
                             List<?> childList = (List<?>) entry.getValue();
                             for (int i = 0; i < childList.size(); i++) {
-                                mapper.addNode(listContainer, childList.get(i), null);
+                                mapper.addNode(listContainer, childList.get(i), null, null);
                             }
                         } else {
                             // update the child
-                            mapper.updateNode(childContainer.getNode(cleanKey), entry.getValue(), paramClass, nodeFilter, depth + 1);
+                            mapper.updateNode(childContainer.getNode(cleanKey), entry.getValue(), paramClass, nodeFilter, depth + 1, null);
                         }
                     } else {
                         // this child does not exist, so we add it
@@ -229,11 +229,11 @@ class ChildNodeMapper {
             // create a container for the List
             Node listContainer = childContainer.addNode(cleanKey);
             for (int i = 0; i < childList.size(); i++) {
-                mapper.addNode(listContainer, childList.get(i), null);
+                mapper.addNode(listContainer, childList.get(i), null, null);
             }
         } else {
             mapper.setNodeName(childMap.get(key), cleanKey);
-            mapper.addNode(childContainer, childMap.get(key), null);
+            mapper.addNode(childContainer, childMap.get(key), null, null);
         }
     }
 

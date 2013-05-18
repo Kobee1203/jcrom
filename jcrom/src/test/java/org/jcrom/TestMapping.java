@@ -1997,11 +1997,6 @@ public class TestMapping extends TestAbstract {
     }
 
     @Test
-    public void testAdobeCQ() {
-        //
-    }
-
-    @Test
     public void finalFields() throws Exception {
         final Jcrom jcrom = new Jcrom();
         jcrom.map(FinalEntity.class);

@@ -37,6 +37,7 @@ import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.ReflectionUtils;
+import org.jcrom.util.io.IOUtils;
 
 /**
  * This class handles mappings of type @JcrFileNode
@@ -137,7 +138,7 @@ class FileNodeMapper {
         //Node contentNode = fileNode.addNode(Property.JCR_CONTENT, NodeType.NT_RESOURCE);
         //setFileNodeProperties(contentNode, file);
 
-        mapper.addNode(fileNode, file, null, false);
+        mapper.addNode(fileNode, file, null, false, null);
     }
 
     <T extends JcrFile> void addFileNode(Node fileNode, T file, Mapper mapper) throws IllegalAccessException, RepositoryException, IOException {
@@ -163,7 +164,7 @@ class FileNodeMapper {
         Node contentNode = fileNode.getNode(Property.JCR_CONTENT);
         setFileNodeProperties(contentNode, file);
 
-        mapper.updateNode(fileNode, file, file.getClass(), nodeFilter, depth + 1);
+        mapper.updateNode(fileNode, file, file.getClass(), nodeFilter, depth + 1, null);
     }
 
     private void removeChildren(Node containerNode) throws RepositoryException {
@@ -351,7 +352,7 @@ class FileNodeMapper {
                 fileObj.setDataProvider(dataProvider);
             } else if (jcrFileNode.loadType() == JcrFileNode.LoadType.BYTES) {
                 InputStream is = contentNode.getProperty(Property.JCR_DATA).getBinary().getStream();
-                JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(Mapper.readBytes(is));
+                JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(IOUtils.toByteArray(is));
                 fileObj.setDataProvider(dataProvider);
             }
         }
@@ -411,7 +412,7 @@ class FileNodeMapper {
                 fileObj.setDataProvider(dataProvider);
             } else if (jcrFileNode.loadType() == JcrFileNode.LoadType.BYTES) {
                 InputStream is = contentNode.getProperty(Property.JCR_DATA).getBinary().getStream();
-                JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(Mapper.readBytes(is));
+                JcrDataProviderImpl dataProvider = new JcrDataProviderImpl(IOUtils.toByteArray(is));
                 fileObj.setDataProvider(dataProvider);
             }
         }

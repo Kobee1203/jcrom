@@ -31,7 +31,7 @@ import org.jcrom.util.PathUtils;
  * @author Olafur Gauti Gudmundsson
  * @author Nicolas Dos Santos
  */
-public class ReferenceListLoader extends AbstractLazyLoader {
+class ReferenceListLoader extends AbstractLazyLoader {
 
     private static final Logger logger = Logger.getLogger(ReferenceListLoader.class.getName());
 

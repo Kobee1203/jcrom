@@ -25,13 +25,9 @@ import java.io.InputStream;
 /**
  * General file manipulation utilities.
  */
-public class FileUtils {
+public final class FileUtils {
 
-    /**
-     * Instances should NOT be constructed in standard programming.
-     */
-    public FileUtils() {
-        super();
+    private FileUtils() {
     }
 
     //-----------------------------------------------------------------------

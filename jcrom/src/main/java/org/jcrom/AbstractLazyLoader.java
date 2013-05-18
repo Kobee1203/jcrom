@@ -14,7 +14,7 @@ import org.jcrom.util.SessionFactoryUtils;
  * 
  * @author Nicolas Dos Santos
  */
-public abstract class AbstractLazyLoader implements LazyLoader {
+abstract class AbstractLazyLoader implements LazyLoader {
 
     private static final Logger logger = Logger.getLogger(AbstractLazyLoader.class.getName());
 
