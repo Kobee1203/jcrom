@@ -363,6 +363,7 @@ public class Jcrom {
      *            <ul>
      *              <li>{@link JcromCallback#doAddNode(Node, String, JcrNode, Object)},</li>
      *              <li>{@link JcromCallback#doAddMixinTypes(Node, String[], JcrNode, Object)},</li>
+     *              <li>{@link JcromCallback#doAddClassNameToProperty(Node, JcrNode, Object)},</li>
      *              <li>{@link JcromCallback#doComplete(Object, Node)},</li>
      *            </ul>
      * @return the newly created JCR node
@@ -445,7 +446,12 @@ public class Jcrom {
      * @param nodeFilter
      *            the NodeFilter to apply when updating child nodes and references
      * @param action 
-     *            callback object that specifies the Jcrom actions
+     *            callback object that specifies the Jcrom actions: 
+     *            <ul>
+     *              <li>{@link JcromCallback#doUpdateClassNameToProperty(Node, JcrNode, Object)},</li>
+     *              <li>{@link JcromCallback#doMoveNode(Node, Node, String, JcrNode, Object)},</li>
+     *              <li>{@link JcromCallback#doComplete(Object, Node)},</li>
+     *            </ul>
      * @return the updated node
      * @throws JcrMappingException
      */

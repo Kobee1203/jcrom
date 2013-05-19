@@ -34,7 +34,6 @@ import org.jcrom.annotations.JcrNode;
  *         if (!(parentNode instanceof NodeImpl) && !(entity instanceof Parent)) {
  *             return super.doAddNode(parentNode, nodeName, jcrNode, entity);
  *         }
- *         System.out.println("add node in callback");
  *         NodeImpl parentNodeImpl = (NodeImpl) parentNode;
  *         Parent parentEntity = (Parent) entity;
  *         return parentNodeImpl.addNodeWithUuid(nodeName, parentEntity.getUuid());
