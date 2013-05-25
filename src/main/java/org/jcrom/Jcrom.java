@@ -75,11 +75,8 @@ public class Jcrom {
     /**
      * Create a new Jcrom instance.
      * 
-     * @param cleanNames
-     *            specifies whether to clean names of new nodes, that is, replace illegal characters and spaces
-     *            automatically
-     * @param dynamicInstantiation
-     *            if set to true, then Jcrom will try to retrieve the name of the class to instantiate from a node
+     * @param cleanNames specifies whether to clean names of new nodes, that is, replace illegal characters and spaces automatically
+     * @param dynamicInstantiation if set to true, then Jcrom will try to retrieve the name of the class to instantiate from a node
      *            property (see @JcrNode(classNameProperty)).
      */
     public Jcrom(boolean cleanNames, boolean dynamicInstantiation) {
@@ -89,8 +86,7 @@ public class Jcrom {
     /**
      * Create a new Jcrom instance with name cleaning set to true, and dynamic instantiation off.
      * 
-     * @param classesToMap
-     *            a set of classes to map by this instance
+     * @param classesToMap a set of classes to map by this instance
      */
     public Jcrom(Set<Class<?>> classesToMap) {
         this(true, false, classesToMap);
@@ -99,11 +95,8 @@ public class Jcrom {
     /**
      * Create a new Jcrom instance with dynamic instantiation turned off.
      * 
-     * @param cleanNames
-     *            specifies whether to clean names of new nodes, that is, replace illegal characters and spaces
-     *            automatically
-     * @param classesToMap
-     *            a set of classes to map by this instance
+     * @param cleanNames specifies whether to clean names of new nodes, that is, replace illegal characters and spaces automatically
+     * @param classesToMap a set of classes to map by this instance
      */
     public Jcrom(boolean cleanNames, Set<Class<?>> classesToMap) {
         this(cleanNames, false, classesToMap);
@@ -112,14 +105,9 @@ public class Jcrom {
     /**
      * Create a new Jcrom instance.
      * 
-     * @param cleanNames
-     *            specifies whether to clean names of new nodes, that is, replace illegal characters and spaces
-     *            automatically
-     * @param dynamicInstantiation
-     *            if set to true, then Jcrom will try to retrieve the name of the class to instantiate from a node
-     *            property (see @JcrNode(classNameProperty)).
-     * @param classesToMap
-     *            a set of classes to map by this instance
+     * @param cleanNames specifies whether to clean names of new nodes, that is, replace illegal characters and spaces automatically
+     * @param dynamicInstantiation if set to true, then Jcrom will try to retrieve the name of the class to instantiate from a node property (see @JcrNode(classNameProperty)).
+     * @param classesToMap a set of classes to map by this instance
      */
     public Jcrom(boolean cleanNames, boolean dynamicInstantiation, Set<Class<?>> classesToMap) {
         this.mapper = new Mapper(cleanNames, dynamicInstantiation, this);
@@ -134,8 +122,7 @@ public class Jcrom {
      * Add a class that this instance can map to/from JCR nodes. This method will validate the class, and all mapped
      * JcrEntity implementations referenced from this class.
      * 
-     * @param entityClass
-     *            the class that will be mapped
+     * @param entityClass the class that will be mapped
      * @return the Jcrom instance
      */
     public synchronized Jcrom map(Class<?> entityClass) {
@@ -151,8 +138,7 @@ public class Jcrom {
     /**
      * Tries to map all classes in the package specified. Fails if one of the classes is not valid for mapping.
      * 
-     * @param packageName
-     *            the name of the package to process
+     * @param packageName the name of the package to process
      * @return the Jcrom instance
      */
     public synchronized Jcrom mapPackage(String packageName) {
@@ -162,10 +148,8 @@ public class Jcrom {
     /**
      * Tries to map all classes in the package specified.
      * 
-     * @param packageName
-     *            the name of the package to process
-     * @param ignoreInvalidClasses
-     *            specifies whether to ignore classes in the package that cannot be mapped
+     * @param packageName the name of the package to process
+     * @param ignoreInvalidClasses specifies whether to ignore classes in the package that cannot be mapped
      * @return the Jcrom instance
      */
     public synchronized Jcrom mapPackage(String packageName, boolean ignoreInvalidClasses) {
@@ -199,8 +183,7 @@ public class Jcrom {
     /**
      * Check whether a specific class is mapped by this instance.
      * 
-     * @param entityClass
-     *            the class we want to check
+     * @param entityClass the class we want to check
      * @return true if the class is mapped, else false
      */
     public boolean isMapped(Class<?> entityClass) {
@@ -252,11 +235,8 @@ public class Jcrom {
     /**
      * Maps the node supplied to an instance of the entity class. Loads all child nodes, to infinite depth.
      * 
-     * @param entityClass
-     *            the class of the entity to be instantiated from the node (in the case of dynamic instantiation, the
-     *            instance class may be read from the document, but will be cast to this class)
-     * @param node
-     *            the JCR node from which to create the object
+     * @param entityClass the class of the entity to be instantiated from the node (in the case of dynamic instantiation, the instance class may be read from the document, but will be cast to this class)
+     * @param node the JCR node from which to create the object
      * @return an instance of the JCR entity class, mapped from the node
      * @throws JcrMappingException
      */
@@ -267,19 +247,14 @@ public class Jcrom {
     /**
      * Maps the node supplied to an instance of the entity class.
      * 
-     * @param entityClass
-     *            the class of the entity to be instantiated from the node (in the case of dynamic instantiation, the
-     *            instance class may be read from the document, but will be cast to this class)
-     * @param node
-     *            the JCR node from which to create the object
-     * @param childNodeFilter
-     *            comma separated list of names of child nodes to load ("*" loads all, while "none" loads no children)
-     * @param maxDepth
-     *            the maximum depth of loaded child nodes (0 means no child nodes are loaded, while a negative value
-     *            means that no restrictions are set on the depth).
+     * @param entityClass the class of the entity to be instantiated from the node (in the case of dynamic instantiation, the instance class may be read from the document, but will be cast to this class)
+     * @param node the JCR node from which to create the object
+     * @param childNodeFilter comma separated list of names of child nodes to load ("*" loads all, while "none" loads no children)
+     * @param maxDepth the maximum depth of loaded child nodes (0 means no child nodes are loaded, while a negative value means that no restrictions are set on the depth).
      * @return an instance of the JCR entity class, mapped from the node
      * @throws JcrMappingException
      */
+    @Deprecated
     public <T> T fromNode(Class<T> entityClass, Node node, String childNodeFilter, int maxDepth) throws JcrMappingException {
         return fromNode(entityClass, node, new NodeFilter(childNodeFilter, maxDepth));
     }
@@ -287,13 +262,9 @@ public class Jcrom {
     /**
      * Maps the node supplied to an instance of the entity class.
      * 
-     * @param entityClass
-     *            the class of the entity to be instantiated from the node (in the case of dynamic instantiation, the
-     *            instance class may be read from the document, but will be cast to this class)
-     * @param node
-     *            the JCR node from which to create the object
-     * @param nodeFilter
-     *            the NodeFilter to apply when loading child nodes and references
+     * @param entityClass the class of the entity to be instantiated from the node (in the case of dynamic instantiation, the instance class may be read from the document, but will be cast to this class)
+     * @param node the JCR node from which to create the object
+     * @param nodeFilter the NodeFilter to apply when loading child nodes and references
      * @return an instance of the JCR entity class, mapped from the node
      * @throws JcrMappingException
      */
@@ -322,10 +293,8 @@ public class Jcrom {
     /**
      * Maps the entity supplied to a JCR node, and adds that node as a child to the parent node supplied.
      * 
-     * @param parentNode
-     *            the parent node to which the entity node will be added
-     * @param entity
-     *            the entity to be mapped to the JCR node
+     * @param parentNode the parent node to which the entity node will be added
+     * @param entity the entity to be mapped to the JCR node
      * @return the newly created JCR node
      * @throws JcrMappingException
      */
@@ -336,12 +305,9 @@ public class Jcrom {
     /**
      * Maps the entity supplied to a JCR node, and adds that node as a child to the parent node supplied.
      * 
-     * @param parentNode
-     *            the parent node to which the entity node will be added
-     * @param entity
-     *            the entity to be mapped to the JCR node
-     * @param mixinTypes
-     *            an array of mixin type that will be added to the new node
+     * @param parentNode the parent node to which the entity node will be added
+     * @param entity the entity to be mapped to the JCR node
+     * @param mixinTypes an array of mixin type that will be added to the new node
      * @return the newly created JCR node
      * @throws JcrMappingException
      */
@@ -352,22 +318,19 @@ public class Jcrom {
     /**
      * Maps the entity supplied to a JCR node, and adds that node as a child to the parent node supplied.
      * 
-     * @param parentNode
-     *            the parent node to which the entity node will be added
-     * @param entity
-     *            the entity to be mapped to the JCR node
-     * @param mixinTypes
-     *            an array of mixin type that will be added to the new node
-     * @param action 
-     *            callback object that specifies the Jcrom actions: 
-     *            <ul>
-     *              <li>{@link JcromCallback#doAddNode(Node, String, JcrNode, Object)},</li>
-     *              <li>{@link JcromCallback#doAddMixinTypes(Node, String[], JcrNode, Object)},</li>
-     *              <li>{@link JcromCallback#doAddClassNameToProperty(Node, JcrNode, Object)},</li>
-     *              <li>{@link JcromCallback#doComplete(Object, Node)},</li>
-     *            </ul>
+     * @param parentNode the parent node to which the entity node will be added
+     * @param entity the entity to be mapped to the JCR node
+     * @param mixinTypes an array of mixin type that will be added to the new node
+     * @param action callback object that specifies the Jcrom actions: 
+     *     <ul>
+     *       <li>{@link JcromCallback#doAddNode(Node, String, JcrNode, Object)},</li>
+     *       <li>{@link JcromCallback#doAddMixinTypes(Node, String[], JcrNode, Object)},</li>
+     *       <li>{@link JcromCallback#doAddClassNameToProperty(Node, JcrNode, Object)},</li>
+     *       <li>{@link JcromCallback#doComplete(Object, Node)},</li>
+     *     </ul>
      * @return the newly created JCR node
      * @throws JcrMappingException
+     * @since 2.1.0
      */
     public Node addNode(Node parentNode, Object entity, String[] mixinTypes, JcromCallback action) throws JcrMappingException {
         if (!mapper.isMapped(entity.getClass())) {
@@ -389,10 +352,8 @@ public class Jcrom {
     /**
      * Update an existing JCR node with the entity supplied.
      * 
-     * @param node
-     *            the JCR node to be updated
-     * @param entity
-     *            the entity that will be mapped to the existing node
+     * @param node the JCR node to be updated
+     * @param entity the entity that will be mapped to the existing node
      * @return the updated node
      * @throws JcrMappingException
      */
@@ -403,19 +364,14 @@ public class Jcrom {
     /**
      * Update an existing JCR node with the entity supplied.
      * 
-     * @param node
-     *            the JCR node to be updated
-     * @param entity
-     *            the entity that will be mapped to the existing node
-     * @param childNodeFilter
-     *            comma separated list of names of child nodes to update ("*" updates all, while "none" updates no
-     *            children)
-     * @param maxDepth
-     *            the maximum depth of updated child nodes (0 means no child nodes are updated, while a negative value
-     *            means that no restrictions are set on the depth).
+     * @param node the JCR node to be updated
+     * @param entity the entity that will be mapped to the existing node
+     * @param childNodeFilter comma separated list of names of child nodes to update ("*" updates all, while "none" updates no children)
+     * @param maxDepth the maximum depth of updated child nodes (0 means no child nodes are updated, while a negative value means that no restrictions are set on the depth).
      * @return the updated node
      * @throws JcrMappingException
      */
+    @Deprecated
     public Node updateNode(Node node, Object entity, String childNodeFilter, int maxDepth) throws JcrMappingException {
         return updateNode(node, entity, new NodeFilter(childNodeFilter, maxDepth), null);
     }
@@ -423,12 +379,9 @@ public class Jcrom {
     /**
      * Update an existing JCR node with the entity supplied.
      * 
-     * @param node
-     *            the JCR node to be updated
-     * @param entity
-     *            the entity that will be mapped to the existing node
-     * @param nodeFilter
-     *            the NodeFilter to apply when updating child nodes and references
+     * @param node the JCR node to be updated
+     * @param entity the entity that will be mapped to the existing node
+     * @param nodeFilter the NodeFilter to apply when updating child nodes and references
      * @return the updated node
      * @throws JcrMappingException
      */
@@ -439,21 +392,18 @@ public class Jcrom {
     /**
      * Update an existing JCR node with the entity supplied.
      * 
-     * @param node
-     *            the JCR node to be updated
-     * @param entity
-     *            the entity that will be mapped to the existing node
-     * @param nodeFilter
-     *            the NodeFilter to apply when updating child nodes and references
-     * @param action 
-     *            callback object that specifies the Jcrom actions: 
-     *            <ul>
-     *              <li>{@link JcromCallback#doUpdateClassNameToProperty(Node, JcrNode, Object)},</li>
-     *              <li>{@link JcromCallback#doMoveNode(Node, Node, String, JcrNode, Object)},</li>
-     *              <li>{@link JcromCallback#doComplete(Object, Node)},</li>
-     *            </ul>
+     * @param node the JCR node to be updated
+     * @param entity the entity that will be mapped to the existing node
+     * @param nodeFilter the NodeFilter to apply when updating child nodes and references
+     * @param action callback object that specifies the Jcrom actions: 
+     *     <ul>
+     *       <li>{@link JcromCallback#doUpdateClassNameToProperty(Node, JcrNode, Object)},</li>
+     *       <li>{@link JcromCallback#doMoveNode(Node, Node, String, JcrNode, Object)},</li>
+     *       <li>{@link JcromCallback#doComplete(Object, Node)},</li>
+     *     </ul>
      * @return the updated node
      * @throws JcrMappingException
+     * @since 2.1.0
      */
     public Node updateNode(Node node, Object entity, NodeFilter nodeFilter, JcromCallback action) throws JcrMappingException {
 

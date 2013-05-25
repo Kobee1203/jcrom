@@ -25,6 +25,7 @@ import org.jcrom.util.NodeFilter;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class ParentDAO extends AbstractJcrDAO<Parent> {
 
@@ -35,6 +36,6 @@ public class ParentDAO extends AbstractJcrDAO<Parent> {
     }
 
     public List<Parent> findByLicense() throws Exception {
-        return super.findByXPath("/jcr:root/content/parents/*[@drivingLicense = 'true']", NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
+        return super.findByXPath("/jcr:root/content/parents/*[@drivingLicense = 'true']", new NodeFilter(NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE));
     }
 }

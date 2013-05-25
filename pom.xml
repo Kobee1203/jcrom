@@ -173,7 +173,7 @@
                     <uploads>
                         <upload>
                             <file>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</file>
-                            <summary>${project.name} ${project.version} binary</summary>
+                            <summary>${project-name} ${project.version} binary</summary>
                             <labels>
                                 <label>Featured</label>
                                 <label>Type-Archive</label>
@@ -181,14 +181,14 @@
                         </upload>
                         <upload>
                             <file>${project.build.directory}/${project.artifactId}-${project.version}-javadoc.${project.packaging}</file>
-                            <summary>${project.name} ${project.version} javadoc</summary>
+                            <summary>${project-name} ${project.version} javadoc</summary>
                             <labels>
                                 <label>Type-Docs</label>
                             </labels>
                         </upload>
                         <upload>
                             <file>${project.build.directory}/${project.artifactId}-${project.version}-sources.${project.packaging}</file>
-                            <summary>${project.name} ${project.version} source</summary>
+                            <summary>${project-name} ${project.version} source</summary>
                             <labels>
                                 <label>Type-Source</label>
                             </labels>
@@ -208,9 +208,8 @@
     </build>
 
     <scm>
-        <url>https://${project-name}.googlecode.com/svn/trunk</url>
-        <connection>scm:svn:https://${project-name}.googlecode.com/svn/trunk</connection>
-        <developerConnection>scm:svn:https://${project-name}.googlecode.com/svn/trunk</developerConnection>
+        <url>http://code.google.com/p/${project-name}/source/browse</url>
+        <connection>http://${project-name}.googlecode.com/svn/trunk/</connection>
     </scm>
 
     <distributionManagement>
