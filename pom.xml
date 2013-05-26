@@ -5,10 +5,11 @@
     <artifactId>jcrom</artifactId>
     <packaging>jar</packaging>
     <version>2.0.2-SNAPSHOT</version>
-    <name>jcrom</name>
 
-    <url>http://code.google.com/p/jcrom/</url>
+    <name>jcrom</name>
     <description>A lightweight framework for mapping Java objects to/from a Java Content Repository (JCR).</description>
+    <url>http://code.google.com/p/jcrom/</url>
+    <inceptionYear>2008</inceptionYear>
 
     <licenses>
         <license>
@@ -30,7 +31,6 @@
     </developers>
 
     <properties>
-        <project-name>jcrom</project-name>
         <java.version>1.6</java.version>
         <encoding>UTF-8</encoding>
     </properties>
@@ -97,6 +97,58 @@
 
     <build>
         <plugins>
+            <!-- Creating current year element -->
+            <plugin>
+                <groupId>org.codehaus.groovy.maven</groupId>
+                <artifactId>gmaven-plugin</artifactId>
+                <version>1.0</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <source>
+                                import java.util.Date
+                                import java.text.MessageFormat
+                                def vartimestamp = MessageFormat.format("{0,date,yyyy}", new Date())
+                                project.properties['currentYear'] = vartimestamp
+                                project.properties['copyrightOwner'] = project.developers['name'].join(", ")
+                            </source>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Adding header to file - https://code.google.com/p/maven-license-plugin/-->
+            <plugin>
+                <groupId>com.mycila.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+                <version>1.9.0</version>
+                <configuration>
+                    <header>${basedir}/header.txt</header>
+                    <properties>
+                        <h_inceptionYear>${project.inceptionYear}</h_inceptionYear>
+                        <h_currentYear>${currentYear}</h_currentYear>
+                        <h_copyrightOwner>${copyrightOwner}</h_copyrightOwner>
+                    </properties>
+                    <encoding>${encoding}</encoding>
+                    <strictCheck>true</strictCheck>
+                    <excludes>
+                        <exclude>**/*.log</exclude>
+                        <exclude>**/*.txt</exclude>
+                        <exclude>apidocs/**</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -119,7 +171,7 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.0</version>
                 <configuration>
-                    <tagBase>https://${project-name}.googlecode.com/svn/tags</tagBase>
+                    <tagBase>https://${project.name}.googlecode.com/svn/tags</tagBase>
                     <goals>deploy gcu:upload</goals>
                 </configuration>
             </plugin>
@@ -161,19 +213,19 @@
                    </execution>
                 </executions>
             </plugin>
+            <!-- Uploading artifacts to Google Code - https://code.google.com/p/maven-gcu-plugin/ -->
             <plugin>
-                <!-- https://code.google.com/p/maven-gcu-plugin/ -->
                 <groupId>com.googlecode.maven-gcu-plugin</groupId>
                 <artifactId>maven-gcu-plugin</artifactId>
                 <version>1.1</version>
                 <configuration>
                     <serverId>googlecode</serverId>
                     <failsOnError>true</failsOnError> <!-- default: false -->
-                    <projectName>${project-name}</projectName> <!-- default: ${project.artifactId} -->
+                    <projectName>${project.name}</projectName> <!-- default: ${project.artifactId} -->
                     <uploads>
                         <upload>
                             <file>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</file>
-                            <summary>${project-name} ${project.version} binary</summary>
+                            <summary>${project.name} ${project.version} binary</summary>
                             <labels>
                                 <label>Featured</label>
                                 <label>Type-Archive</label>
@@ -181,14 +233,14 @@
                         </upload>
                         <upload>
                             <file>${project.build.directory}/${project.artifactId}-${project.version}-javadoc.${project.packaging}</file>
-                            <summary>${project-name} ${project.version} javadoc</summary>
+                            <summary>${project.name} ${project.version} javadoc</summary>
                             <labels>
                                 <label>Type-Docs</label>
                             </labels>
                         </upload>
                         <upload>
                             <file>${project.build.directory}/${project.artifactId}-${project.version}-sources.${project.packaging}</file>
-                            <summary>${project-name} ${project.version} source</summary>
+                            <summary>${project.name} ${project.version} source</summary>
                             <labels>
                                 <label>Type-Source</label>
                             </labels>
@@ -208,8 +260,8 @@
     </build>
 
     <scm>
-        <url>http://code.google.com/p/${project-name}/source/browse</url>
-        <connection>http://${project-name}.googlecode.com/svn/trunk/</connection>
+        <url>http://code.google.com/p/${project.name}/source/browse</url>
+        <connection>http://${project.name}.googlecode.com/svn/trunk/</connection>
     </scm>
 
     <distributionManagement>
@@ -217,13 +269,13 @@
             <id>googlecode-releases</id>
             <name>Google Code Releases Repository</name>
             <uniqueVersion>false</uniqueVersion>
-            <url>svn:https://${project-name}.googlecode.com/svn/repo/releases</url>
+            <url>svn:https://${project.name}.googlecode.com/svn/repo/releases</url>
         </repository>
         <snapshotRepository>
             <id>googlecode-snapshots</id>
             <name>Google Code Snapshots Repository</name>
             <uniqueVersion>false</uniqueVersion>
-            <url>svn:https://${project-name}.googlecode.com/svn/repo/snapshots</url>
+            <url>svn:https://${project.name}.googlecode.com/svn/repo/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
