@@ -1,5 +1,7 @@
 /**
- * Copyright (C) 2008-2013 by JCROM Authors (Olafur Gauti Gudmundsson, Nicolas Dos Santos) - All rights reserved.
+ * This file is part of the JCROM project.
+ * Copyright (C) 2008-2013 - All rights reserved.
+ * Authors: Olafur Gauti Gudmundsson, Nicolas Dos Santos
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

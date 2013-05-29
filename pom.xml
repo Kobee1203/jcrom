@@ -6,7 +6,7 @@
     <packaging>jar</packaging>
     <version>2.0.2-SNAPSHOT</version>
 
-    <name>jcrom</name>
+    <name>JCROM</name>
     <description>A lightweight framework for mapping Java objects to/from a Java Content Repository (JCR).</description>
     <url>http://code.google.com/p/jcrom/</url>
     <inceptionYear>2008</inceptionYear>
@@ -114,7 +114,7 @@
                                 import java.text.MessageFormat
                                 def vartimestamp = MessageFormat.format("{0,date,yyyy}", new Date())
                                 project.properties['currentYear'] = vartimestamp
-                                project.properties['copyrightOwner'] = project.developers['name'].join(", ")
+                                project.properties['authors'] = project.developers['name'].join(", ")
                             </source>
                         </configuration>
                     </execution>
@@ -128,9 +128,10 @@
                 <configuration>
                     <header>${basedir}/header.txt</header>
                     <properties>
+                        <h_project>${project.name}</h_project>
                         <h_inceptionYear>${project.inceptionYear}</h_inceptionYear>
                         <h_currentYear>${currentYear}</h_currentYear>
-                        <h_copyrightOwner>${copyrightOwner}</h_copyrightOwner>
+                        <h_authors>${authors}</h_authors>
                     </properties>
                     <encoding>${encoding}</encoding>
                     <strictCheck>true</strictCheck>
