@@ -247,7 +247,9 @@ public class Jcrom {
     }
 
     /**
-     * Maps the node supplied to an instance of the entity class.
+     * @deprecated This method is now deprecated. Use {@link #fromNode(Class, Node, NodeFilter)} instead.
+     * 
+     * <p>Maps the node supplied to an instance of the entity class.</p>
      * 
      * @param entityClass the class of the entity to be instantiated from the node (in the case of dynamic instantiation, the instance class may be read from the document, but will be cast to this class)
      * @param node the JCR node from which to create the object
@@ -364,7 +366,9 @@ public class Jcrom {
     }
 
     /**
-     * Update an existing JCR node with the entity supplied.
+     * @deprecated This method is now deprecated. Use {@link #updateNode(Node, Object, NodeFilter)} instead.
+     * 
+     * <p>Update an existing JCR node with the entity supplied.</p>
      * 
      * @param node the JCR node to be updated
      * @param entity the entity that will be mapped to the existing node

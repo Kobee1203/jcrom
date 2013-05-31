@@ -208,8 +208,10 @@ public interface JcrDAO<T> {
     /**
      * @deprecated This method is now deprecated. Use {@link #updateById(Object, String, NodeFilter)} instead.
      * 
+     * <p>
      * Updates an existing JCR Node with the values extracted from the object supplied.
      * The node to update is loaded using the Identifier supplied.
+     * </p>
      * 
      * @param entity the object to be mapped to a JCR node
      * @param id the Identifier of the node to update
