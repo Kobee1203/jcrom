@@ -27,7 +27,7 @@ import org.jcrom.annotations.JcrNode;
 /**
  * The interface for Jcrom callbacks.<br/>
  * This interface defines the methods to be implemented that can change the default actions to 
- * add a node to update a node, add mixin types...<br/>
+ * add a node, to update a node, add mixin types...<br/>
  * It is recommended to extend the default implementation, {@link DefaultJcromCallback}, in order to only override the methods to modify.<br/>
  * For example:<br/>
  * <pre>
@@ -74,7 +74,7 @@ public interface JcromCallback {
     void doAddMixinTypes(Node node, String[] mixinTypes, JcrNode jcrNode, Object entity) throws JcrMappingException, RepositoryException;
 
     /**
-     * Method invoked when you the class name is added to property for a newly created JCR node.
+     * Method invoked when the class name is added to property for a newly created JCR node.
      * 
      * @param node the newly created JCR node
      * @param jcrNode {@link JcrNode} annotation specified on the Entity Class
@@ -85,7 +85,7 @@ public interface JcromCallback {
     void doAddClassNameToProperty(Node node, JcrNode jcrNode, Object entity) throws JcrMappingException, RepositoryException;
 
     /**
-     * Method invoked when you update the class name to property for a node updated.
+     * Method invoked when the class name is updated to property for a node updated.
      * 
      * @param node the newly created JCR node
      * @param jcrNode {@link JcrNode} annotation specified on the Entity Class
