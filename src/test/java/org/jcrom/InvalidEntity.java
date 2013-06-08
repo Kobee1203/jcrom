@@ -18,6 +18,7 @@
 package org.jcrom;
 
 import java.util.List;
+
 import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrPath;
@@ -26,49 +27,50 @@ import org.jcrom.annotations.JcrProperty;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class InvalidEntity {
 
-	public InvalidEntity() {
+    public InvalidEntity() {
 
-	}
-	
-	@JcrPath
-	private String path;
-	
-	@JcrName
-	private String name;
+    }
 
-	@JcrProperty
-	private String body;
-	
-	@JcrProperty
-	private float number; // float properties is not supported!
-	
-	@JcrChildNode
-	private List children; // List is not parameterized, and therefore not valid
+    @JcrPath
+    private String path;
 
-	public String getPath() {
-		return path;
-	}
+    @JcrName
+    private String name;
 
-	public void setPath(String path) {
-		this.path = path;
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public void setName( String name ) {
-		this.name = name;
-	}
-	
-	public String getBody() {
-		return body;
-	}
-	
-	public void setBody( String body ) {
-		this.body = body;
-	}
+    @JcrProperty
+    private String body;
+
+    @JcrProperty
+    private float number; // float properties is not supported!
+
+    @JcrChildNode
+    private List children; // List is not parameterized, and therefore not valid
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
 }

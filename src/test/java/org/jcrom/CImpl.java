@@ -22,6 +22,7 @@ import org.jcrom.annotations.JcrReference;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class CImpl extends AbstractJcrEntity implements C {
 

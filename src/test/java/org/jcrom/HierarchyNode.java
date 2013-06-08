@@ -21,6 +21,9 @@ import org.jcrom.annotations.JcrNode;
 
 /**
  * Models a hierarchy node, base class for documents and folders.
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(nodeType = "nt:unstructured", classNameProperty = "className")
 public abstract class HierarchyNode extends AbstractJcrEntity {

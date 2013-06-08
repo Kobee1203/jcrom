@@ -23,6 +23,11 @@ import javax.jcr.Session;
 import org.jcrom.dao.AbstractJcrDAO;
 import org.jcrom.util.SessionFactoryUtils;
 
+/**
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
+ */
 public class TreeDAO extends AbstractJcrDAO<Tree> {
 
     private boolean flag;

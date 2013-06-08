@@ -29,6 +29,9 @@ import org.jcrom.annotations.JcrUUID;
 
 /**
  * Models a folder.
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(nodeType = NodeType.NT_UNSTRUCTURED, classNameProperty = "className", mixinTypes = { NodeType.MIX_REFERENCEABLE })
 public class Folder extends HierarchyNode {

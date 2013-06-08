@@ -22,10 +22,13 @@ import java.lang.reflect.Field;
 
 /**
  * @author Wulf Rowek
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public interface AnnotationReader {
 
     public <T extends Annotation> T getAnnotation(Field field, Class<T> clazz);
+
     public Boolean isAnnotationPresent(Field field, Class<? extends Annotation> clazz);
 
 }

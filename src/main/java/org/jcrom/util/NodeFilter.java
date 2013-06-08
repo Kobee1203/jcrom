@@ -26,6 +26,7 @@ import javax.jcr.Node;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class NodeFilter implements Serializable {
 

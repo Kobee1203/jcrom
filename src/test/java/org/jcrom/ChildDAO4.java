@@ -25,6 +25,7 @@ import org.jcrom.dao.AbstractJcrDAO;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class ChildDAO4 extends AbstractJcrDAO<Child4> {
 

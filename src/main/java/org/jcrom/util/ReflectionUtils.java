@@ -48,6 +48,7 @@ import org.jcrom.annotations.JcrNode;
  * Various reflection utility methods, used mainly in the Mapper.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public final class ReflectionUtils {
 

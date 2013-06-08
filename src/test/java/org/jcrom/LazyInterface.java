@@ -22,11 +22,12 @@ import org.jcrom.annotations.JcrNode;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
-@JcrNode(classNameProperty="className")
+@JcrNode(classNameProperty = "className")
 public interface LazyInterface extends JcrEntity {
 
-	public void setString( String s );
-	
-	public String getString();
+    public void setString(String s);
+
+    public String getString();
 }

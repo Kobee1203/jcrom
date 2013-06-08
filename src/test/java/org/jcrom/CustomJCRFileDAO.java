@@ -18,18 +18,22 @@
 package org.jcrom;
 
 import javax.jcr.Session;
+
 import org.jcrom.dao.AbstractJcrDAO;
 
 /**
  * Thanks to Danilo Barboza for contributing this test class.
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class CustomJCRFileDAO extends AbstractJcrDAO<CustomJCRFile> {
 
-	/**
-	 * @param session
-	 * @param jcrom
-	 */
-	public CustomJCRFileDAO(Session session, Jcrom jcrom) {
-		super(CustomJCRFile.class, session, jcrom);
-	}
+    /**
+     * @param session
+     * @param jcrom
+     */
+    public CustomJCRFileDAO(Session session, Jcrom jcrom) {
+        super(CustomJCRFile.class, session, jcrom);
+    }
 }

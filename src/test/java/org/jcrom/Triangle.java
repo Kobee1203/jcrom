@@ -22,6 +22,9 @@ import org.jcrom.annotations.JcrProperty;
 
 /**
  * Thanks to Leander for contributing this.
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(classNameProperty = "className")
 public class Triangle extends AbstractJcrEntity implements Shape {

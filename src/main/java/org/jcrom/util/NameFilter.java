@@ -35,6 +35,7 @@ import java.util.Set;
  * true, and "none" means isIncluded() will always return false.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class NameFilter {
 

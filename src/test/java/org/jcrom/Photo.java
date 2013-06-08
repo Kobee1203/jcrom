@@ -24,6 +24,7 @@ import org.jcrom.annotations.JcrProperty;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(nodeType = "nt:unstructured")
 public class Photo extends JcrFile {

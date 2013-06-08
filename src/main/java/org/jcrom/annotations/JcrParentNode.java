@@ -30,6 +30,7 @@ import java.lang.annotation.Target;
  * it was mapped).
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

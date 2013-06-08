@@ -28,6 +28,7 @@ import org.jcrom.annotations.JcrReference;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class DynamicObject extends AbstractJcrEntity {
 

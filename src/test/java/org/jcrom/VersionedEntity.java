@@ -32,6 +32,7 @@ import org.jcrom.annotations.JcrVersionName;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class VersionedEntity extends AbstractJcrEntity implements VersionedInterface {
 

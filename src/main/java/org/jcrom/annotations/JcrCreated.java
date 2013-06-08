@@ -30,6 +30,7 @@ import java.lang.annotation.Target;
  * use of using this annotation.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

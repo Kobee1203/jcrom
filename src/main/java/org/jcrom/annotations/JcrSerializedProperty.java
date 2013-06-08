@@ -27,17 +27,18 @@ import java.lang.annotation.Target;
  * array and then mapped to JCR node property.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface JcrSerializedProperty {
 
-	/**
-	 * The name of the JCR property. 
-	 * Defaults to the name of the field being annotated.
-	 * 
-	 * @return the name of the JCR property storing the value that the field
-	 * represents
-	 */
-	String name() default "fieldName";
+    /**
+     * The name of the JCR property. 
+     * Defaults to the name of the field being annotated.
+     * 
+     * @return the name of the JCR property storing the value that the field
+     * represents
+     */
+    String name() default "fieldName";
 }

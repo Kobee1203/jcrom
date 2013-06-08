@@ -17,18 +17,24 @@
  */
 package org.jcrom;
 
-import java.util.Map;
-
-import org.jcrom.annotations.JcrProperty;
+import org.jcrom.annotations.JcrChildNode;
 
 /**
  * 
  * @author Nicolas Dos Santos
  */
-public class EntityModifiedMapFieldAdded extends AbstractJcrEntity {
+public class EntityChild extends EntityParent {
 
     private static final long serialVersionUID = 1L;
 
-    @JcrProperty
-    private Map<String, String> strings;
+    @JcrChildNode
+    private Person person;
+
+    public Person getPerson() {
+        return person;
+    }
+
+    public void setPerson(Person person) {
+        this.person = person;
+    }
 }

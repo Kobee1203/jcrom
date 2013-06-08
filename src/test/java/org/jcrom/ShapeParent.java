@@ -25,6 +25,7 @@ import org.jcrom.annotations.JcrChildNode;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class ShapeParent extends AbstractJcrEntity {
 

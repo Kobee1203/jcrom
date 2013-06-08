@@ -27,6 +27,7 @@ import java.lang.annotation.Target;
  * Ths annotation is mandatory for classes that are to be mapped using JCROM.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

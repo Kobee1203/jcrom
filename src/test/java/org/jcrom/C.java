@@ -22,10 +22,12 @@ import org.jcrom.annotations.JcrNode;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
-@JcrNode(classNameProperty="className")
+@JcrNode(classNameProperty = "className")
 public interface C {
 
-    public void setA( A a );
+    public void setA(A a);
+
     public A getA();
 }

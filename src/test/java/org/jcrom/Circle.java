@@ -22,6 +22,7 @@ import org.jcrom.annotations.JcrProperty;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class Circle extends AbstractJcrEntity implements Shape {
 

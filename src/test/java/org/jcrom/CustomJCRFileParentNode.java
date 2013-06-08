@@ -22,35 +22,37 @@ import org.jcrom.annotations.JcrNode;
 
 /**
  * Thanks to Leander for contributing this test class.
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(nodeType = "nt:unstructured")
 public class CustomJCRFileParentNode extends AbstractJcrEntity {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@JcrFileNode
-	private CustomJCRFile file;
+    @JcrFileNode
+    private CustomJCRFile file;
 
-	/**
-	 * @return the file
-	 */
-	public CustomJCRFile getFile() {
-		return this.file;
-	}
+    /**
+     * @return the file
+     */
+    public CustomJCRFile getFile() {
+        return this.file;
+    }
 
-	/**
-	 * @param file
-	 *            the file to set
-	 */
-	public void setFile(final CustomJCRFile file) {
-		this.file = file;
-	}
+    /**
+     * @param file
+     *            the file to set
+     */
+    public void setFile(final CustomJCRFile file) {
+        this.file = file;
+    }
 
-	/**
-	 * Default Constructor.
-	 */
-	public CustomJCRFileParentNode() {
-	}
-
+    /**
+     * Default Constructor.
+     */
+    public CustomJCRFileParentNode() {
+    }
 
 }

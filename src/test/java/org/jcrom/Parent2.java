@@ -28,6 +28,7 @@ import org.jcrom.annotations.JcrNode;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(mixinTypes = { NodeType.MIX_REFERENCEABLE })
 public class Parent2 extends AbstractEntity implements Serializable {

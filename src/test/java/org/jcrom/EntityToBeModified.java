@@ -18,8 +18,8 @@
 package org.jcrom;
 
 /**
+ * 
  * @author Nicolas Dos Santos
- *
  */
 public class EntityToBeModified extends AbstractJcrEntity {
 

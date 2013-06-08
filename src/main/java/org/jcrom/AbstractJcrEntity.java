@@ -27,6 +27,7 @@ import org.jcrom.annotations.JcrPath;
  * for name and path, and implements the getters and setters.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public abstract class AbstractJcrEntity implements Serializable {
 

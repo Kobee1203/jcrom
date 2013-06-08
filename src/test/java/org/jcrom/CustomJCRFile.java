@@ -25,6 +25,9 @@ import org.jcrom.annotations.JcrUUID;
 
 /**
  * Thanks to Danilo Barboza and Leander for contributing this test class.
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(nodeType = NodeType.NT_UNSTRUCTURED, mixinTypes = { NodeType.MIX_REFERENCEABLE })
 public class CustomJCRFile extends JcrFile {

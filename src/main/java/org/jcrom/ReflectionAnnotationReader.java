@@ -22,13 +22,17 @@ import java.lang.reflect.Field;
 
 /**
  * @author Wulf Rowek
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class ReflectionAnnotationReader implements AnnotationReader {
 
+    @Override
     public <T extends Annotation> T getAnnotation(Field field, Class<T> annotationClass) {
         return field.getAnnotation(annotationClass);
     }
 
+    @Override
     public Boolean isAnnotationPresent(Field field, Class<? extends Annotation> annotationClass) {
         return field.isAnnotationPresent(annotationClass);
     }

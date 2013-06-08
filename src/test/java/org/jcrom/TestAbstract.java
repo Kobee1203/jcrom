@@ -29,6 +29,11 @@ import org.apache.jackrabbit.core.TransientRepository;
 import org.junit.After;
 import org.junit.Before;
 
+/**
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
+ */
 public class TestAbstract {
 
     protected Repository repo;

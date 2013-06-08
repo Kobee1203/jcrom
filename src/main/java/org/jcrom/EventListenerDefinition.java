@@ -20,6 +20,11 @@ package org.jcrom;
 import javax.jcr.observation.Event;
 import javax.jcr.observation.EventListener;
 
+/**
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
+ */
 public class EventListenerDefinition {
 
     private EventListener listener;

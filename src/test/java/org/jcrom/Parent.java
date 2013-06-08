@@ -34,6 +34,7 @@ import org.jcrom.annotations.JcrUUID;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(mixinTypes = { "mix:referenceable" }, classNameProperty = "className")
 public class Parent extends AbstractEntity implements Serializable {
@@ -41,11 +42,11 @@ public class Parent extends AbstractEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @JcrIdentifier
-    String id;
+    private String id;
     @JcrUUID
-    String uuid;
+    private String uuid;
     @JcrProperty
-    List<String> tags;
+    private List<String> tags;
 
     @JcrChildNode
     private Child adoptedChild;

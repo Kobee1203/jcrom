@@ -29,6 +29,9 @@ import org.junit.Test;
 /**
  * Thanks to Leander for identifying this problem, and submitting the
  * unit test.
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class TestReferenceHistory extends TestAbstract {
 

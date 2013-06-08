@@ -22,6 +22,7 @@ import org.jcrom.annotations.JcrChildNode;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class AImpl extends AbstractJcrEntity implements A {
 

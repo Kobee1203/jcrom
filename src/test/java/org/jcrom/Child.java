@@ -26,6 +26,7 @@ import org.jcrom.annotations.JcrParentNode;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class Child extends AbstractEntity {
 

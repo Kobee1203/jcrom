@@ -22,6 +22,7 @@ import org.jcrom.annotations.JcrSerializedProperty;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class EntityWithSerializedProperties extends AbstractJcrEntity {
 

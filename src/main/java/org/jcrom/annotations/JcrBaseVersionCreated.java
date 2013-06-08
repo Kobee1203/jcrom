@@ -31,6 +31,7 @@ import java.lang.annotation.Target;
  * Also note that this will be empty when iterating over older versions.
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

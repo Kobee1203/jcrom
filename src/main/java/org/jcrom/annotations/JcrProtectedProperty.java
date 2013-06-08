@@ -26,7 +26,6 @@ import java.lang.annotation.Target;
  * This annotation is used mark fields that should be mapped to protected properties of JCR node.
  * 
  * @author Nicolas Dos Santos
- *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.ANNOTATION_TYPE })

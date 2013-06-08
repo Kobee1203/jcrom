@@ -28,6 +28,8 @@ import org.junit.Test;
  * Thanks to Vincent Gigure for providing this test case.
  *
  * @author Vincent Gigure
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class TestInstantiation extends TestAbstract {
 

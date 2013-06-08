@@ -27,6 +27,7 @@ import org.junit.Test;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class TestFilters {
 

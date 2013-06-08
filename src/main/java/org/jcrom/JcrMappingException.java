@@ -21,6 +21,7 @@ package org.jcrom;
  * A runtime exception that is thrown when mapping errors occur.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class JcrMappingException extends RuntimeException {
 

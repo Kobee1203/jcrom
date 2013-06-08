@@ -37,6 +37,7 @@ import java.util.Map;
  * on the child object.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
@@ -44,7 +45,8 @@ public @interface JcrFileNode {
 
     public enum LoadType {
 
-        STREAM, BYTES
+        STREAM,
+        BYTES
     }
 
     /**

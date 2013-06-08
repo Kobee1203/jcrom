@@ -19,16 +19,26 @@ package org.jcrom;
 
 import java.util.Map;
 
+import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrProperty;
 
 /**
  * 
  * @author Nicolas Dos Santos
  */
-public class EntityModifiedMapFieldAdded extends AbstractJcrEntity {
+@JcrNode(mixinTypes = { "mix:referenceable" }, classNameProperty = "className")
+public class EntityParent extends AbstractJcrEntity {
 
     private static final long serialVersionUID = 1L;
 
     @JcrProperty
-    private Map<String, String> strings;
+    private Map<String, String> myMap;
+
+    public Map<String, String> getMyMap() {
+        return myMap;
+    }
+
+    public void setMyMap(Map<String, String> myMap) {
+        this.myMap = myMap;
+    }
 }

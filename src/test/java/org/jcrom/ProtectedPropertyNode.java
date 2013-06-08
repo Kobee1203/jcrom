@@ -28,8 +28,8 @@ import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrProtectedProperty;
 
 /**
+ * 
  * @author Nicolas Dos Santos
- *
  */
 @JcrNode(nodeType = NodeType.NT_UNSTRUCTURED, mixinTypes = { NodeType.MIX_CREATED, NodeType.MIX_LOCKABLE, NodeType.MIX_REFERENCEABLE })
 public class ProtectedPropertyNode extends AbstractEntity {

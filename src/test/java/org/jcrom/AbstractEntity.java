@@ -28,6 +28,7 @@ import org.jcrom.annotations.JcrProperty;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(classNameProperty = "className")
 public abstract class AbstractEntity implements Serializable {

@@ -30,8 +30,9 @@ import org.jcrom.annotations.JcrReference;
 import org.junit.Test;
 
 /**
+ * Thanks to Ben Fortuna for providing this test case.
+ * 
  * @author Nicolas Dos Santos
- *
  */
 public class TestJcrReference extends TestAbstract {
 

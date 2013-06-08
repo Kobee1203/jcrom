@@ -22,6 +22,10 @@ import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrPath;
 import org.jcrom.annotations.JcrProperty;
 
+/**
+ * 
+ * @author Nicolas Dos Santos
+ */
 @JcrNode(nodeType = "cq:PageContent")
 public class PageContentNode {
 

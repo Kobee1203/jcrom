@@ -28,6 +28,7 @@ import org.jcrom.annotations.JcrUUID;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(mixinTypes = { "mix:referenceable" })
 public class Tree extends AbstractJcrEntity {

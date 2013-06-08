@@ -30,10 +30,10 @@ import java.lang.annotation.Target;
  * mixin type.
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface JcrCheckedout {
 
-	
 }

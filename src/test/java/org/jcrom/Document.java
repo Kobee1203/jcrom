@@ -23,6 +23,9 @@ import org.jcrom.annotations.JcrUUID;
 
 /**
  * Models a Document, contains a file.
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(nodeType = "nt:unstructured", classNameProperty = "className", mixinTypes = { "mix:referenceable" })
 public class Document extends HierarchyNode {

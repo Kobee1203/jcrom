@@ -24,6 +24,9 @@ import org.jcrom.annotations.JcrReference;
 
 /**
  * Models a reference to a Folder.
+ * 
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(nodeType = "nt:unstructured", classNameProperty = "className")
 public class FolderReference extends HierarchyNode {

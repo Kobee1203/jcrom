@@ -21,7 +21,8 @@ import org.jcrom.annotations.JcrNode;
 
 /**
  *
- * @author gauti
+ * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(classNameProperty = "className", mixinTypes = { "mix:versionable", "mix:referenceable" })
 public interface VersionedInterface extends JcrEntity {

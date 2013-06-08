@@ -22,6 +22,7 @@ import org.jcrom.annotations.JcrNode;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @JcrNode(mixinTypes = { "mix:referenceable" }, classNameProperty = "className")
 public interface Shape extends JcrEntity {

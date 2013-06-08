@@ -34,8 +34,8 @@ import org.jcrom.util.PathUtils;
 import org.junit.Test;
 
 /**
+ * 
  * @author Nicolas Dos Santos
- *
  */
 public class TestAdobeCQ extends TestAbstract {
 

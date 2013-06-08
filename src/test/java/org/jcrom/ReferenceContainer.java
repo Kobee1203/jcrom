@@ -19,6 +19,7 @@ package org.jcrom;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.annotations.JcrPath;
@@ -28,8 +29,9 @@ import org.jcrom.annotations.JcrUUID;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
-@JcrNode(mixinTypes = {"mix:referenceable"})
+@JcrNode(mixinTypes = { "mix:referenceable" })
 public class ReferenceContainer {
 
     @JcrName
@@ -38,7 +40,7 @@ public class ReferenceContainer {
     private String path;
     @JcrUUID
     private String uuid;
-    @JcrReference(lazy=true)
+    @JcrReference(lazy = true)
     private ReferencedEntity reference;
     @JcrReference
     private List<ReferencedEntity> references;

@@ -22,6 +22,7 @@ import org.jcrom.annotations.JcrParentNode;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class WithParentInterface extends AbstractJcrEntity {
 

@@ -32,6 +32,7 @@ import java.io.OutputStream;
  * <p>Thanks to Robin Wyles for adding content length.</p>
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class JcrDataProviderImpl implements JcrDataProvider {
 

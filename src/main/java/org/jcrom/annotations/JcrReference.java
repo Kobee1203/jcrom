@@ -26,6 +26,7 @@ import java.lang.annotation.Target;
  * This annotation is used to mark fields that are to be mapped as JCR reference properties.
  * 
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.ANNOTATION_TYPE })

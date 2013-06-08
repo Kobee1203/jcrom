@@ -32,9 +32,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TreeMap;
 
 import javax.jcr.Node;
@@ -58,6 +60,7 @@ import org.junit.Test;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public class TestMapping extends TestAbstract {
 
@@ -246,6 +249,18 @@ public class TestMapping extends TestAbstract {
     }
 
     @Test
+    public void testGetNodesMethod() throws Exception {
+        Node jcrRootNode = session.getRootNode();
+        Node rootNode = jcrRootNode.addNode("mapSuperclassTest");
+        Node newNode = rootNode.addNode("newNode");
+        NodeIterator nodeIterator = rootNode.getNodes("myMap"); // Gets all child nodes that match 'myMap'
+        assertFalse(nodeIterator.hasNext()); // It's not correct ! there should be an empty iterator !
+        session.save();
+        nodeIterator = rootNode.getNodes("myMap");
+        assertFalse(nodeIterator.hasNext()); // It's correct after saving
+    }
+
+    @Test
     public void testEnums() throws Exception {
         Jcrom jcrom = new Jcrom();
         jcrom.map(EnumEntity.class);
@@ -381,6 +396,41 @@ public class TestMapping extends TestAbstract {
         Child child = new Child();
         child.setName(name);
         return child;
+    }
+
+    @Test
+    public void mapsInSuperclass() throws Exception {
+
+        Jcrom jcrom = new Jcrom(true, true);
+        jcrom.map(EntityParent.class);
+        jcrom.map(EntityChild.class);
+
+        // create person
+        Person person = new Person();
+        person.setName("nico");
+        person.setAge(30);
+        person.setPhones(Arrays.asList(new String[] { "0123456789" }));
+
+        Map<String, String> myMap = new HashMap<String, String>();
+        myMap.put("key1", "value1");
+        myMap.put("key2", "value2");
+
+        EntityChild entity = new EntityChild();
+        entity.setName("myChild");
+        entity.setMyMap(myMap);
+        entity.setPerson(person);
+
+        Node rootNode = session.getRootNode().addNode("mapSuperclassTest");
+        Node newNode = jcrom.addNode(rootNode, entity);
+        session.save();
+
+        EntityChild entityFromJcr = jcrom.fromNode(EntityChild.class, newNode);
+        assertNotNull(entityFromJcr);
+        assertNotNull(entityFromJcr.getMyMap());
+        assertEquals(2, entityFromJcr.getMyMap().size());
+        assertNotNull(entityFromJcr.getPerson());
+        assertEquals(30, entityFromJcr.getPerson().getAge());
+        assertEquals("nico", entityFromJcr.getPerson().getName());
     }
 
     @Test

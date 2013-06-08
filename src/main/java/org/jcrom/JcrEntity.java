@@ -20,12 +20,15 @@ package org.jcrom;
 /**
  *
  * @author Olafur Gauti Gudmundsson
+ * @author Nicolas Dos Santos
  */
 public interface JcrEntity {
 
-	public void setName( String name );
-	public String getName();
-	
-	public void setPath( String path );
-	public String getPath();
+    public void setName(String name);
+
+    public String getName();
+
+    public void setPath(String path);
+
+    public String getPath();
 }
