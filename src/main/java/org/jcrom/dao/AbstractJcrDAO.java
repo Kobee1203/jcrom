@@ -1035,7 +1035,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
             nodeIterator.skip(startIndex);
             return toList(nodeIterator, nodeFilter, resultSize);
         } catch (RepositoryException e) {
-            throw new JcrMappingException("Could not find nodes by XPath", e);
+            throw new JcrMappingException("Could not find nodes by SQL", e);
         }
     }
 
@@ -1053,7 +1053,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
             QueryResult result = query.execute();
             return toList(result.getNodes(), nodeFilter);
         } catch (RepositoryException e) {
-            throw new JcrMappingException("Could not find nodes by XPath", e);
+            throw new JcrMappingException("Could not find nodes by SQL", e);
         }
     }
 
@@ -1074,7 +1074,7 @@ public abstract class AbstractJcrDAO<T> implements JcrDAO<T> {
             QueryResult result = query.execute();
             return toList(result.getNodes(), nodeFilter);
         } catch (RepositoryException e) {
-            throw new JcrMappingException("Could not find nodes by XPath", e);
+            throw new JcrMappingException("Could not find nodes by QOM", e);
         }
     }
 

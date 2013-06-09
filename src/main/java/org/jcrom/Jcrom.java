@@ -158,7 +158,11 @@ public class Jcrom {
         try {
             for (Class<?> c : ReflectionUtils.getClasses(packageName)) {
                 try {
-                    map(c);
+                    // Ignore Enum because these are not entities
+                    // Can be useful if there is an inner Enum
+                    if (!c.isEnum()) {
+                        map(c);
+                    }
                 } catch (JcrMappingException ex) {
                     if (!ignoreInvalidClasses) {
                         throw ex;
