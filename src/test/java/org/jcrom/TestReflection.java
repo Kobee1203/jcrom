@@ -53,6 +53,6 @@ public class TestReflection {
         assertTrue(jcrClasses.contains(Node.class));
 
         Set<Class<?>> classesToMap = ReflectionUtils.getClasses("org.jcrom.dao");
-        assertEquals(11, classesToMap.size());
+        assertEquals(12, classesToMap.size());
     }
 }

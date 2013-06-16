@@ -62,6 +62,7 @@ import org.jcrom.dao.ChildDAO2;
 import org.jcrom.dao.ChildDAO3;
 import org.jcrom.dao.ChildDAO4;
 import org.jcrom.dao.CustomJCRFileDAO;
+import org.jcrom.dao.EntityWithMapChildrenDAO;
 import org.jcrom.dao.ParentDAO2;
 import org.jcrom.dao.ParentDAO3;
 import org.jcrom.dao.ParentDAO4;
@@ -401,22 +402,7 @@ public class TestMapping extends ModeShapeSingleUseTest {
         Locale locale = Locale.ITALIAN;
         Locale[] locales = { Locale.FRENCH, Locale.GERMAN };
 
-        EntityWithMapChildren entity = new EntityWithMapChildren();
-        entity.setName("mapEntity");
-        entity.addIntegerArray("myIntArr1", myIntArr1);
-        entity.addIntegerArray("myIntArr2", myIntArr2);
-        entity.setMultiInt(myIntArr3);
-        entity.addStringArray("myStringArr1", myStringArr1);
-        entity.addStringArray("myStringArr2", myStringArr2);
-        entity.setMultiString(myStringArr3);
-        entity.addString("myString1", myString1);
-        entity.addString("myString2", myString2);
-        entity.addInteger("myInt1", myInt1);
-        entity.addInteger("myInt2", myInt2);
-        entity.addObject("myObject1", createChildWithName("childName1"));
-        entity.addObject("myObject2", createChildWithName("childName2"));
-        entity.setLocale(locale);
-        entity.setMultiLocale(locales);
+        EntityWithMapChildren entity = createEntityWithMapChildren(myIntArr1, myIntArr2, myIntArr3, myInt1, myInt2, myStringArr1, myStringArr2, myStringArr3, myString1, myString2, locale, locales);
 
         Node rootNode = ((Session) session).getRootNode().addNode("mapChildTest");
         Node newNode = jcrom.addNode(rootNode, entity);
@@ -450,6 +436,169 @@ public class TestMapping extends ModeShapeSingleUseTest {
         assertTrue(entityFromJcr.getLocale().equals(locale));
         assertTrue(entityFromJcr.getMultiLocale().length == entity.getMultiLocale().length);
         assertTrue(entityFromJcr.getMultiLocale()[1].equals(locales[1]));
+    }
+
+    @Test
+    public void testPersistMapWithDAO() throws Exception {
+        Jcrom jcrom = new Jcrom(true, true);
+        jcrom.map(EntityWithMapChildren.class);
+        jcrom.map(Child.class);
+
+        EntityWithMapChildrenDAO dao = new EntityWithMapChildrenDAO(session, jcrom, new String[] { NodeType.MIX_VERSIONABLE });
+
+        Integer[] myIntArr1 = { 1, 2, 3 };
+        Integer[] myIntArr2 = { 4, 5, 6 };
+        int[] myIntArr3 = { 7, 8, 9 };
+
+        int myInt1 = 1;
+        int myInt2 = 2;
+
+        String[] myStringArr1 = { "a", "b", "c" };
+        String[] myStringArr2 = { "d", "e", "f" };
+        String[] myStringArr3 = { "h", "i", "j" };
+
+        String myString1 = "string1";
+        String myString2 = "string2";
+
+        Locale locale = Locale.ITALIAN;
+        Locale[] locales = { Locale.FRENCH, Locale.GERMAN };
+
+        EntityWithMapChildren entity = createEntityWithMapChildren(myIntArr1, myIntArr2, myIntArr3, myInt1, myInt2, myStringArr1, myStringArr2, myStringArr3, myString1, myString2, locale, locales);
+
+        dao.create(entity);
+
+        EntityWithMapChildren createEntity = dao.get(entity.getPath());
+
+        assertTrue(createEntity.getIntegers().equals(entity.getIntegers()));
+        assertTrue(createEntity.getStrings().equals(entity.getStrings()));
+        assertTrue(createEntity.getMultiInt().length == entity.getMultiInt().length);
+        assertTrue(createEntity.getMultiInt()[1] == myIntArr3[1]);
+        assertTrue(createEntity.getMultiString().length == entity.getMultiString().length);
+        assertTrue(createEntity.getIntegerArrays().size() == entity.getIntegerArrays().size());
+        assertTrue(createEntity.getIntegerArrays().get("myIntArr1").length == myIntArr1.length);
+        assertTrue(createEntity.getIntegerArrays().get("myIntArr2").length == myIntArr2.length);
+        assertTrue(createEntity.getIntegerArrays().get("myIntArr1")[1] == myIntArr1[1]);
+        assertTrue(createEntity.getStringArrays().size() == entity.getStringArrays().size());
+        assertTrue(createEntity.getStringArrays().get("myStringArr1").length == myStringArr1.length);
+        assertTrue(createEntity.getStringArrays().get("myStringArr2").length == myStringArr2.length);
+        assertTrue(createEntity.getStringArrays().get("myStringArr1")[1].equals(myStringArr1[1]));
+        assertTrue(createEntity.getObjects().size() == entity.getObjects().size());
+        assertTrue(createEntity.getObjects().get("myObject1") instanceof Child);
+        // The node name has been replaced by the key
+        assertFalse("childName1".equals(((Child) createEntity.getObjects().get("myObject1")).getName()));
+        assertEquals("myObject1", ((Child) createEntity.getObjects().get("myObject1")).getName());
+        assertTrue(createEntity.getObjects().get("myObject2") instanceof Child);
+        // The node name has been replaced by the key
+        assertFalse("childName2".equals(((Child) createEntity.getObjects().get("myObject2")).getName()));
+        assertEquals("myObject2", ((Child) createEntity.getObjects().get("myObject2")).getName());
+
+        assertTrue(createEntity.getLocale().equals(locale));
+        assertTrue(createEntity.getMultiLocale().length == entity.getMultiLocale().length);
+        assertTrue(createEntity.getMultiLocale()[1].equals(locales[1]));
+
+        // UPDATE
+
+        Integer[] updateMyIntArr1 = { 9, 8, 7 };
+        Integer[] updateMyIntArr2 = { 6, 5, 4 };
+        int[] updateMyIntArr3 = { 3, 2, 1 };
+
+        int updateMyInt1 = 3;
+        int updateMyInt2 = 4;
+
+        String[] updateMyStringArr1 = { "k", "l", "m" };
+        String[] updateMyStringArr2 = { "n", "o", "p" };
+        String[] updateMyStringArr3 = { "q", "r", "s" };
+
+        String updateMyString1 = "string3";
+        String updateMyString2 = "string4";
+
+        Locale updateLocale = Locale.FRENCH;
+        Locale[] updateLocales = { Locale.ENGLISH, Locale.GERMAN };
+
+        EntityWithMapChildren entity2 = createEntityWithMapChildren(updateMyIntArr1, updateMyIntArr2, updateMyIntArr3, updateMyInt1, updateMyInt2, updateMyStringArr1, updateMyStringArr2, updateMyStringArr3, updateMyString1, updateMyString2, updateLocale, updateLocales);
+
+        entity2.setName(createEntity.getName());
+        entity2.setPath(createEntity.getPath());
+        entity2.getObjects().clear();
+        entity2.addObject("updateChildName1", createChildWithName("updateChildName1"));
+        entity2.addObject("updateChildName2", createChildWithName("updateChildName2"));
+
+        dao.update(entity2);
+
+        EntityWithMapChildren updateEntity = dao.get(entity2.getPath());
+
+        assertTrue(updateEntity.getIntegers().equals(entity2.getIntegers()));
+        assertTrue(updateEntity.getStrings().equals(entity2.getStrings()));
+        assertTrue(updateEntity.getMultiInt().length == entity2.getMultiInt().length);
+        assertTrue(updateEntity.getMultiInt()[1] == updateMyIntArr3[1]);
+        assertTrue(updateEntity.getMultiString().length == entity2.getMultiString().length);
+        assertTrue(updateEntity.getIntegerArrays().size() == entity2.getIntegerArrays().size());
+        assertTrue(updateEntity.getIntegerArrays().get("myIntArr1").length == updateMyIntArr1.length);
+        assertTrue(updateEntity.getIntegerArrays().get("myIntArr2").length == updateMyIntArr2.length);
+        assertTrue(updateEntity.getIntegerArrays().get("myIntArr1")[1] == updateMyIntArr1[1]);
+        assertTrue(updateEntity.getStringArrays().size() == entity2.getStringArrays().size());
+        assertTrue(updateEntity.getStringArrays().get("myStringArr1").length == updateMyStringArr1.length);
+        assertTrue(updateEntity.getStringArrays().get("myStringArr2").length == updateMyStringArr2.length);
+        assertTrue(updateEntity.getStringArrays().get("myStringArr1")[1].equals(updateMyStringArr1[1]));
+        assertTrue(updateEntity.getObjects().size() == entity2.getObjects().size());
+        assertTrue(updateEntity.getObjects().get("updateChildName1") instanceof Child);
+        assertEquals("updateChildName1", ((Child) updateEntity.getObjects().get("updateChildName1")).getName());
+        assertTrue(updateEntity.getObjects().get("updateChildName2") instanceof Child);
+        assertEquals("updateChildName2", ((Child) updateEntity.getObjects().get("updateChildName2")).getName());
+
+        assertTrue(updateEntity.getLocale().equals(updateLocale));
+        assertTrue(updateEntity.getMultiLocale().length == entity2.getMultiLocale().length);
+        assertTrue(updateEntity.getMultiLocale()[1].equals(updateLocales[1]));
+
+        EntityWithMapChildren versionedEntity = dao.getVersion(entity.getPath(), "1.0");
+
+        assertTrue(versionedEntity.getIntegers().equals(entity.getIntegers()));
+        assertTrue(versionedEntity.getStrings().equals(entity.getStrings()));
+        assertTrue(versionedEntity.getMultiInt().length == entity.getMultiInt().length);
+        assertTrue(versionedEntity.getMultiInt()[1] == myIntArr3[1]);
+        assertTrue(versionedEntity.getMultiString().length == entity.getMultiString().length);
+        assertTrue(versionedEntity.getIntegerArrays().size() == entity.getIntegerArrays().size());
+        assertTrue(versionedEntity.getIntegerArrays().get("myIntArr1").length == myIntArr1.length);
+        assertTrue(versionedEntity.getIntegerArrays().get("myIntArr2").length == myIntArr2.length);
+        assertTrue(versionedEntity.getIntegerArrays().get("myIntArr1")[1] == myIntArr1[1]);
+        assertTrue(versionedEntity.getStringArrays().size() == entity.getStringArrays().size());
+        assertTrue(versionedEntity.getStringArrays().get("myStringArr1").length == myStringArr1.length);
+        assertTrue(versionedEntity.getStringArrays().get("myStringArr2").length == myStringArr2.length);
+        assertTrue(versionedEntity.getStringArrays().get("myStringArr1")[1].equals(myStringArr1[1]));
+        assertTrue(versionedEntity.getObjects().size() == entity.getObjects().size());
+        assertTrue(versionedEntity.getObjects().get("myObject1") instanceof Child);
+        // The node name has been replaced by the key
+        assertFalse("childName1".equals(((Child) versionedEntity.getObjects().get("myObject1")).getName()));
+        assertEquals("myObject1", ((Child) versionedEntity.getObjects().get("myObject1")).getName());
+        assertTrue(versionedEntity.getObjects().get("myObject2") instanceof Child);
+        // The node name has been replaced by the key
+        assertFalse("childName2".equals(((Child) versionedEntity.getObjects().get("myObject2")).getName()));
+        assertEquals("myObject2", ((Child) versionedEntity.getObjects().get("myObject2")).getName());
+
+        assertTrue(versionedEntity.getLocale().equals(locale));
+        assertTrue(versionedEntity.getMultiLocale().length == entity.getMultiLocale().length);
+        assertTrue(versionedEntity.getMultiLocale()[1].equals(locales[1]));
+    }
+
+    private EntityWithMapChildren createEntityWithMapChildren(Integer[] myIntArr1, Integer[] myIntArr2, int[] myIntArr3, int myInt1, int myInt2, String[] myStringArr1, String[] myStringArr2, String[] myStringArr3, String myString1, String myString2, Locale locale, Locale[] locales) {
+        EntityWithMapChildren entity = new EntityWithMapChildren();
+        entity.setName("mapEntity");
+        entity.addIntegerArray("myIntArr1", myIntArr1);
+        entity.addIntegerArray("myIntArr2", myIntArr2);
+        entity.setMultiInt(myIntArr3);
+        entity.addStringArray("myStringArr1", myStringArr1);
+        entity.addStringArray("myStringArr2", myStringArr2);
+        entity.setMultiString(myStringArr3);
+        entity.addString("myString1", myString1);
+        entity.addString("myString2", myString2);
+        entity.addInteger("myInt1", myInt1);
+        entity.addInteger("myInt2", myInt2);
+        entity.addObject("myObject1", createChildWithName("childName1"));
+        entity.addObject("myObject2", createChildWithName("childName2"));
+        entity.setLocale(locale);
+        entity.setMultiLocale(locales);
+
+        return entity;
     }
 
     private Child createChildWithName(String name) {
@@ -1051,6 +1200,7 @@ public class TestMapping extends ModeShapeSingleUseTest {
         dad.setAdoptedChild(createChild("AdoptedChild1"));
         dad.addChild(createChild("Child1"));
         dad.addChild(createChild("Child2"));
+
         assertFalse(parentDao.exists(rootNode.getPath() + "/" + dad.getName()));
 
         Parent mom = createParent("Jane");
