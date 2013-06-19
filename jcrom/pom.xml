@@ -116,34 +116,82 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.8.1</version>
-                <configuration>
-                	<encoding>${encoding}</encoding>
-                	<reportOutputDirectory>${basedir}</reportOutputDirectory>
-                	<destDir>apidocs</destDir>
-                </configuration>
-            </plugin>
-            <plugin>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.0</version>
                 <configuration>
                     <tagBase>https://${project-name}.googlecode.com/svn/tags</tagBase>
-                    <goals>deploy gcupload:gcupload</goals>
+                    <goals>deploy gcu:upload</goals>
                 </configuration>
             </plugin>
+            <!-- Package source to JAR to upload to repo -->
             <plugin>
-                <groupId>org.riedelcastro</groupId>
-                <artifactId>gcupload-maven-plugin</artifactId>
-                <version>0.9</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <!-- Restrict execution of source compilation to install or deploy. -->
+                        <!-- The default is package. -->
+                        <phase>install</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Package JavaDocs to JAR to upload to repo -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9</version>
                 <configuration>
-                    <projectName>jcrom</projectName>
+                    <encoding>${encoding}</encoding>
+                    <reportOutputDirectory>${basedir}</reportOutputDirectory>
+                    <destDir>apidocs</destDir>
+                </configuration>
+                <executions>
+                   <execution>
+                      <id>attach-javadocs</id>
+                      <!-- Restrict execution of source compilation to install -->
+                      <phase>install</phase>
+                      <goals>
+                         <goal>jar</goal>
+                      </goals>
+                   </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- https://code.google.com/p/maven-gcu-plugin/ -->
+                <groupId>com.googlecode.maven-gcu-plugin</groupId>
+                <artifactId>maven-gcu-plugin</artifactId>
+                <version>1.1</version>
+                <configuration>
+                    <serverId>googlecode</serverId>
+                    <failsOnError>true</failsOnError> <!-- default: false -->
+                    <projectName>${project-name}</projectName> <!-- default: ${project.artifactId} -->
                     <uploads>
                         <upload>
-                            <extensions>jar</extensions>
-                            <labels>Type-Library,Featured</labels>
-                            <summary>JCROM ${project.version} binary</summary>
+                            <file>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</file>
+                            <summary>${project-name} ${project.version} binary</summary>
+                            <labels>
+                                <label>Featured</label>
+                                <label>Type-Archive</label>
+                            </labels>
+                        </upload>
+                        <upload>
+                            <file>${project.build.directory}/${project.artifactId}-${project.version}-javadoc.${project.packaging}</file>
+                            <summary>${project-name} ${project.version} javadoc</summary>
+                            <labels>
+                                <label>Type-Docs</label>
+                            </labels>
+                        </upload>
+                        <upload>
+                            <file>${project.build.directory}/${project.artifactId}-${project.version}-sources.${project.packaging}</file>
+                            <summary>${project-name} ${project.version} source</summary>
+                            <labels>
+                                <label>Type-Source</label>
+                            </labels>
                         </upload>
                     </uploads>
                 </configuration>
@@ -160,9 +208,8 @@
     </build>
 
     <scm>
-        <url>https://jcrom.googlecode.com/svn/tags/jcrom-2.0.1</url>
-        <connection>scm:svn:https://jcrom.googlecode.com/svn/tags/jcrom-2.0.1</connection>
-        <developerConnection>scm:svn:https://jcrom.googlecode.com/svn/tags/jcrom-2.0.1</developerConnection>
+        <url>http://code.google.com/p/${project-name}/source/browse</url>
+        <connection>http://${project-name}.googlecode.com/svn/trunk/</connection>
     </scm>
 
     <distributionManagement>
@@ -185,7 +232,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.8.1</version>
+                <version>2.9</version>
                 <configuration>
                 	<encoding>${encoding}</encoding>
                 	<reportOutputDirectory>${basedir}</reportOutputDirectory>
