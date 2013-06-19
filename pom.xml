@@ -269,7 +269,7 @@
     <scm>
         <url>http://code.google.com/p/${project.name}/source/browse</url>
         <connection>scm:svn:http://${project.name}.googlecode.com/svn/trunk/</connection>
-        <developerConnection>scm:svn:https://${project-name}.googlecode.com/svn/trunk/</developerConnection>
+        <developerConnection>scm:svn:https://${project.name}.googlecode.com/svn/trunk/</developerConnection>
     </scm>
 
     <distributionManagement>
