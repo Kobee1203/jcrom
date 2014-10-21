@@ -23,6 +23,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Logger;
+
+import javax.jcr.Binary;
+import javax.jcr.RepositoryException;
 
 /**
  * A simple implementation of the JcrDataProvider interface.
@@ -38,11 +42,14 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 
     private static final long serialVersionUID = 1L;
 
-    protected final TYPE type;
-    protected final byte[] bytes;
-    protected final File file;
-    protected final InputStream inputStream;
-    protected final long contentLength;
+    private static final Logger logger = Logger.getLogger(JcrDataProviderImpl.class.getName());
+
+    private final TYPE type;
+    private final byte[] bytes;
+    private final File file;
+    private final InputStream inputStream;
+    private final Binary binary;
+    private final long contentLength;
 
     public JcrDataProviderImpl(byte[] bytes) {
         this.type = TYPE.BYTES;
@@ -50,6 +57,7 @@ public class JcrDataProviderImpl implements JcrDataProvider {
         System.arraycopy(bytes, 0, this.bytes, 0, bytes.length);
         this.file = null;
         this.inputStream = null;
+        this.binary = null;
         this.contentLength = bytes.length;
     }
 
@@ -58,6 +66,7 @@ public class JcrDataProviderImpl implements JcrDataProvider {
         this.file = file;
         this.bytes = null;
         this.inputStream = null;
+        this.binary = null;
         this.contentLength = file.length();
     }
 
@@ -70,7 +79,25 @@ public class JcrDataProviderImpl implements JcrDataProvider {
         this.inputStream = inputStream;
         this.bytes = null;
         this.file = null;
+        this.binary = null;
         this.contentLength = length;
+    }
+
+    /**
+     * Constructor to directly maps the Binary of the JCR repository.
+     * <p/>
+     * This allow to get a fresh InputStream on each getInputstream call.
+     * <p/>
+     * This is also useful to know that this DataProvider should not be used to update a Node (cf. {@link #isPersisted()}).
+     * @param binary Binary object
+     */
+    public JcrDataProviderImpl(Binary binary) {
+        this.type = TYPE.STREAM;
+        this.binary = binary;
+        this.bytes = null;
+        this.file = null;
+        this.inputStream = null;
+        this.contentLength = -1;
     }
 
     @Override
@@ -100,7 +127,13 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 
     @Override
     public InputStream getInputStream() {
-        return inputStream;
+        InputStream is = inputStream;
+        try {
+            is = binary != null ? binary.getStream() : inputStream;
+        } catch (RepositoryException e) {
+            logger.info(e.toString());
+        }
+        return is;
     }
 
     @Override
@@ -110,12 +143,12 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 
     @Override
     public void writeToFile(File destination) throws IOException {
-        if (type == TYPE.BYTES) {
-            write(bytes, destination);
-        } else if (type == TYPE.STREAM) {
-            write(inputStream, destination);
-        } else if (type == TYPE.FILE) {
-            write(file, destination);
+        if (getType() == TYPE.BYTES) {
+            write(getBytes(), destination);
+        } else if (getType() == TYPE.STREAM) {
+            write(getInputStream(), destination);
+        } else if (getType() == TYPE.FILE) {
+            write(getFile(), destination);
         }
     }
 
@@ -177,6 +210,18 @@ public class JcrDataProviderImpl implements JcrDataProvider {
 
     @Override
     public long getContentLength() {
-        return this.contentLength;
+        long size = this.contentLength;
+        try {
+            size = binary != null ? binary.getSize() : this.contentLength;
+        } catch (RepositoryException e) {
+            logger.info(e.toString());
+        }
+        return size;
     }
+
+    @Override
+    public boolean isPersisted() {
+        return binary != null;
+    }
+
 }

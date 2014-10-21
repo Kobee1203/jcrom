@@ -208,6 +208,7 @@
                     <encoding>${encoding}</encoding>
                     <reportOutputDirectory>${basedir}</reportOutputDirectory>
                     <destDir>apidocs</destDir>
+                    <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
                 <executions>
                    <execution>

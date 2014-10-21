@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -42,11 +43,18 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.LongProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.StringProperty;
+
 import org.jcrom.annotations.JcrNode;
 
 /**
  * Various reflection utility methods, used mainly in the Mapper.
- * 
+ *
  * @author Olafur Gauti Gudmundsson
  * @author Nicolas Dos Santos
  */
@@ -83,6 +91,25 @@ public final class ReflectionUtils {
             }
         }
         return validFields;
+    }
+
+    /**
+     * Retrieve a method from a given class or one of its superclass.
+     *
+     * @param type the class for which we want to retrieve the Method
+     * @param name the name of the method
+     * @param parametersType the parameters type of the method
+     * @return {@link Method}
+     */
+    public static Method getMethod(Class<?> type, String name, Class<?>... parametersType) throws NoSuchMethodException {
+        try {
+            return type.getMethod(name, parametersType);
+        } catch (NoSuchMethodException e) {
+            if (!Object.class.equals(type.getSuperclass())) {
+                return getMethod(type.getSuperclass(), name, parametersType);
+            }
+            throw new NoSuchMethodException();
+        }
     }
 
     /**
@@ -138,7 +165,10 @@ public final class ReflectionUtils {
     }
 
     public static boolean isValidMapValueType(Class<?> type) {
-        return type == String.class || isArrayOfType(type, String.class) || type == Date.class || isArrayOfType(type, Date.class) || type == Calendar.class || isArrayOfType(type, Calendar.class) || type == Timestamp.class || isArrayOfType(type, Timestamp.class) || type == Integer.class || isArrayOfType(type, Integer.class) || type == int.class || isArrayOfType(type, int.class) || type == Long.class || isArrayOfType(type, Long.class) || type == long.class || isArrayOfType(type, long.class) || type == Double.class || isArrayOfType(type, Double.class) || type == double.class || isArrayOfType(type, double.class) || type == Boolean.class || isArrayOfType(type, Boolean.class) || type == boolean.class || isArrayOfType(type, boolean.class) || type == Locale.class || isArrayOfType(type, Locale.class) || type.isEnum() || (type.isArray() && type.getComponentType().isEnum());
+        if (type == ObjectProperty.class) {
+            return true;
+        }
+        return type == String.class || type == StringProperty.class || isArrayOfType(type, String.class) || type == Date.class || isArrayOfType(type, Date.class) || type == Calendar.class || isArrayOfType(type, Calendar.class) || type == Timestamp.class || isArrayOfType(type, Timestamp.class) || type == Integer.class || type == IntegerProperty.class || isArrayOfType(type, Integer.class) || type == int.class || isArrayOfType(type, int.class) || type == Long.class || type == LongProperty.class || isArrayOfType(type, Long.class) || type == long.class || isArrayOfType(type, long.class) || type == Double.class || type == DoubleProperty.class || isArrayOfType(type, Double.class) || type == double.class || isArrayOfType(type, double.class) || type == Boolean.class || type == BooleanProperty.class || isArrayOfType(type, Boolean.class) || type == boolean.class || isArrayOfType(type, boolean.class) || type == Locale.class || isArrayOfType(type, Locale.class) || type.isEnum() || (type.isArray() && type.getComponentType().isEnum());
     }
 
     private static boolean isArrayOfType(Class<?> c, Class<?> type) {
@@ -215,6 +245,52 @@ public final class ReflectionUtils {
             return (Class<?>) typeVars[index].getBounds()[0];
         } else {
             return null;
+        }
+    }
+
+    /**
+     * Try to retrieve the generic parameter of an ObjectProperty at runtime.
+     *  
+     * @param source source Object
+     * @param field {@link Field} object
+     * @return Class representing the generic parameter
+     */
+    public static Class<?> getObjectPropertyGeneric(Object source, Field field) {
+        Type type = field.getGenericType();
+        if (type instanceof ParameterizedType) {
+            return getGenericClass(source, (ParameterizedType) type);
+        } else {
+            return field.getType();
+        }
+    }
+
+    /**
+     * Try to extract the generic type of the given ParameterizedType used in the given source object.
+     *
+     * @param source source Object
+     * @param type ParameterizedType
+     * @return Class representing the generic type
+     */
+    private static Class getGenericClass(Object source, ParameterizedType type) {
+        Type type1 = type.getActualTypeArguments()[0];
+        if (type1 instanceof ParameterizedType) {
+            return (Class) ((ParameterizedType) type1).getRawType();
+        } else if (type1 instanceof TypeVariable) {
+            // Type is generic, try to get its actual type from the super class
+            // e.g.: ObjectProperty<T> where T extends U
+            if (source.getClass().getGenericSuperclass() instanceof ParameterizedType) {
+                Type parameterizedType = ((ParameterizedType) source.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+                if (parameterizedType instanceof ParameterizedType) { // it means that the parent class is also generic
+                    return (Class) ((ParameterizedType) parameterizedType).getRawType();
+                } else {
+                    return (Class) parameterizedType;
+                }
+            } else {
+                // The actual type is not declared, use the upper bound of the type e.g. U
+                return (Class) ((TypeVariable) type1).getBounds()[0];
+            }
+        } else {
+            return (Class) type1;
         }
     }
 

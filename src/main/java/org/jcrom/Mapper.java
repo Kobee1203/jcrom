@@ -17,6 +17,10 @@
  */
 package org.jcrom;
 
+import static org.jcrom.util.JavaFXUtils.getObject;
+import static org.jcrom.util.JavaFXUtils.getType;
+import static org.jcrom.util.JavaFXUtils.setObject;
+
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -61,6 +65,7 @@ import org.jcrom.annotations.JcrVersionCreated;
 import org.jcrom.annotations.JcrVersionName;
 import org.jcrom.callback.DefaultJcromCallback;
 import org.jcrom.callback.JcromCallback;
+import org.jcrom.util.JavaFXUtils;
 import org.jcrom.util.JcrUtils;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.PathUtils;
@@ -68,7 +73,7 @@ import org.jcrom.util.ReflectionUtils;
 
 /**
  * This class handles the heavy lifting of mapping a JCR node to a JCR entity object, and vice versa.
- * 
+ *
  * @author Olafur Gauti Gudmundsson
  * @author Nicolas Dos Santos
  */
@@ -97,7 +102,7 @@ class Mapper {
 
     /**
      * Create a Mapper for a specific class.
-     * 
+     *
      * @param entityClass
      *            the class that we will me mapping to/from
      */
@@ -208,16 +213,18 @@ class Mapper {
     }
 
     String getNodeName(Object object) throws IllegalAccessException {
-        return (String) findNameField(object).get(object);
+        Field field = findNameField(object);
+        return (String) JavaFXUtils.getObject(field, object);
     }
 
     String getNodePath(Object object) throws IllegalAccessException {
-        return (String) findPathField(object).get(object);
+        Field field = findPathField(object);
+        return (String) JavaFXUtils.getObject(field, object);
     }
 
     Object getParentObject(Object childObject) throws IllegalAccessException {
         Field parentField = findParentField(childObject);
-        return parentField != null ? parentField.get(childObject) : null;
+        return parentField != null ? getObject(parentField, childObject) : null;
     }
 
     String getChildContainerNodePath(Object childObject, Object parentObject, Node parentNode) throws IllegalAccessException, RepositoryException {
@@ -235,7 +242,7 @@ class Mapper {
 
     String getNodeId(Object object) throws IllegalAccessException {
         Field idField = findIdField(object);
-        return idField != null ? (String) idField.get(object) : getNodeUUID(object);
+        return idField != null ? (String) getObject(idField, object) : getNodeUUID(object);
     }
 
     static boolean hasMixinType(Node node, String mixinType) throws RepositoryException {
@@ -265,11 +272,13 @@ class Mapper {
     }
 
     void setNodeName(Object object, String name) throws IllegalAccessException {
-        findNameField(object).set(object, name);
+        Field field = findNameField(object);
+        setObject(field, object, name);
     }
 
     void setNodePath(Object object, String path) throws IllegalAccessException {
-        findPathField(object).set(object, path);
+        Field field = findPathField(object);
+        setObject(field, object, path);
     }
 
     /**
@@ -280,21 +289,21 @@ class Mapper {
     void setUUID(Object object, String uuid) throws IllegalAccessException {
         Field uuidField = findUUIDField(object);
         if (uuidField != null) {
-            uuidField.set(object, uuid);
+            setObject(uuidField, object, uuid);
         }
     }
 
     void setId(Object object, String id) throws IllegalAccessException {
         Field idField = findIdField(object);
         if (idField != null) {
-            idField.set(object, id);
+            setObject(idField, object, id);
         }
     }
 
     /**
      * Check if this node has a child version history reference. If so, then return the referenced node, else return the
      * node supplied.
-     * 
+     *
      * @param node
      * @return
      * @throws javax.jcr.RepositoryException
@@ -368,12 +377,12 @@ class Mapper {
 
     /**
      * Transforms the node supplied to an instance of the entity class that this Mapper was created for.
-     * 
+     *
      * @param node
      *            the JCR node from which to create the object
      * @param nodeFilter
      *            the NodeFilter to be applied
-     * @param action 
+     * @param action
      *            callback object that specifies the Jcr action
      * @return an instance of the JCR entity class, mapped from the node
      * @throws java.lang.Exception
@@ -399,7 +408,7 @@ class Mapper {
 
     /**
      * Transforms the node supplied to an instance of the entity class that this Mapper was created for.
-     * 
+     *
      * @param node
      *            the JCR node from which to create the object
      * @param nodeFilter
@@ -426,15 +435,15 @@ class Mapper {
 
     /**
      * Transforms the entity supplied to a JCR node, and adds that node as a child to the parent node supplied.
-     * 
+     *
      * @param parentNode
      *            the parent node to which the entity node will be added
      * @param entity
      *            the entity to be mapped to the JCR node
      * @param mixinTypes
      *            an array of mixin type that will be added to the new node
-     * @param action 
-     *            callback object that specifies the Jcrom actions: 
+     * @param action
+     *            callback object that specifies the Jcrom actions:
      *            <ul>
      *              <li>{@link JcromCallback#doAddNode(Node, String, JcrNode, Object)},</li>
      *              <li>{@link JcromCallback#doAddMixinTypes(Node, String[], JcrNode, Object)},</li>
@@ -448,7 +457,9 @@ class Mapper {
     }
 
     Node addNode(Node parentNode, Object entity, String[] mixinTypes, boolean createNode, JcromCallback action) throws IllegalAccessException, RepositoryException, IOException {
-
+        if (javafx.beans.property.Property.class.isAssignableFrom(entity.getClass())) {
+            entity = ((javafx.beans.property.Property) entity).getValue();
+        }
         entity = clearCglib(entity);
 
         if (action == null) {
@@ -516,14 +527,14 @@ class Mapper {
 
     /**
      * Update an existing JCR node with the entity supplied.
-     * 
+     *
      * @param node
      *            the JCR node to be updated
      * @param entity
      *            the entity that will be mapped to the existing node
      * @param nodeFilter
      *            the NodeFilter to apply when updating child nodes and references
-     * @param action 
+     * @param action
      *            callback object that specifies the Jcrom actions
      * @return the updated node
      * @throws java.lang.Exception
@@ -686,58 +697,58 @@ class Mapper {
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrUUID.class)) {
                 if (node.hasProperty(Property.JCR_UUID)) {
                     //field.set(obj, node.getUUID());
-                    field.set(obj, node.getIdentifier());
+                    setObject(field, obj, node.getIdentifier());
                 }
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrIdentifier.class)) {
-                field.set(obj, node.getIdentifier());
+                setObject(field, obj, node.getIdentifier());
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrBaseVersionName.class)) {
                 if (isVersionable(node)) {
                     //Version baseVersion = node.getBaseVersion();
                     Version baseVersion = getVersionManager(node).getBaseVersion(node.getPath());
-                    field.set(obj, baseVersion.getName());
+                    setObject(field, obj, baseVersion.getName());
                 }
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrBaseVersionCreated.class)) {
                 if (isVersionable(node)) {
                     //Version baseVersion = node.getBaseVersion();
                     Version baseVersion = getVersionManager(node).getBaseVersion(node.getPath());
-                    field.set(obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(baseVersion.getCreated())));
+                    setObject(field, obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(baseVersion.getCreated())));
                 }
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrVersionName.class)) {
                 if (node.getParent() != null && node.getParent().isNodeType(NodeType.NT_VERSION)) {
-                    field.set(obj, node.getParent().getName());
+                    setObject(field, obj, node.getParent().getName());
                 } else if (isVersionable(node)) {
                     // if we're not browsing version history, then this must be the base version
                     //Version baseVersion = node.getBaseVersion();
                     Version baseVersion = getVersionManager(node).getBaseVersion(node.getPath());
-                    field.set(obj, baseVersion.getName());
+                    setObject(field, obj, baseVersion.getName());
                 }
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrVersionCreated.class)) {
                 if (node.getParent() != null && node.getParent().isNodeType(NodeType.NT_VERSION)) {
                     Version version = (Version) node.getParent();
-                    field.set(obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(version.getCreated())));
+                    setObject(field, obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(version.getCreated())));
                 } else if (isVersionable(node)) {
                     // if we're not browsing version history, then this must be the base version
                     //Version baseVersion = node.getBaseVersion();
                     Version baseVersion = getVersionManager(node).getBaseVersion(node.getPath());
-                    field.set(obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(baseVersion.getCreated())));
+                    setObject(field, obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(baseVersion.getCreated())));
                 }
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrCheckedout.class)) {
-                field.set(obj, node.isCheckedOut());
+                setObject(field, obj, node.isCheckedOut());
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrCreated.class)) {
                 if (node.hasProperty(Property.JCR_CREATED)) {
-                    field.set(obj, JcrUtils.getValue(field.getType(), node.getProperty(Property.JCR_CREATED).getValue()));
+                    setObject(field, obj, JcrUtils.getValue(field.getType(), node.getProperty(Property.JCR_CREATED).getValue()));
                 }
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrParentNode.class)) {
-                if (parentObject != null && field.getType().isInstance(parentObject)) {
-                    field.set(obj, parentObject);
+                if (parentObject != null && getType(field, obj).isInstance(parentObject)) {
+                    setObject(field, obj, parentObject);
                 }
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrChildNode.class) && nodeFilter.isDepthIncluded(depth)) {
@@ -750,8 +761,7 @@ class Mapper {
                 fileNodeMapper.getFilesFromNode(field, node, obj, depth, nodeFilter, this);
 
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrPath.class)) {
-                field.set(obj, node.getPath());
-
+                setObject(field, obj, node.getPath());
             }
         }
         return obj;
@@ -771,7 +781,7 @@ class Mapper {
      * This is a temporary solution to enable lazy loading of single child nodes and single references. The problem is
      * that Jcrom uses direct field modification, but CGLIB fails to cascade field changes between the enhanced class
      * and the lazy object.
-     * 
+     *
      * @param obj
      * @return
      * @throws java.lang.IllegalAccessException
@@ -780,8 +790,8 @@ class Mapper {
         for (Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass(), true)) {
             field.setAccessible(true);
             if (field.getName().equals("CGLIB$LAZY_LOADER_0")) {
-                if (field.get(obj) != null) {
-                    return field.get(obj);
+                if (getObject(field, obj) != null) {
+                    return getObject(field, obj);
                 } else {
                     // lazy loading has not been triggered yet, so
                     // we do it manually
@@ -797,7 +807,7 @@ class Mapper {
             field.setAccessible(true);
             if (field.getName().equals("CGLIB$CALLBACK_0")) {
                 try {
-                    return ((LazyLoader) field.get(obj)).loadObject();
+                    return ((LazyLoader) getObject(field, obj)).loadObject();
                 } catch (Exception e) {
                     throw new JcrMappingException("Could not trigger lazy loading", e);
                 }

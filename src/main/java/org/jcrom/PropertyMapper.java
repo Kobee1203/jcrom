@@ -17,6 +17,12 @@
  */
 package org.jcrom;
 
+import static org.jcrom.util.JavaFXUtils.getObject;
+import static org.jcrom.util.JavaFXUtils.getValue;
+import static org.jcrom.util.JavaFXUtils.isList;
+import static org.jcrom.util.JavaFXUtils.isMap;
+import static org.jcrom.util.JavaFXUtils.setObject;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,6 +36,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import javafx.beans.property.ListProperty;
 
 import javax.jcr.Binary;
 import javax.jcr.NamespaceRegistry;
@@ -82,7 +90,7 @@ class PropertyMapper {
                 }
             }
         }
-        field.set(obj, map);
+        setObject(field, obj, map);
     }
 
     private Object[] valuesToArray(Class<?> type, Value[] values) throws RepositoryException, IOException {
@@ -100,7 +108,7 @@ class PropertyMapper {
             if (node.hasProperty(propertyName)) {
                 Property p = node.getProperty(propertyName);
                 //field.set(obj, deserialize(p.getStream()));
-                field.set(obj, deserialize(p.getBinary().getStream()));
+                setObject(field, obj, deserialize(p.getBinary().getStream()));
             }
         }
     }
@@ -136,7 +144,7 @@ class PropertyMapper {
         String name = getPropertyName(field);
 
         if (nodeFilter == null || nodeFilter.isIncluded(NodeFilter.PROPERTY_PREFIX + field.getName(), node, depth)) {
-            if (ReflectionUtils.implementsInterface(field.getType(), Map.class)) {
+            if (isMap(field)) {
                 // map of properties
                 Class<?> valueType = ReflectionUtils.getParameterizedClass(field, 1);
                 try {
@@ -156,7 +164,7 @@ class PropertyMapper {
     void mapProtectedPropertyToField(Object obj, Field field, Node node) throws RepositoryException, IllegalAccessException, IOException {
         String name = getProtectedPropertyName(field);
 
-        if (ReflectionUtils.implementsInterface(field.getType(), Map.class)) {
+        if (isMap(field)) {
             // map of properties
             Class<?> valueType = ReflectionUtils.getParameterizedClass(field, 1);
             Node childrenContainer = node.getNode(name);
@@ -178,8 +186,16 @@ class PropertyMapper {
                 for (Value value : p.getValues()) {
                     properties.add(JcrUtils.getValue(paramClass, value));
                 }
-                field.set(obj, properties);
+                setObject(field, obj, properties);
 
+            } else if (ListProperty.class.isAssignableFrom(field.getType())) {
+                ListProperty<Object> list = (ListProperty) field.get(obj);
+                List<Object> properties = new ArrayList<Object>();
+                Class<?> paramClass = ReflectionUtils.getParameterizedClass(field);
+                for (Value value : p.getValues()) {
+                    properties.add(JcrUtils.getValue(paramClass, value));
+                }
+                list.setAll(properties);
             } else if (field.getType().isArray() && field.getType().getComponentType() != byte.class) {
                 // multi-value property (array)
                 Value[] values = p.getValues();
@@ -188,39 +204,39 @@ class PropertyMapper {
                     for (int i = 0; i < values.length; i++) {
                         arr[i] = (int) values[i].getDouble();
                     }
-                    field.set(obj, arr);
+                    setObject(field, obj, arr);
                 } else if (field.getType().getComponentType() == long.class) {
                     long[] arr = new long[values.length];
                     for (int i = 0; i < values.length; i++) {
                         arr[i] = values[i].getLong();
                     }
-                    field.set(obj, arr);
+                    setObject(field, obj, arr);
                 } else if (field.getType().getComponentType() == double.class) {
                     double[] arr = new double[values.length];
                     for (int i = 0; i < values.length; i++) {
                         arr[i] = values[i].getDouble();
                     }
-                    field.set(obj, arr);
+                    setObject(field, obj, arr);
                 } else if (field.getType().getComponentType() == boolean.class) {
                     boolean[] arr = new boolean[values.length];
                     for (int i = 0; i < values.length; i++) {
                         arr[i] = values[i].getBoolean();
                     }
-                    field.set(obj, arr);
+                    setObject(field, obj, arr);
                 } else if (field.getType().getComponentType() == Locale.class) {
                     Locale[] arr = new Locale[values.length];
                     for (int i = 0; i < values.length; i++) {
                         arr[i] = JcrUtils.parseLocale(values[i].getString());
                     }
-                    field.set(obj, arr);
+                    setObject(field, obj, arr);
                 } else {
                     Object[] arr = valuesToArray(field.getType().getComponentType(), values);
-                    field.set(obj, arr);
+                    setObject(field, obj, arr);
                 }
 
             } else {
                 // single-value property
-                field.set(obj, JcrUtils.getValue(field.getType(), p.getValue()));
+                setObject(field, obj, getValue(field, obj, p));
             }
         }
     }
@@ -228,7 +244,7 @@ class PropertyMapper {
     private void mapSerializedFieldToProperty(Field field, Object obj, Node node, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
         String propertyName = getSerializedPropertyName(field);
-        Object fieldValue = field.get(obj);
+        Object fieldValue = getObject(field, obj);
         // make sure that this property is supposed to be updated
         if (nodeFilter == null || nodeFilter.isIncluded(NodeFilter.PROPERTY_PREFIX + field.getName(), node, depth)) {
             if (fieldValue != null) {
@@ -276,12 +292,12 @@ class PropertyMapper {
         String name = getPropertyName(field);
         // make sure that this property is supposed to be updated
         if (nodeFilter == null || nodeFilter.isIncluded(NodeFilter.PROPERTY_PREFIX + field.getName(), node, depth)) {
-            if (ReflectionUtils.implementsInterface(field.getType(), Map.class)) {
+            if (isMap(field)) {
                 // this is a Map child, where we map the key/value pairs as properties
                 addChildMap(field, obj, node, name, mapper);
             } else {
                 // normal property
-                Class<?> paramClass = ReflectionUtils.implementsInterface(field.getType(), List.class) ? ReflectionUtils.getParameterizedClass(field) : null;
+                Class<?> paramClass = isList(field.getType()) ? ReflectionUtils.getParameterizedClass(field) : null;
                 mapToProperty(name, field.getType(), paramClass, field.get(obj), node);
             }
         }
@@ -302,7 +318,7 @@ class PropertyMapper {
 
             ValueFactory valueFactory = node.getSession().getValueFactory();
 
-            if (ReflectionUtils.implementsInterface(type, List.class)) {
+            if (isList(type)) {
                 // multi-value property List
                 List<?> fieldValues = (List<?>) propertyValue;
                 if (!fieldValues.isEmpty()) {
@@ -368,7 +384,7 @@ class PropertyMapper {
             }
         } else {
             // remove the value
-            if (ReflectionUtils.implementsInterface(type, List.class)) {
+            if (isList(type)) {
                 node.setProperty(propertyName, (Value[]) null);
             } else {
                 node.setProperty(propertyName, (Value) null);

@@ -33,7 +33,7 @@ import java.io.Serializable;
  */
 public interface JcrDataProvider extends Serializable {
 
-    public enum TYPE {
+    enum TYPE {
         FILE,
         BYTES,
         STREAM
@@ -44,46 +44,69 @@ public interface JcrDataProvider extends Serializable {
      * 
      * @return the type of content this provider offers
      */
-    public TYPE getType();
+    TYPE getType();
 
-    public boolean isFile();
+    /**
+     * Check whether the current JcrDataProvider contains a file.
+     * 
+     * @return <code>true</code> if the JcrDataProvider contains a file, <code>false</code> instead
+     */
+    boolean isFile();
 
-    public boolean isBytes();
+    /**
+     * Check whether the current JcrDataProvider contains a byte array.
+     * 
+     * @return <code>true</code> if the JcrDataProvider contains a byte array, <code>false</code> instead
+     */
+    boolean isBytes();
 
-    public boolean isStream();
+    /**
+     * Check whether the current JcrDataProvider contains a stream.
+     * 
+     * @return <code>true</code> if the JcrDataProvider contains a stream, <code>false</code> instead
+     */
+    boolean isStream();
 
     /**
      * Return a file.
      * 
      * @return file, or null if type is not JcrDataProvider.TYPE.FILE
      */
-    public File getFile();
+    File getFile();
 
     /**
      * Return a byte array.
      * 
      * @return byte array, or null if type is not JcrDataProvider.TYPE.BYTES
      */
-    public byte[] getBytes();
+    byte[] getBytes();
 
     /**
      * Return an input stream.
      * 
      * @return input stream, or null if type is not JcrDataProvider.TYPE.STREAM
      */
-    public InputStream getInputStream();
+    InputStream getInputStream();
 
     /**
      * Write the content out to the File supplied.
      * 
      * @param file the file in question
      */
-    public void writeToFile(File file) throws IOException;
+    void writeToFile(File file) throws IOException;
 
     /**
      * Returns the length of the byte array / file / input stream
      * 
      * @return content length in long value
      */
-    public long getContentLength();
+    long getContentLength();
+
+    /**
+     * Check whether the current JcrDataProvider contains a persisted content.
+     * This is useful to know whether the JcrDataProvider should not be used to update a Node
+     * 
+     * @return <code>true</code> if the JcrDataProvider contains a content already persisted, <code>false</code> instead
+     */
+    boolean isPersisted();
 }

@@ -26,6 +26,13 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.StringTokenizer;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.LongProperty;
+import javafx.beans.property.Property;
+import javafx.beans.property.StringProperty;
+
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -187,7 +194,14 @@ public final class JcrUtils {
      * @throws RepositoryException
      */
     public static Value createValue(Class<?> c, Object value, ValueFactory valueFactory) throws RepositoryException {
-        if (c == String.class) {
+        if (Property.class.isAssignableFrom(c)) {
+            Object wrappedValue = ((Property) value).getValue();
+            if (wrappedValue == null) {
+                return null;
+            } else {
+                return createValue(wrappedValue.getClass(), wrappedValue, valueFactory);
+            }
+        } else if (c == String.class) {
             return valueFactory.createValue((String) value);
         } else if (c == Date.class) {
             Calendar cal = Calendar.getInstance();
@@ -233,7 +247,7 @@ public final class JcrUtils {
      * @throws IOException
      */
     public static Object getValue(Class<?> c, Value value) throws RepositoryException, IOException {
-        if (c == String.class) {
+        if (c == String.class || StringProperty.class.isAssignableFrom(c)) {
             return value.getString();
         } else if (c == Date.class) {
             return value.getDate().getTime();
@@ -248,13 +262,13 @@ public final class JcrUtils {
             // byte array...we need to read from the stream
             //return Mapper.readBytes(value.getStream());
             return IOUtils.toByteArray(value.getBinary().getStream());
-        } else if (c == Integer.class || c == int.class) {
+        } else if (c == Integer.class || c == int.class || IntegerProperty.class.isAssignableFrom(c)) {
             return (int) value.getDouble();
-        } else if (c == Long.class || c == long.class) {
+        } else if (c == Long.class || c == long.class || LongProperty.class.isAssignableFrom(c)) {
             return value.getLong();
-        } else if (c == Double.class || c == double.class) {
+        } else if (c == Double.class || c == double.class || DoubleProperty.class.isAssignableFrom(c)) {
             return value.getDouble();
-        } else if (c == Boolean.class || c == boolean.class) {
+        } else if (c == Boolean.class || c == boolean.class || BooleanProperty.class.isAssignableFrom(c)) {
             return value.getBoolean();
         } else if (c == Locale.class) {
             return parseLocale(value.getString());
