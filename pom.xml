@@ -99,6 +99,15 @@
             <artifactId>tika-core</artifactId>
             <version>1.1</version>
         </dependency>
+        <!-- cf. http://notaboekje.blogspot.fr/2012/02/creer-un-projet-maven-pour-javafx.html  -->
+        <!-- Add javafx.rt.jar property in maven settings.xml, representing the path of the JavaFX jar -->
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>javafx</artifactId>
+            <version>2.2</version>
+            <systemPath>${javafx.rt.jar}</systemPath>
+            <scope>system</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -208,7 +217,7 @@
                     <encoding>${encoding}</encoding>
                     <reportOutputDirectory>${basedir}</reportOutputDirectory>
                     <destDir>apidocs</destDir>
-                    <additionalparam>-Xdoclint:none</additionalparam>
+                    <!--<additionalparam>-Xdoclint:none</additionalparam>-->
                 </configuration>
                 <executions>
                    <execution>

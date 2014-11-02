@@ -1,6 +1,7 @@
 org.jcrom
 org.jcrom.annotations
 org.jcrom.callback
+org.jcrom.converter
 org.jcrom.dao
 org.jcrom.util
 org.jcrom.util.io
