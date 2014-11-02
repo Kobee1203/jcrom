@@ -51,6 +51,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 
 import org.jcrom.annotations.JcrNode;
+import org.jcrom.converter.Converter;
 
 /**
  * Various reflection utility methods, used mainly in the Mapper.
@@ -165,10 +166,7 @@ public final class ReflectionUtils {
     }
 
     public static boolean isValidMapValueType(Class<?> type) {
-        if (type == ObjectProperty.class) {
-            return true;
-        }
-        return type == String.class || type == StringProperty.class || isArrayOfType(type, String.class) || type == Date.class || isArrayOfType(type, Date.class) || type == Calendar.class || isArrayOfType(type, Calendar.class) || type == Timestamp.class || isArrayOfType(type, Timestamp.class) || type == Integer.class || type == IntegerProperty.class || isArrayOfType(type, Integer.class) || type == int.class || isArrayOfType(type, int.class) || type == Long.class || type == LongProperty.class || isArrayOfType(type, Long.class) || type == long.class || isArrayOfType(type, long.class) || type == Double.class || type == DoubleProperty.class || isArrayOfType(type, Double.class) || type == double.class || isArrayOfType(type, double.class) || type == Boolean.class || type == BooleanProperty.class || isArrayOfType(type, Boolean.class) || type == boolean.class || isArrayOfType(type, boolean.class) || type == Locale.class || isArrayOfType(type, Locale.class) || type.isEnum() || (type.isArray() && type.getComponentType().isEnum());
+        return type == String.class || type == StringProperty.class || isArrayOfType(type, String.class) || type == Date.class || isArrayOfType(type, Date.class) || type == Calendar.class || isArrayOfType(type, Calendar.class) || type == Timestamp.class || isArrayOfType(type, Timestamp.class) || type == Integer.class || type == IntegerProperty.class || isArrayOfType(type, Integer.class) || type == int.class || isArrayOfType(type, int.class) || type == Long.class || type == LongProperty.class || isArrayOfType(type, Long.class) || type == long.class || isArrayOfType(type, long.class) || type == Double.class || type == DoubleProperty.class || isArrayOfType(type, Double.class) || type == double.class || isArrayOfType(type, double.class) || type == Boolean.class || type == BooleanProperty.class || isArrayOfType(type, Boolean.class) || type == boolean.class || isArrayOfType(type, boolean.class) || type == Locale.class || isArrayOfType(type, Locale.class) || type.isEnum() || (type.isArray() && type.getComponentType().isEnum()) || type == ObjectProperty.class;
     }
 
     private static boolean isArrayOfType(Class<?> c, Class<?> type) {
@@ -180,28 +178,25 @@ public final class ReflectionUtils {
     }
 
     /**
-     * Get the (first) class that parameterizes the Field supplied.
-     *
-     * @param field the field
-     * @return the class that parameterizes the field, or null if field is
-     * not parameterized
+     * Get the (first) class that parameterizes the Type supplied.
+     * 
+     * @param type the Type
+     * @return the class that parameterizes the field, or null if field is not parameterized
      */
-    public static Class<?> getParameterizedClass(Field field) {
-        return getParameterizedClass(field, 0);
+    public static Class<?> getParameterizedClass(Type type) {
+        return getParameterizedClass(type, 0);
     }
 
     /**
-     * Get the class that parameterizes the Field supplied, at the index
-     * supplied (field can be parameterized with multiple param classes).
-     *
-     * @param field the field
+     * Get the class that parameterizes the Type supplied, at the index supplied (type can be parameterized with multiple param classes).
+     * 
+     * @param type the Type
      * @param index the index of the parameterizing class
-     * @return the class that parameterizes the field, or null if field is
-     * not parameterized
+     * @return the class that parameterizes the field, or null if field is not parameterized
      */
-    public static Class<?> getParameterizedClass(Field field, int index) {
-        if (field.getGenericType() instanceof ParameterizedType) {
-            ParameterizedType ptype = (ParameterizedType) field.getGenericType();
+    public static Class<?> getParameterizedClass(Type type, int index) {
+        if (type instanceof ParameterizedType) {
+            ParameterizedType ptype = (ParameterizedType) type;
             Type paramType = ptype.getActualTypeArguments()[index];
             if (paramType instanceof GenericArrayType) {
                 Class<?> arrayType = (Class<?>) ((GenericArrayType) paramType).getGenericComponentType();
@@ -218,9 +213,9 @@ public final class ReflectionUtils {
         return null;
     }
 
-    public static Class<?> getTypeArgumentOfParameterizedClass(Field field, int index, int typeIndex) {
-        if (field.getGenericType() instanceof ParameterizedType) {
-            ParameterizedType ptype = (ParameterizedType) field.getGenericType();
+    public static Class<?> getTypeArgumentOfParameterizedClass(Type type, int index, int typeIndex) {
+        if (type instanceof ParameterizedType) {
+            ParameterizedType ptype = (ParameterizedType) type;
             Type paramType = ptype.getActualTypeArguments()[index];
             if (!(paramType instanceof GenericArrayType)) {
                 if (paramType instanceof ParameterizedType) {
@@ -235,17 +230,15 @@ public final class ReflectionUtils {
         return null;
     }
 
-    public static Class<?> getParameterizedClass(Class<?> c) {
-        return getParameterizedClass(c, 0);
-    }
-
-    public static Class<?> getParameterizedClass(Class<?> c, int index) {
-        TypeVariable<?>[] typeVars = c.getTypeParameters();
-        if (typeVars.length > 0) {
-            return (Class<?>) typeVars[index].getBounds()[0];
-        } else {
-            return null;
+    public static Type getConverterGenericType(Class<? extends Converter<?, ?>> converterClass, int index) {
+        Type converterType = converterClass.getGenericInterfaces()[0];
+        ParameterizedType ptype = (ParameterizedType) converterType;
+        Type paramType = ptype.getActualTypeArguments()[index];
+        if (paramType instanceof ParameterizedType) {
+            ParameterizedType paramPType = (ParameterizedType) paramType;
+            return paramPType;
         }
+        return null;
     }
 
     /**
@@ -278,7 +271,7 @@ public final class ReflectionUtils {
         } else if (type1 instanceof TypeVariable) {
             // Type is generic, try to get its actual type from the super class
             // e.g.: ObjectProperty<T> where T extends U
-            if (source.getClass().getGenericSuperclass() instanceof ParameterizedType) {
+            if (source != null && source.getClass().getGenericSuperclass() instanceof ParameterizedType) {
                 Type parameterizedType = ((ParameterizedType) source.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
                 if (parameterizedType instanceof ParameterizedType) { // it means that the parent class is also generic
                     return (Class) ((ParameterizedType) parameterizedType).getRawType();
@@ -319,18 +312,16 @@ public final class ReflectionUtils {
     }
 
     /**
-     * Check if the field supplied is parameterized with a valid JCR
-     * property type.
+     * Check if the type supplied is parameterized with a valid JCR property type.
      *
-     * @param field the field
-     * @return true if the field is parameterized with a valid JCR property
-     * type, else false
+     * @param type the Type
+     * @return true if the type is parameterized with a valid JCR property type, else false
      */
-    public static boolean isFieldParameterizedWithPropertyType(Field field) {
-        if (field.getGenericType() instanceof ParameterizedType) {
-            ParameterizedType ptype = (ParameterizedType) field.getGenericType();
-            for (Type type : ptype.getActualTypeArguments()) {
-                if (isPropertyType((Class<?>) type)) {
+    public static boolean isTypeParameterizedWithPropertyType(Type type) {
+        if (type instanceof ParameterizedType) {
+            ParameterizedType ptype = (ParameterizedType) type;
+            for (Type t : ptype.getActualTypeArguments()) {
+                if (isPropertyType((Class<?>) t)) {
                     return true;
                 }
             }

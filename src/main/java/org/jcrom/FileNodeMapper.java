@@ -251,7 +251,7 @@ class FileNodeMapper {
 
     private void addMultipleFilesToNode(Field field, Object obj, String nodeName, Node node, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
-        JcrNode fileJcrNode = ReflectionUtils.getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field));
+        JcrNode fileJcrNode = ReflectionUtils.getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field.getGenericType()));
         Node fileContainer = createFileFolderNode(fileJcrNode, nodeName, node, mapper);
 
         List<?> children = (List<?>) getObject(field, obj);
@@ -261,10 +261,10 @@ class FileNodeMapper {
     private void addMapOfFilesToNode(Field field, Object obj, String nodeName, Node node, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
         Class<?> fileClass;
-        if (isList(ReflectionUtils.getParameterizedClass(field, 1))) {
-            fileClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field, 1, 0);
+        if (isList(ReflectionUtils.getParameterizedClass(field.getGenericType(), 1))) {
+            fileClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field.getGenericType(), 1, 0);
         } else {
-            fileClass = ReflectionUtils.getParameterizedClass(field, 1);
+            fileClass = ReflectionUtils.getParameterizedClass(field.getGenericType(), 1);
         }
 
         JcrNode fileJcrNode = ReflectionUtils.getJcrNodeAnnotation(fileClass);
@@ -273,7 +273,7 @@ class FileNodeMapper {
 
         Map<?, ?> children = (Map<?, ?>) field.get(obj);
         if (children != null && !children.isEmpty()) {
-            Class<?> paramClass = ReflectionUtils.getParameterizedClass(field, 1);
+            Class<?> paramClass = ReflectionUtils.getParameterizedClass(field.getGenericType(), 1);
             if (fileContainer.hasNodes()) {
                 // nodes already exist, we need to update
                 Map<String, String> mapWithCleanKeys = new HashMap<String, String>();
@@ -343,7 +343,7 @@ class FileNodeMapper {
             if (isList(field.getType())) {
                 // multiple file nodes in a List
                 addMultipleFilesToNode(field, obj, nodeName, node, mapper, depth, nodeFilter);
-            } else if (isMap(field)) {
+            } else if (isMap(field.getType())) {
                 // dynamic map of file nodes
                 addMapOfFilesToNode(field, obj, nodeName, node, mapper, depth, nodeFilter);
             } else {
@@ -447,13 +447,13 @@ class FileNodeMapper {
     @SuppressWarnings("unchecked")
     private Map<?, ?> getFileMap(Field field, Node fileContainer, JcrFileNode jcrFileNode, Object obj, int depth, NodeFilter nodeFilter, Mapper mapper) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
-        Class<?> mapParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+        Class<?> mapParamClass = ReflectionUtils.getParameterizedClass(field.getGenericType(), 1);
         Map<Object, Object> children = jcrFileNode.mapContainerClass().newInstance();
         NodeIterator iterator = fileContainer.getNodes();
         while (iterator.hasNext()) {
             Node childNode = iterator.nextNode();
             if (isList(mapParamClass)) {
-                Class<?> childObjClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field, 1, 0);
+                Class<?> childObjClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field.getGenericType(), 1, 0);
                 if (jcrFileNode.lazy()) {
                     // lazy loading
                     children.put(childNode.getName(), ProxyFactory.createFileNodeListProxy(childObjClass, obj, fileContainer.getPath(), fileContainer.getSession(), mapper, depth, nodeFilter, jcrFileNode));
@@ -483,7 +483,7 @@ class FileNodeMapper {
             if (isList(getType(field, obj))) {
                 // we can expect more than one child object here
                 List<?> children;
-                Class<?> childObjClass = ReflectionUtils.getParameterizedClass(field);
+                Class<?> childObjClass = ReflectionUtils.getParameterizedClass(field.getGenericType());
                 if (jcrFileNode.lazy()) {
                     // lazy loading
                     children = ProxyFactory.createFileNodeListProxy(childObjClass, obj, fileContainer.getPath(), node.getSession(), mapper, depth, nodeFilter, jcrFileNode);
@@ -493,7 +493,7 @@ class FileNodeMapper {
                 }
                 setObject(field, obj, children);
 
-            } else if (isMap(field)) {
+            } else if (isMap(field.getType())) {
                 // dynamic map of child nodes
                 // lazy loading is applied to each value in the Map
                 setObject(field, obj, getFileMap(field, fileContainer, jcrFileNode, obj, depth, nodeFilter, mapper));

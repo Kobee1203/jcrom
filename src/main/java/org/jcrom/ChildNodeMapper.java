@@ -186,7 +186,7 @@ class ChildNodeMapper {
         Node childContainer = createChildNodeContainer(node, nodeName, jcrChildNode, mapper);
         Map<?, ?> childMap = (Map<?, ?>) getObject(field, obj);
         if (childMap != null && !childMap.isEmpty()) {
-            Class<?> paramClass = ReflectionUtils.getParameterizedClass(field, 1);
+            Class<?> paramClass = ReflectionUtils.getParameterizedClass(field.getGenericType(), 1);
             if (childContainer.hasNodes()) {
                 // nodes already exist, we need to update
                 Map<String, String> mapWithCleanKeys = new HashMap<String, String>();
@@ -256,10 +256,10 @@ class ChildNodeMapper {
 
         // make sure that this child is supposed to be updated
         if (nodeFilter == null || nodeFilter.isIncluded(field.getName(), depth)) {
-            if (isList(field)) {
+            if (isList(field.getType())) {
                 // multiple children in a List
                 addMultipleChildrenToNode(field, jcrChildNode, obj, nodeName, node, mapper, depth, nodeFilter);
-            } else if (isMap(field)) {
+            } else if (isMap(field.getType())) {
                 // multiple children in a Map
                 addMapOfChildrenToNode(field, jcrChildNode, obj, nodeName, node, mapper, depth, nodeFilter);
             } else {
@@ -342,9 +342,9 @@ class ChildNodeMapper {
             // child nodes are almost always stored inside a container node
             Node childrenContainer = node.getNode(nodeName);
             childrenContainer = mapper.checkIfVersionedChild(childrenContainer);
-            if (isList(field)) {
+            if (isList(field.getType())) {
                 // we can expect more than one child object here
-                Class<?> childObjClass = ReflectionUtils.getParameterizedClass(field);
+                Class<?> childObjClass = ReflectionUtils.getParameterizedClass(field.getGenericType());
                 List<?> children;
                 if (jcrChildNode.lazy()) {
                     // lazy loading
@@ -354,10 +354,10 @@ class ChildNodeMapper {
                     children = getChildrenList(childObjClass, childrenContainer, obj, mapper, depth, nodeFilter, jcrChildNode);
                 }
                 setObject(field, obj, children);
-            } else if (isMap(field)) {
+            } else if (isMap(field.getType())) {
                 // dynamic map of child nodes
                 // lazy loading is applied to each value in the Map
-                Class<?> mapParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+                Class<?> mapParamClass = ReflectionUtils.getParameterizedClass(field.getGenericType(), 1);
                 Map<?, ?> childrenMap = getChildrenMap(mapParamClass, childrenContainer, obj, mapper, depth, nodeFilter, jcrChildNode);
                 setObject(field, obj, childrenMap);
             } else {
@@ -410,10 +410,10 @@ class ChildNodeMapper {
             field.setAccessible(true);
             if (mapper.getJcrom().getAnnotationReader().isAnnotationPresent(field, JcrChildNode.class)) {
                 Class<?> childObjClass;
-                if (isList(field)) {
-                    childObjClass = ReflectionUtils.getParameterizedClass(field);
-                } else if (isMap(field)) {
-                    childObjClass = ReflectionUtils.getParameterizedClass(field, 1);
+                if (isList(field.getType())) {
+                    childObjClass = ReflectionUtils.getParameterizedClass(field.getGenericType());
+                } else if (isMap(field.getType())) {
+                    childObjClass = ReflectionUtils.getParameterizedClass(field.getGenericType(), 1);
                 } else {
                     childObjClass = field.getType();
                 }

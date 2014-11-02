@@ -37,8 +37,8 @@ public @interface JcrSerializedProperty {
      * The name of the JCR property. 
      * Defaults to the name of the field being annotated.
      * 
-     * @return the name of the JCR property storing the value that the field
-     * represents
+     * @return the name of the JCR property storing the value that the field represents
      */
     String name() default "fieldName";
+
 }

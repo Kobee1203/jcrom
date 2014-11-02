@@ -177,7 +177,7 @@ class ReferenceMapper {
         // map the references as properties on the container node
         Map<?, ?> referenceMap = (Map<?, ?>) field.get(obj);
         if (referenceMap != null && !referenceMap.isEmpty()) {
-            Class<?> paramClass = ReflectionUtils.getParameterizedClass(field, 1);
+            Class<?> paramClass = ReflectionUtils.getParameterizedClass(field.getGenericType(), 1);
             for (Map.Entry<?, ?> entry : referenceMap.entrySet()) {
                 String key = (String) entry.getKey();
                 if (isList(paramClass)) {
@@ -204,7 +204,7 @@ class ReferenceMapper {
             if (isList(field.getType())) {
                 // multiple references in a List
                 addMultipleReferencesToNode(field, obj, propertyName, node);
-            } else if (isMap(field)) {
+            } else if (isMap(field.getType())) {
                 // multiple references in a Map
                 addMapOfReferencesToNode(field, obj, propertyName, node);
             } else {
@@ -334,7 +334,7 @@ class ReferenceMapper {
 
         if (isList(field.getType())) {
             // multiple references in a List
-            Class<?> referenceObjClass = ReflectionUtils.getParameterizedClass(field);
+            Class<?> referenceObjClass = ReflectionUtils.getParameterizedClass(field.getGenericType());
             List value = null;
             if (jcrReference.lazy()) {
                 // lazy loading
@@ -344,10 +344,10 @@ class ReferenceMapper {
                 value = getReferenceList(field, propertyName, referenceObjClass, node, obj, depth, nodeFilter, mapper);
             }
             setObject(field, obj, value);
-        } else if (isMap(field)) {
+        } else if (isMap(field.getType())) {
             // multiple references in a Map
             // lazy loading is applied to each value in the Map
-            Class<?> mapParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+            Class<?> mapParamClass = ReflectionUtils.getParameterizedClass(field.getGenericType(), 1);
             Map<String, Object> value = getReferenceMap(field, propertyName, mapParamClass, node, obj, depth, nodeFilter, mapper, jcrReference);
             setObject(field, obj, value);
         } else {

@@ -19,7 +19,6 @@ package org.jcrom.util;
 
 import static org.jcrom.util.ReflectionUtils.getMethod;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -33,8 +32,6 @@ import javafx.beans.property.MapProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.StringProperty;
-
-import javax.jcr.RepositoryException;
 
 /**
  * User: Antoine Mischler <antoine@dooapp.com>
@@ -193,7 +190,7 @@ public final class JavaFXUtils {
         if (MapProperty.class.isAssignableFrom(field.getType())) {
             Object mapProperty = field.get(source);
             if (mapProperty != null) {
-                ((MapProperty) field.get(source)).putAll((Map) value);
+                ((MapProperty) mapProperty).putAll((Map) value);
             } else {
                 try {
                     ((MapProperty) getPropertyByPropertyGetter(field, source)).putAll((Map) value);
@@ -204,7 +201,7 @@ public final class JavaFXUtils {
         } else if (ListProperty.class.isAssignableFrom(field.getType())) {
             Object listProperty = field.get(source);
             if (listProperty != null) {
-                ((ListProperty) field.get(source)).setAll((Collection) value);
+                ((ListProperty) listProperty).setAll((Collection) value);
             } else {
                 try {
                     ((ListProperty) getPropertyByPropertyGetter(field, source)).setAll((Collection) value);
@@ -219,12 +216,8 @@ public final class JavaFXUtils {
         }
     }
 
-    public static boolean isMap(Field field) {
-        return ReflectionUtils.implementsInterface(field.getType(), Map.class) || MapProperty.class.isAssignableFrom(field.getType());
-    }
-
-    public static boolean isList(Field field) {
-        return isList(field.getType());
+    public static boolean isMap(Class<?> clazz) {
+        return ReflectionUtils.implementsInterface(clazz, Map.class) || MapProperty.class.isAssignableFrom(clazz);
     }
 
     public static boolean isList(Class<?> clazz) {
@@ -233,14 +226,6 @@ public final class JavaFXUtils {
 
     public static boolean isNotString(Field field) {
         return field.getType() != String.class && field.getType() != StringProperty.class;
-    }
-
-    public static Object getValue(Field field, Object obj, javax.jcr.Property p) throws IllegalAccessException, RepositoryException, IOException {
-        if (ObjectProperty.class.isAssignableFrom(field.getType())) {
-            return JcrUtils.getValue(ReflectionUtils.getObjectPropertyGeneric(obj, field), p.getValue());
-        } else {
-            return JcrUtils.getValue(field.getType(), p.getValue());
-        }
     }
 
     /**

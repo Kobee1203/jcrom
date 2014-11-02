@@ -27,7 +27,7 @@ import org.junit.runners.Suite.SuiteClasses;
  */
 @RunWith(Suite.class)
 @SuiteClasses({ 
-    TestAdobeCQ.class, TestInstantiation.class, TestJcrFileReference.class, 
+    TestAdobeCQ.class, TestConverter.class, TestInstantiation.class, TestJcrFileReference.class, 
     TestJcromCallback.class, TestJcrReference.class, TestLazyLoading.class, TestMapping.class, 
     TestModeShape.class, TestReferenceHistory.class, TestUserManager.class
 })

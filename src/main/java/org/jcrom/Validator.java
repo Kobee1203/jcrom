@@ -24,6 +24,7 @@ import static org.jcrom.util.JavaFXUtils.isNotString;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +50,8 @@ import org.jcrom.annotations.JcrSerializedProperty;
 import org.jcrom.annotations.JcrUUID;
 import org.jcrom.annotations.JcrVersionCreated;
 import org.jcrom.annotations.JcrVersionName;
+import org.jcrom.converter.Converter;
+import org.jcrom.converter.DefaultConverter;
 import org.jcrom.util.ReflectionUtils;
 
 /**
@@ -72,10 +75,8 @@ class Validator {
      * this class (e.g. child nodes) are also validated and added to the set. Throws a JcrMappingException if invalid
      * mapping is found.
      * 
-     * @param c
-     *            the Class to be validated
-     * @param dynamicInstantiation
-     *            when dynamic instantiation is on, we allow interfaces
+     * @param c the Class to be validated
+     * @param dynamicInstantiation when dynamic instantiation is on, we allow interfaces
      * @return a Set of the input class and referenced classes, validated and ready for mapping
      */
     Set<Class<?>> validate(Class<?> c, boolean dynamicInstantiation) {
@@ -108,103 +109,114 @@ class Validator {
                 logger.finer("In [" + c.getName() + "]: Processing field: " + field.getName());
             }
 
+            Class<?> type = field.getType();
+            Type genericType = field.getGenericType();
+
             if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProperty.class)) {
+                // Check whether there is a Converter defined (DefaultConverter.class means no Converter defined)
+                Class<? extends Converter<?, ?>> converterClass = jcrom.getAnnotationReader().getAnnotation(field, JcrProperty.class).converter();
+                if (!DefaultConverter.class.equals(converterClass)) {
+                    type = ReflectionUtils.getParameterizedClass(converterClass.getGenericInterfaces()[0], 1);
+                    genericType = ReflectionUtils.getConverterGenericType(converterClass, 1);
+                }
                 // make sure that the property type is supported
-                if (isList(field)) {
-                    if (!ReflectionUtils.isFieldParameterizedWithPropertyType(field)) {
+                if (isList(type)) {
+                    if (!ReflectionUtils.isTypeParameterizedWithPropertyType(genericType)) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is a List annotated as @JcrProperty is not parameterized with a property type.");
                     }
 
-                } else if (isMap(field)) {
-                    // special case, mapping a Map of properties, so we must
-                    // make sure that it is properly parameterized:
+                } else if (isMap(type)) {
+                    // special case, mapping a Map of properties, so we must make sure that it is properly parameterized:
                     // first parameter must be a String
-                    Class<?> keyParamClass = ReflectionUtils.getParameterizedClass(field, 0);
+                    Class<?> keyParamClass = ReflectionUtils.getParameterizedClass(genericType, 0);
                     if (keyParamClass == null || keyParamClass != String.class) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProperty is a java.util.Map that is not parameterised with a java.lang.String key type.");
                     }
-                    // the value class must be a valid property type, or an array
-                    // of valid property types
-                    Class<?> valueParamClass = ReflectionUtils.getParameterizedClass(field, 1);
+                    // the value class must be a valid property type, or an array of valid property types
+                    Class<?> valueParamClass = ReflectionUtils.getParameterizedClass(genericType, 1);
                     if (valueParamClass == null || !ReflectionUtils.isValidMapValueType(valueParamClass)) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProperty is a java.util.Map that is not parameterised with a valid value property type.");
                     }
 
-                } else if (!ReflectionUtils.isPropertyType(getType(field, null))) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProperty is not a valid JCR property (type is " + field.getType().getName() + ").");
+                } else if (ObjectProperty.class.isAssignableFrom(type)) {
+                    if (!ReflectionUtils.isPropertyType(ReflectionUtils.getObjectPropertyGeneric(null, field))) {
+                        throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProperty is not a valid JCR property (type is " + type.getName() + ").");
+                    }
+                } else if (!ReflectionUtils.isPropertyType(type)) {
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProperty is not a valid JCR property (type is " + type.getName() + ").");
                 }
 
             } else if (field.isAnnotationPresent(JcrProtectedProperty.class)) {
                 if (!ReflectionUtils.isPropertyType(getType(field, null))) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProtectedProperty is not a valid JCR property (type is " + field.getType().getName() + ").");
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrProtectedProperty is not a valid JCR property (type is " + type.getName() + ").");
                 }
 
             } else if (field.isAnnotationPresent(JcrSerializedProperty.class)) {
                 // make sure field is Serializable
                 if (!ReflectionUtils.implementsInterface(getType(field, null), Serializable.class)) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrSerializedProperty does not implement java.io.Serializable (type is " + field.getType().getName() + ").");
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrSerializedProperty does not implement java.io.Serializable (type is " + type.getName() + ").");
                 }
 
             } else if (field.isAnnotationPresent(JcrName.class)) {
                 // make sure this is a String field
                 if (isNotString(field)) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrName must be of type java.lang.String, but is of type: " + field.getType().getName());
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrName must be of type java.lang.String, but is of type: " + type.getName());
                 }
                 foundNameField = true;
 
             } else if (field.isAnnotationPresent(JcrUUID.class)) {
                 // make sure this is a String field
                 if (getType(field, null) != String.class) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrUUID must be of type java.lang.String, but is of type: " + field.getType().getName());
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrUUID must be of type java.lang.String, but is of type: " + type.getName());
                 }
 
             } else if (field.isAnnotationPresent(JcrIdentifier.class)) {
                 // make sure this is a String field
                 if (getType(field, null) != String.class) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrIdentifier must be of type java.lang.String, but is of type: " + field.getType().getName());
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrIdentifier must be of type java.lang.String, but is of type: " + type.getName());
                 }
 
             } else if (field.isAnnotationPresent(JcrPath.class)) {
                 // make sure this is a String field
                 if (isNotString(field)) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrPath must be of type java.lang.String, but is of type: " + field.getType().getName());
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrPath must be of type java.lang.String, but is of type: " + type.getName());
                 }
                 foundPathField = true;
 
             } else if (field.isAnnotationPresent(JcrBaseVersionName.class)) {
                 // make sure this is a String field
                 if (getType(field, null) != String.class) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrBaseVersionName must be of type java.lang.String, but is of type: " + field.getType().getName());
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrBaseVersionName must be of type java.lang.String, but is of type: " + type.getName());
                 }
 
             } else if (field.isAnnotationPresent(JcrBaseVersionCreated.class)) {
                 // make sure this is a Date/Calendar/Timestamp field
                 if (!ReflectionUtils.isDateType(getType(field, null))) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrBaseVersionCreated must be of type java.util.Date / java.util.Calendar / java.sql.Timestamp, but is of type: " + field.getType().getName());
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrBaseVersionCreated must be of type java.util.Date / java.util.Calendar / java.sql.Timestamp, but is of type: " + type.getName());
                 }
 
             } else if (field.isAnnotationPresent(JcrVersionName.class)) {
                 // make sure this is a String field
                 if (getType(field, null) != String.class) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrVersionName must be of type java.lang.String, but is of type: " + field.getType().getName());
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrVersionName must be of type java.lang.String, but is of type: " + type.getName());
                 }
 
             } else if (field.isAnnotationPresent(JcrVersionCreated.class)) {
                 // make sure this is a Date/Calendar/Timestamp field
                 if (!ReflectionUtils.isDateType(getType(field, null))) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrVersionCreated must be of type java.util.Date / java.util.Calendar / java.sql.Timestamp, but is of type: " + field.getType().getName());
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrVersionCreated must be of type java.util.Date / java.util.Calendar / java.sql.Timestamp, but is of type: " + type.getName());
                 }
 
             } else if (field.isAnnotationPresent(JcrCheckedout.class)) {
                 // make sure this i a boolean field
                 if (getType(field, null) != boolean.class && getType(field, null) != Boolean.class) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrCheckedout must be of type boolean, but is of type: " + field.getType().getName());
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrCheckedout must be of type boolean, but is of type: " + type.getName());
                 }
 
             } else if (field.isAnnotationPresent(JcrCreated.class)) {
                 // make sure this is a Date/Calendar/Timestamp field
                 if (!ReflectionUtils.isDateType(getType(field, null))) {
-                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrCreated must be of type java.util.Date / java.util.Calendar / java.sql.Timestamp, but is of type: " + field.getType().getName());
+                    throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrCreated must be of type java.util.Date / java.util.Calendar / java.sql.Timestamp, but is of type: " + type.getName());
                 }
             } else if (field.isAnnotationPresent(JcrParentNode.class)) {
                 // make sure that the parent node type is a valid JCR class
@@ -212,91 +224,87 @@ class Validator {
 
             } else if (field.isAnnotationPresent(JcrChildNode.class)) {
                 // make sure that the child node type are valid JCR classes
-                if (isList(field)) {
-                    // map a List of child nodes, here we must make sure that
-                    // the List is parameterized
-                    Class<?> paramClass = ReflectionUtils.getParameterizedClass(field);
+                if (isList(type)) {
+                    // map a List of child nodes, here we must make sure that the List is parameterized
+                    Class<?> paramClass = ReflectionUtils.getParameterizedClass(genericType);
                     if (paramClass != null) {
-                        validateInternal(ReflectionUtils.getParameterizedClass(field), validClasses, dynamicInstantiation);
+                        validateInternal(ReflectionUtils.getParameterizedClass(genericType), validClasses, dynamicInstantiation);
                     } else {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.List that is not parameterised with a valid class type.");
                     }
 
-                } else if (isMap(field)) {
-                    // special case, mapping a Map of child nodes, so we must
-                    // make sure that it is properly parameterized:
+                } else if (isMap(type)) {
+                    // special case, mapping a Map of child nodes, so we must make sure that it is properly parameterized:
                     // first parameter must be a String
-                    Class<?> keyParamClass = ReflectionUtils.getParameterizedClass(field, 0);
+                    Class<?> keyParamClass = ReflectionUtils.getParameterizedClass(genericType, 0);
                     if (keyParamClass == null || keyParamClass != String.class) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.Map that is not parameterised with a java.lang.String key type.");
                     }
                     // the value class must be Object, or List of Objects
-                    Class<?> valueParamClass = ReflectionUtils.getParameterizedClass(field, 1);
-                    Class<?> valueParamParamClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field, 1, 0);
+                    Class<?> valueParamClass = ReflectionUtils.getParameterizedClass(genericType, 1);
+                    Class<?> valueParamParamClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(genericType, 1, 0);
                     if (valueParamClass == null || (valueParamClass != Object.class && !(ReflectionUtils.implementsInterface(valueParamClass, List.class) && (valueParamParamClass != null && valueParamParamClass == Object.class)))) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.Map that is not parameterised with a valid value type (Object or List<Object>).");
                     }
 
                 } else {
-                    if (ObjectProperty.class.isAssignableFrom(field.getType())) {
+                    if (ObjectProperty.class.isAssignableFrom(type)) {
                         validateInternal(ReflectionUtils.getObjectPropertyGeneric(null, field), validClasses, dynamicInstantiation);
                     } else {
-                        validateInternal(field.getType(), validClasses, dynamicInstantiation);
+                        validateInternal(type, validClasses, dynamicInstantiation);
                     }
                 }
 
             } else if (field.isAnnotationPresent(JcrFileNode.class)) {
                 // make sure that the file node type is a JcrFile
-                if (isList(field)) {
-                    if (!ReflectionUtils.extendsClass(ReflectionUtils.getParameterizedClass(field), JcrFile.class)) {
+                if (isList(type)) {
+                    if (!ReflectionUtils.extendsClass(ReflectionUtils.getParameterizedClass(genericType), JcrFile.class)) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is a List annotated as @JcrFileNode is not parameterized with a JcrFile implementation.");
                     }
 
-                } else if (isMap(field)) {
-                    // special case, mapping a Map of file nodes, so we must
-                    // make sure that it is properly parameterized:
+                } else if (isMap(type)) {
+                    // special case, mapping a Map of file nodes, so we must make sure that it is properly parameterized:
                     // first parameter must be a String
-                    Class<?> keyParamClass = ReflectionUtils.getParameterizedClass(field, 0);
+                    Class<?> keyParamClass = ReflectionUtils.getParameterizedClass(genericType, 0);
                     if (keyParamClass == null || keyParamClass != String.class) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrFileNode is a java.util.Map that is not parameterised with a java.lang.String key type.");
                     }
                     // the value class must be JcrFile extension, or List of JcrFile extensions
-                    Class<?> valueParamClass = ReflectionUtils.getParameterizedClass(field, 1);
-                    Class<?> valueParamParamClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field, 1, 0);
+                    Class<?> valueParamClass = ReflectionUtils.getParameterizedClass(genericType, 1);
+                    Class<?> valueParamParamClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(genericType, 1, 0);
                     if (valueParamClass == null || (!ReflectionUtils.extendsClass(valueParamClass, JcrFile.class) && !(ReflectionUtils.implementsInterface(valueParamClass, List.class) && (valueParamParamClass != null && ReflectionUtils.extendsClass(valueParamParamClass, JcrFile.class))))) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrFileNode is a java.util.Map that is not parameterised with a valid value type (JcrFile or List<JcrFile>).");
                     }
 
                 } else {
-                    if (!ReflectionUtils.extendsClass(getType(field, null), JcrFile.class) && !ObjectProperty.class.isAssignableFrom(field.getType())) {
-                        throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrFileNode is of type that does not extend JcrFile: " + field.getType().getName());
+                    if (!ReflectionUtils.extendsClass(getType(field, null), JcrFile.class) && !ObjectProperty.class.isAssignableFrom(type)) {
+                        throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrFileNode is of type that does not extend JcrFile: " + type.getName());
                     }
                 }
 
             } else if (field.isAnnotationPresent(JcrReference.class)) {
                 Class<?> fieldType;
-                if (isList(field)) {
-                    fieldType = ReflectionUtils.getParameterizedClass(field);
+                if (isList(type)) {
+                    fieldType = ReflectionUtils.getParameterizedClass(genericType);
 
-                } else if (isMap(field)) {
-                    // special case, mapping a Map of references, so we must
-                    // make sure that it is properly parameterized:
+                } else if (isMap(type)) {
+                    // special case, mapping a Map of references, so we must make sure that it is properly parameterized:
                     // first parameter must be a String
-                    Class<?> keyParamClass = ReflectionUtils.getParameterizedClass(field, 0);
+                    Class<?> keyParamClass = ReflectionUtils.getParameterizedClass(genericType, 0);
                     if (keyParamClass == null || keyParamClass != String.class) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is a java.util.Map that is not parameterised with a java.lang.String key type.");
                     }
                     // the value class must be Object, or List of Objects
-                    Class<?> valueParamClass = ReflectionUtils.getParameterizedClass(field, 1);
-                    Class<?> valueParamParamClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(field, 1, 0);
+                    Class<?> valueParamClass = ReflectionUtils.getParameterizedClass(genericType, 1);
+                    Class<?> valueParamParamClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(genericType, 1, 0);
                     if (valueParamClass == null || (valueParamClass != Object.class && !(ReflectionUtils.implementsInterface(valueParamClass, List.class) && (valueParamParamClass != null && valueParamParamClass == Object.class)))) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is a java.util.Map that is not parameterised with a valid value type (Object or List<Object>).");
                     }
                     fieldType = null;
-                } else if (ObjectProperty.class.isAssignableFrom(field.getType())) {
+                } else if (ObjectProperty.class.isAssignableFrom(type)) {
                     fieldType = ReflectionUtils.getObjectPropertyGeneric(null, field);
                 } else {
-                    fieldType = field.getType();
+                    fieldType = type;
                 }
 
                 if (fieldType != null) {
@@ -315,7 +323,7 @@ class Validator {
                             }
                         }
                         if (!foundUUID && !foundId) {
-                            throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is of type that has no @JcrUUID or @JcrIdentifier: " + field.getType().getName());
+                            throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is of type that has no @JcrUUID or @JcrIdentifier: " + type.getName());
                         }
                     }
                     // validate the class

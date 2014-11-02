@@ -18,7 +18,6 @@
 package org.jcrom;
 
 import static org.jcrom.util.JavaFXUtils.getObject;
-import static org.jcrom.util.JavaFXUtils.getValue;
 import static org.jcrom.util.JavaFXUtils.isList;
 import static org.jcrom.util.JavaFXUtils.isMap;
 import static org.jcrom.util.JavaFXUtils.setObject;
@@ -31,6 +30,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +38,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import javafx.beans.property.ListProperty;
+import javafx.beans.property.ObjectProperty;
 
 import javax.jcr.Binary;
 import javax.jcr.NamespaceRegistry;
@@ -53,6 +54,8 @@ import javax.jcr.ValueFactory;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.annotations.JcrProtectedProperty;
 import org.jcrom.annotations.JcrSerializedProperty;
+import org.jcrom.converter.Converter;
+import org.jcrom.converter.DefaultConverter;
 import org.jcrom.util.JcrUtils;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.ReflectionUtils;
@@ -71,8 +74,19 @@ class PropertyMapper {
         this.mapper = mapper;
     }
 
-    void mapPropertiesToMap(Object obj, Field field, Class<?> valueType, PropertyIterator propIterator, boolean ignoreReadOnlyProperties) throws RepositoryException, IOException, IllegalAccessException {
+    void mapPropertiesToMap(String propertyName, Field field, Object obj, Node node, Class<? extends Converter<?, ?>> converterClass, boolean ignoreReadOnlyProperties) throws RepositoryException, IOException, IllegalAccessException {
         Map<String, Object> map = new HashMap<String, Object>();
+
+        Type genericType = field.getGenericType();
+
+        if (converterClass != null) {
+            genericType = ReflectionUtils.getConverterGenericType(converterClass, 1);
+        }
+
+        Class<?> valueType = ReflectionUtils.getParameterizedClass(genericType, 1);
+        Node childrenContainer = node.getNode(propertyName);
+        PropertyIterator propIterator = childrenContainer.getProperties();
+
         while (propIterator.hasNext()) {
             Property p = propIterator.nextProperty();
             // we ignore the read-only properties added by the repository
@@ -90,7 +104,19 @@ class PropertyMapper {
                 }
             }
         }
-        setObject(field, obj, map);
+
+        Object fieldValue = map;
+
+        if (converterClass != null) {
+            try {
+                Converter converter = converterClass.newInstance();
+                fieldValue = converter.convertToEntityAttribute(fieldValue);
+            } catch (InstantiationException e) {
+                throw new IllegalAccessException("Could not instantiate the Converter object from the field '" + field.getName() + "'");
+            }
+        }
+
+        setObject(field, obj, fieldValue);
     }
 
     private Object[] valuesToArray(Class<?> type, Value[] values) throws RepositoryException, IOException {
@@ -131,6 +157,15 @@ class PropertyMapper {
         return name;
     }
 
+    Class<? extends Converter<?, ?>> getPropertyConverter(Field field) {
+        JcrProperty jcrProperty = mapper.getJcrom().getAnnotationReader().getAnnotation(field, JcrProperty.class);
+        Class<? extends Converter<?, ?>> converter = null;
+        if (!DefaultConverter.class.equals(jcrProperty.converter())) {
+            converter = jcrProperty.converter();
+        }
+        return converter;
+    }
+
     String getProtectedPropertyName(Field field) {
         JcrProtectedProperty jcrProperty = mapper.getJcrom().getAnnotationReader().getAnnotation(field, JcrProtectedProperty.class);
         String name = field.getName();
@@ -144,19 +179,23 @@ class PropertyMapper {
         String name = getPropertyName(field);
 
         if (nodeFilter == null || nodeFilter.isIncluded(NodeFilter.PROPERTY_PREFIX + field.getName(), node, depth)) {
-            if (isMap(field)) {
+            Class<?> type = field.getType();
+
+            Class<? extends Converter<?, ?>> converterClass = getPropertyConverter(field);
+            if (converterClass != null) {
+                type = ReflectionUtils.getParameterizedClass(converterClass.getGenericInterfaces()[0], 1);
+            }
+
+            if (isMap(type)) {
                 // map of properties
-                Class<?> valueType = ReflectionUtils.getParameterizedClass(field, 1);
                 try {
-                    Node childrenContainer = node.getNode(name);
-                    PropertyIterator propIterator = childrenContainer.getProperties();
-                    mapPropertiesToMap(obj, field, valueType, propIterator, true);
+                    mapPropertiesToMap(name, field, obj, node, converterClass, true);
                 } catch (PathNotFoundException pne) {
                     // ignore here as the Field could have been added to the model
                     // since the Node was created and not yet been populated.
                 }
             } else {
-                mapToField(name, field, obj, node);
+                mapToField(name, field, obj, node, converterClass);
             }
         }
     }
@@ -164,80 +203,100 @@ class PropertyMapper {
     void mapProtectedPropertyToField(Object obj, Field field, Node node) throws RepositoryException, IllegalAccessException, IOException {
         String name = getProtectedPropertyName(field);
 
-        if (isMap(field)) {
+        if (isMap(field.getType())) {
             // map of properties
-            Class<?> valueType = ReflectionUtils.getParameterizedClass(field, 1);
-            Node childrenContainer = node.getNode(name);
-            PropertyIterator propIterator = childrenContainer.getProperties();
-            mapPropertiesToMap(obj, field, valueType, propIterator, false);
+            mapPropertiesToMap(name, field, obj, node, null, false);
         } else {
-            mapToField(name, field, obj, node);
+            mapToField(name, field, obj, node, null);
         }
     }
 
-    void mapToField(String propertyName, Field field, Object obj, Node node) throws RepositoryException, IllegalAccessException, IOException {
+    void mapToField(String propertyName, Field field, Object obj, Node node, Class<? extends Converter<?, ?>> converterClass) throws RepositoryException, IllegalAccessException, IOException {
         if (node.hasProperty(propertyName)) {
             Property p = node.getProperty(propertyName);
 
-            if (ReflectionUtils.implementsInterface(field.getType(), List.class)) {
+            Class<?> type = field.getType();
+            Type genericType = field.getGenericType();
+
+            if (converterClass != null) {
+                type = ReflectionUtils.getParameterizedClass(converterClass.getGenericInterfaces()[0], 1);
+                genericType = ReflectionUtils.getConverterGenericType(converterClass, 1);
+            }
+
+            Object fieldValue = null;
+
+            if (ReflectionUtils.implementsInterface(type, List.class)) {
                 // multi-value property (List)
                 List<Object> properties = new ArrayList<Object>();
-                Class<?> paramClass = ReflectionUtils.getParameterizedClass(field);
-                for (Value value : p.getValues()) {
-                    properties.add(JcrUtils.getValue(paramClass, value));
+                Class<?> paramClass = ReflectionUtils.getParameterizedClass(genericType);
+                for (Value v : p.getValues()) {
+                    properties.add(JcrUtils.getValue(paramClass, v));
                 }
-                setObject(field, obj, properties);
-
-            } else if (ListProperty.class.isAssignableFrom(field.getType())) {
+                fieldValue = properties;
+            } else if (ListProperty.class.isAssignableFrom(type)) {
                 ListProperty<Object> list = (ListProperty) field.get(obj);
                 List<Object> properties = new ArrayList<Object>();
-                Class<?> paramClass = ReflectionUtils.getParameterizedClass(field);
-                for (Value value : p.getValues()) {
-                    properties.add(JcrUtils.getValue(paramClass, value));
+                Class<?> paramClass = ReflectionUtils.getParameterizedClass(genericType);
+                for (Value v : p.getValues()) {
+                    properties.add(JcrUtils.getValue(paramClass, v));
                 }
                 list.setAll(properties);
-            } else if (field.getType().isArray() && field.getType().getComponentType() != byte.class) {
+                fieldValue = list;
+            } else if (ObjectProperty.class.isAssignableFrom(type)) {
+                fieldValue = JcrUtils.getValue(ReflectionUtils.getObjectPropertyGeneric(obj, field), p.getValue());
+            } else if (type.isArray() && type.getComponentType() != byte.class) {
                 // multi-value property (array)
                 Value[] values = p.getValues();
-                if (field.getType().getComponentType() == int.class) {
+                if (type.getComponentType() == int.class) {
                     int[] arr = new int[values.length];
                     for (int i = 0; i < values.length; i++) {
                         arr[i] = (int) values[i].getDouble();
                     }
-                    setObject(field, obj, arr);
-                } else if (field.getType().getComponentType() == long.class) {
+                    fieldValue = arr;
+                } else if (type.getComponentType() == long.class) {
                     long[] arr = new long[values.length];
                     for (int i = 0; i < values.length; i++) {
                         arr[i] = values[i].getLong();
                     }
-                    setObject(field, obj, arr);
-                } else if (field.getType().getComponentType() == double.class) {
+                    fieldValue = arr;
+                } else if (type.getComponentType() == double.class) {
                     double[] arr = new double[values.length];
                     for (int i = 0; i < values.length; i++) {
                         arr[i] = values[i].getDouble();
                     }
-                    setObject(field, obj, arr);
-                } else if (field.getType().getComponentType() == boolean.class) {
+                    fieldValue = arr;
+                } else if (type.getComponentType() == boolean.class) {
                     boolean[] arr = new boolean[values.length];
                     for (int i = 0; i < values.length; i++) {
                         arr[i] = values[i].getBoolean();
                     }
-                    setObject(field, obj, arr);
-                } else if (field.getType().getComponentType() == Locale.class) {
+                    fieldValue = arr;
+                } else if (type.getComponentType() == Locale.class) {
                     Locale[] arr = new Locale[values.length];
                     for (int i = 0; i < values.length; i++) {
                         arr[i] = JcrUtils.parseLocale(values[i].getString());
                     }
-                    setObject(field, obj, arr);
+                    fieldValue = arr;
                 } else {
-                    Object[] arr = valuesToArray(field.getType().getComponentType(), values);
-                    setObject(field, obj, arr);
+                    Object[] arr = valuesToArray(type.getComponentType(), values);
+                    fieldValue = arr;
                 }
 
             } else {
                 // single-value property
-                setObject(field, obj, getValue(field, obj, p));
+                fieldValue = JcrUtils.getValue(type, p.getValue());
             }
+
+            if (converterClass != null) {
+                try {
+                    Converter converter = converterClass.newInstance();
+                    fieldValue = converter.convertToEntityAttribute(fieldValue);
+                } catch (InstantiationException e) {
+                    throw new IllegalAccessException("Could not instantiate the Converter object from the field '" + field.getName() + "'");
+                }
+            }
+
+            setObject(field, obj, fieldValue);
         }
     }
 
@@ -268,10 +327,8 @@ class PropertyMapper {
         mapSerializedFieldToProperty(field, obj, node, depth, nodeFilter);
     }
 
-    @SuppressWarnings("unchecked")
-    private void addChildMap(Field field, Object obj, Node node, String nodeName, Mapper mapper) throws RepositoryException, IllegalAccessException {
+    private void addChildMap(String nodeName, Class<?> paramClass, Map<String, Object> map, Node node, Mapper mapper) throws RepositoryException, IllegalAccessException {
 
-        Map<String, Object> map = (Map<String, Object>) field.get(obj);
         boolean nullOrEmpty = map == null || map.isEmpty();
         // remove the child node
         NodeIterator nodeIterator = node.getNodes(nodeName);
@@ -282,7 +339,7 @@ class PropertyMapper {
         Node childContainer = node.addNode(mapper.getCleanName(nodeName));
         if (!nullOrEmpty) {
             for (Map.Entry<String, Object> entry : map.entrySet()) {
-                mapToProperty(entry.getKey(), ReflectionUtils.getParameterizedClass(field, 1), null, entry.getValue(), childContainer);
+                mapToProperty(entry.getKey(), paramClass, null, entry.getValue(), childContainer);
             }
         }
     }
@@ -292,13 +349,31 @@ class PropertyMapper {
         String name = getPropertyName(field);
         // make sure that this property is supposed to be updated
         if (nodeFilter == null || nodeFilter.isIncluded(NodeFilter.PROPERTY_PREFIX + field.getName(), node, depth)) {
-            if (isMap(field)) {
+            Class<?> type = field.getType();
+            Type genericType = field.getGenericType();
+            Object value = field.get(obj);
+
+            Class<? extends Converter<?, ?>> converterClass = getPropertyConverter(field);
+            if (converterClass != null) {
+                type = ReflectionUtils.getParameterizedClass(converterClass.getGenericInterfaces()[0], 1);
+                genericType = ReflectionUtils.getConverterGenericType(converterClass, 1);
+                try {
+                    Converter converter = converterClass.newInstance();
+                    value = converter.convertToJcrProperty(value);
+                } catch (InstantiationException e) {
+                    throw new IllegalAccessException("Could not instantiate the Converter object from the field '" + name + "'");
+                }
+            }
+
+            if (isMap(type)) {
                 // this is a Map child, where we map the key/value pairs as properties
-                addChildMap(field, obj, node, name, mapper);
+                Class<?> paramClass = ReflectionUtils.getParameterizedClass(genericType, 1);
+                addChildMap(name, paramClass, (Map<String, Object>) value, node, mapper);
+                // addChildMap(field, obj, node, name, mapper);
             } else {
                 // normal property
-                Class<?> paramClass = isList(field.getType()) ? ReflectionUtils.getParameterizedClass(field) : null;
-                mapToProperty(name, field.getType(), paramClass, field.get(obj), node);
+                Class<?> paramClass = isList(type) ? ReflectionUtils.getParameterizedClass(genericType) : null;
+                mapToProperty(name, type, paramClass, value, node);
             }
         }
     }

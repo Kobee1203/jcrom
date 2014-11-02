@@ -77,9 +77,9 @@ public class TestsJavaFXUtils {
         Field fieldStringFX = JavaFXEntity.class.getField("stringFX");
         Field listFX = JavaFXEntity.class.getField("listFX");
         Field list = JavaFXEntity.class.getField("list");
-        assertTrue(JavaFXUtils.isList(listFX));
-        assertTrue(JavaFXUtils.isList(list));
-        assertFalse(JavaFXUtils.isList(fieldStringFX));
+        assertTrue(JavaFXUtils.isList(listFX.getType()));
+        assertTrue(JavaFXUtils.isList(list.getType()));
+        assertFalse(JavaFXUtils.isList(fieldStringFX.getType()));
     }
 
     @Test
@@ -88,9 +88,9 @@ public class TestsJavaFXUtils {
         Field fieldStringFX = JavaFXEntity.class.getField("stringFX");
         Field mapFX = JavaFXEntity.class.getField("mapFX");
         Field map = JavaFXEntity.class.getField("map");
-        assertTrue(JavaFXUtils.isMap(mapFX));
-        assertTrue(JavaFXUtils.isMap(map));
-        assertFalse(JavaFXUtils.isMap(fieldStringFX));
+        assertTrue(JavaFXUtils.isMap(mapFX.getType()));
+        assertTrue(JavaFXUtils.isMap(map.getType()));
+        assertFalse(JavaFXUtils.isMap(fieldStringFX.getType()));
     }
 
     @Test
