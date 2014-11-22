@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
@@ -31,27 +30,17 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.net.URL;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.LongProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.StringProperty;
-
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.converter.Converter;
+import org.jcrom.type.TypeHandler;
 
 /**
  * Various reflection utility methods, used mainly in the Mapper.
@@ -161,21 +150,21 @@ public final class ReflectionUtils {
      * @param type the class we want to check
      * @return true if the class represents a valid JCR property type
      */
-    public static boolean isPropertyType(Class<?> type) {
-        return isValidMapValueType(type) || type == InputStream.class || isArrayOfType(type, byte.class);
-    }
+    //    public static boolean isPropertyType(Class<?> type) {
+    //        return isValidMapValueType(type) || type == InputStream.class || isArrayOfType(type, byte.class);
+    //    }
 
-    public static boolean isValidMapValueType(Class<?> type) {
-        return type == String.class || type == StringProperty.class || isArrayOfType(type, String.class) || type == Date.class || isArrayOfType(type, Date.class) || type == Calendar.class || isArrayOfType(type, Calendar.class) || type == Timestamp.class || isArrayOfType(type, Timestamp.class) || type == Integer.class || type == IntegerProperty.class || isArrayOfType(type, Integer.class) || type == int.class || isArrayOfType(type, int.class) || type == Long.class || type == LongProperty.class || isArrayOfType(type, Long.class) || type == long.class || isArrayOfType(type, long.class) || type == Double.class || type == DoubleProperty.class || isArrayOfType(type, Double.class) || type == double.class || isArrayOfType(type, double.class) || type == Boolean.class || type == BooleanProperty.class || isArrayOfType(type, Boolean.class) || type == boolean.class || isArrayOfType(type, boolean.class) || type == Locale.class || isArrayOfType(type, Locale.class) || type.isEnum() || (type.isArray() && type.getComponentType().isEnum()) || type == ObjectProperty.class;
-    }
+    //    public static boolean isValidMapValueType(Class<?> type) {
+    //        return type == String.class || type == StringProperty.class || isArrayOfType(type, String.class) || type == Date.class || isArrayOfType(type, Date.class) || type == Calendar.class || isArrayOfType(type, Calendar.class) || type == Timestamp.class || isArrayOfType(type, Timestamp.class) || type == Integer.class || type == IntegerProperty.class || isArrayOfType(type, Integer.class) || type == int.class || isArrayOfType(type, int.class) || type == Long.class || type == LongProperty.class || isArrayOfType(type, Long.class) || type == long.class || isArrayOfType(type, long.class) || type == Double.class || type == DoubleProperty.class || isArrayOfType(type, Double.class) || type == double.class || isArrayOfType(type, double.class) || type == Boolean.class || type == BooleanProperty.class || isArrayOfType(type, Boolean.class) || type == boolean.class || isArrayOfType(type, boolean.class) || type == Locale.class || isArrayOfType(type, Locale.class) || type.isEnum() || (type.isArray() && type.getComponentType().isEnum()) || type == ObjectProperty.class;
+    //    }
 
-    private static boolean isArrayOfType(Class<?> c, Class<?> type) {
-        return c.isArray() && c.getComponentType() == type;
-    }
+    //    private static boolean isArrayOfType(Class<?> c, Class<?> type) {
+    //        return c.isArray() && c.getComponentType() == type;
+    //    }
 
-    public static boolean isDateType(Class<?> type) {
-        return type == Date.class || type == Calendar.class || type == Timestamp.class;
-    }
+    //    public static boolean isDateType(Class<?> type) {
+    //        return type == Date.class || type == Calendar.class || type == Timestamp.class;
+    //    }
 
     /**
      * Get the (first) class that parameterizes the Type supplied.
@@ -245,15 +234,15 @@ public final class ReflectionUtils {
      * Try to retrieve the generic parameter of an ObjectProperty at runtime.
      *  
      * @param source source Object
-     * @param field {@link Field} object
+     * @param type type
+     * @param genericType generic type
      * @return Class representing the generic parameter
      */
-    public static Class<?> getObjectPropertyGeneric(Object source, Field field) {
-        Type type = field.getGenericType();
-        if (type instanceof ParameterizedType) {
-            return getGenericClass(source, (ParameterizedType) type);
+    public static Class<?> getObjectPropertyGeneric(Object source, Class<?> type, Type genericType) {
+        if (genericType instanceof ParameterizedType) {
+            return getGenericClass(source, (ParameterizedType) genericType);
         } else {
-            return field.getType();
+            return type;
         }
     }
 
@@ -315,13 +304,14 @@ public final class ReflectionUtils {
      * Check if the type supplied is parameterized with a valid JCR property type.
      *
      * @param type the Type
+     * @param typeHandler {@link TypeHandler}
      * @return true if the type is parameterized with a valid JCR property type, else false
      */
-    public static boolean isTypeParameterizedWithPropertyType(Type type) {
+    public static boolean isTypeParameterizedWithPropertyType(Type type, TypeHandler typeHandler) {
         if (type instanceof ParameterizedType) {
             ParameterizedType ptype = (ParameterizedType) type;
             for (Type t : ptype.getActualTypeArguments()) {
-                if (isPropertyType((Class<?>) t)) {
+                if (typeHandler.isPropertyType((Class<?>) t)) {
                     return true;
                 }
             }

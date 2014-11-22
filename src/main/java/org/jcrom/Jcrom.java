@@ -32,6 +32,8 @@ import javax.jcr.Value;
 
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.callback.JcromCallback;
+import org.jcrom.type.DefaultTypeHandler;
+import org.jcrom.type.TypeHandler;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.ReflectionUtils;
 
@@ -112,8 +114,9 @@ public class Jcrom {
      * @param classesToMap a set of classes to map by this instance
      */
     public Jcrom(boolean cleanNames, boolean dynamicInstantiation, Set<Class<?>> classesToMap) {
-        this.mapper = new Mapper(cleanNames, dynamicInstantiation, this);
-        this.validator = new Validator(this);
+        TypeHandler typeHandler = new DefaultTypeHandler();
+        this.mapper = new Mapper(cleanNames, dynamicInstantiation, typeHandler, this);
+        this.validator = new Validator(typeHandler, this);
         this.annotationReader = new ReflectionAnnotationReader();
         for (Class<?> c : classesToMap) {
             map(c);

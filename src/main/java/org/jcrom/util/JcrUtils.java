@@ -17,37 +17,19 @@
  */
 package org.jcrom.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Timestamp;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
 import java.util.StringTokenizer;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.LongProperty;
-import javafx.beans.property.Property;
-import javafx.beans.property.StringProperty;
-
-import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.ValueFactory;
 import javax.jcr.lock.LockManager;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionManager;
 
 import org.jcrom.JcrMappingException;
-import org.jcrom.util.io.IOUtils;
 
 /**
  * Contains utilities used for JCR nodes
@@ -193,6 +175,7 @@ public final class JcrUtils {
      * @return a {@link Value} object
      * @throws RepositoryException
      */
+    /*
     public static Value createValue(Class<?> c, Object value, ValueFactory valueFactory) throws RepositoryException {
         if (Property.class.isAssignableFrom(c)) {
             Object wrappedValue = ((Property) value).getValue();
@@ -237,52 +220,176 @@ public final class JcrUtils {
         return null;
     }
 
+    public static Object getValue(Class<?> type, Type genericType, Value[] values) throws RepositoryException, IOException {
+        if (ReflectionUtils.implementsInterface(type, List.class)) {
+            // multi-value property (List)
+            List<Object> properties = new ArrayList<Object>();
+            Class<?> paramClass = ReflectionUtils.getParameterizedClass(genericType);
+            for (Value v : p.getValues()) {
+                properties.add(JcrUtils.getValue(paramClass, v));
+            }
+            fieldValue = properties;
+        } else if (ListProperty.class.isAssignableFrom(type)) {
+            ListProperty<Object> list = (ListProperty) field.get(obj);
+            List<Object> properties = new ArrayList<Object>();
+            Class<?> paramClass = ReflectionUtils.getParameterizedClass(genericType);
+            for (Value v : p.getValues()) {
+                properties.add(JcrUtils.getValue(paramClass, genericType, v));
+            }
+            list.setAll(properties);
+            fieldValue = list;
+        } else if (type.isArray()) {
+            // multi-value property (array)
+            Value[] values = p.getValues();
+            if (type.getComponentType() == byte.class) {
+                // byte array...we need to read from the stream
+                //fieldValue = Mapper.readBytes(value.getStream());
+                fieldValue = IOUtils.toByteArray(value.getBinary().getStream());
+            } else if (type.getComponentType() == int.class) {
+                int[] arr = new int[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    arr[i] = (int) values[i].getDouble();
+                }
+                fieldValue = arr;
+            } else if (type.getComponentType() == long.class) {
+                long[] arr = new long[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    arr[i] = values[i].getLong();
+                }
+                fieldValue = arr;
+            } else if (type.getComponentType() == double.class) {
+                double[] arr = new double[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    arr[i] = values[i].getDouble();
+                }
+                fieldValue = arr;
+            } else if (type.getComponentType() == boolean.class) {
+                boolean[] arr = new boolean[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    arr[i] = values[i].getBoolean();
+                }
+                fieldValue = arr;
+            } else if (type.getComponentType() == Locale.class) {
+                Locale[] arr = new Locale[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    arr[i] = JcrUtils.parseLocale(values[i].getString());
+                }
+                fieldValue = arr;
+            } else {
+                Object[] arr = valuesToArray(type.getComponentType(), values);
+                fieldValue = arr;
+            }
+        } else {
+
+        }
+    }
+    */
+
     /**
      * Returns a representation of the given {@link Value} by using the given {@link Class}.
      * 
-     * @param c {@link Class} used to return the representation with correct type
+     * @param type {@link Class} used to return the representation with correct type
      * @param value {@link Value} object
      * @return a representation of {@link Value}.
      * @throws RepositoryException
      * @throws IOException
      */
-    public static Object getValue(Class<?> c, Value value) throws RepositoryException, IOException {
-        if (c == String.class || StringProperty.class.isAssignableFrom(c)) {
-            return value.getString();
-        } else if (c == Date.class) {
-            return value.getDate().getTime();
-        } else if (c == Timestamp.class) {
-            return new Timestamp(value.getDate().getTimeInMillis());
-        } else if (c == Calendar.class) {
-            return value.getDate();
-        } else if (c == InputStream.class) {
-            //return value.getStream();
-            return value.getBinary().getStream();
+    /*
+    public static Object getValue(Class<?> type, Type genericType, Value value) throws RepositoryException, IOException {
+        Object fieldValue = null;
+
+        if (ReflectionUtils.implementsInterface(type, List.class)) {
+            // multi-value property (List)
+            List<Object> properties = new ArrayList<Object>();
+            Class<?> paramClass = ReflectionUtils.getParameterizedClass(genericType);
+            for (Value v : p.getValues()) {
+                properties.add(JcrUtils.getValue(paramClass, v));
+            }
+            fieldValue = properties;
+        } else if (ListProperty.class.isAssignableFrom(type)) {
+            ListProperty<Object> list = (ListProperty) field.get(obj);
+            List<Object> properties = new ArrayList<Object>();
+            Class<?> paramClass = ReflectionUtils.getParameterizedClass(genericType);
+            for (Value v : p.getValues()) {
+                properties.add(JcrUtils.getValue(paramClass, v));
+            }
+            list.setAll(properties);
+            fieldValue = list;
+        } else if (ObjectProperty.class.isAssignableFrom(type)) {
+            fieldValue = JcrUtils.getValue(ReflectionUtils.getObjectPropertyGeneric(obj, type, genericType), value);
+        } else if (type == String.class || StringProperty.class.isAssignableFrom(type)) {
+            fieldValue = value.getString();
+        } else if (type == Date.class) {
+            fieldValue = value.getDate().getTime();
+        } else if (type == Timestamp.class) {
+            fieldValue = new Timestamp(value.getDate().getTimeInMillis());
+        } else if (type == Calendar.class) {
+            fieldValue = value.getDate();
+        } else if (type == InputStream.class) {
+            //fieldValue = value.getStream();
+            fieldValue = value.getBinary().getStream();
         } else if (c.isArray() && c.getComponentType() == byte.class) {
             // byte array...we need to read from the stream
-            //return Mapper.readBytes(value.getStream());
-            return IOUtils.toByteArray(value.getBinary().getStream());
-        } else if (c == Integer.class || c == int.class || IntegerProperty.class.isAssignableFrom(c)) {
-            return (int) value.getDouble();
-        } else if (c == Long.class || c == long.class || LongProperty.class.isAssignableFrom(c)) {
-            return value.getLong();
-        } else if (c == Double.class || c == double.class || DoubleProperty.class.isAssignableFrom(c)) {
-            return value.getDouble();
-        } else if (c == Boolean.class || c == boolean.class || BooleanProperty.class.isAssignableFrom(c)) {
-            return value.getBoolean();
-        } else if (c == Locale.class) {
-            return parseLocale(value.getString());
-        } else if (c.isEnum()) {
-            return Enum.valueOf((Class<? extends Enum>) c, value.getString());
+            //fieldValue = Mapper.readBytes(value.getStream());
+            fieldValue = IOUtils.toByteArray(value.getBinary().getStream());
+        } else if (type.isArray()) {
+            // multi-value property (array)
+            Value[] values = p.getValues();
+            if (type.getComponentType() == int.class) {
+                int[] arr = new int[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    arr[i] = (int) values[i].getDouble();
+                }
+                fieldValue = arr;
+            } else if (type.getComponentType() == long.class) {
+                long[] arr = new long[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    arr[i] = values[i].getLong();
+                }
+                fieldValue = arr;
+            } else if (type.getComponentType() == double.class) {
+                double[] arr = new double[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    arr[i] = values[i].getDouble();
+                }
+                fieldValue = arr;
+            } else if (type.getComponentType() == boolean.class) {
+                boolean[] arr = new boolean[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    arr[i] = values[i].getBoolean();
+                }
+                fieldValue = arr;
+            } else if (type.getComponentType() == Locale.class) {
+                Locale[] arr = new Locale[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    arr[i] = JcrUtils.parseLocale(values[i].getString());
+                }
+                fieldValue = arr;
+            } else {
+                Object[] arr = valuesToArray(type.getComponentType(), values);
+                fieldValue = arr;
+            }
+        } else if (type == Integer.class || type == int.class || IntegerProperty.class.isAssignableFrom(type)) {
+            fieldValue = (int) value.getDouble();
+        } else if (type == Long.class || type == long.class || LongProperty.class.isAssignableFrom(type)) {
+            fieldValue = value.getLong();
+        } else if (type == Double.class || type == double.class || DoubleProperty.class.isAssignableFrom(type)) {
+            fieldValue = value.getDouble();
+        } else if (type == Boolean.class || type == boolean.class || BooleanProperty.class.isAssignableFrom(type)) {
+            fieldValue = value.getBoolean();
+        } else if (type == Locale.class) {
+            fieldValue = parseLocale(value.getString());
+        } else if (type.isEnum()) {
+            fieldValue = Enum.valueOf((Class<? extends Enum>) type, value.getString());
         }
-        return null;
+        return fieldValue;
     }
+    */
 
     /**
      * Parses given locale string to Locale object. If the string is empty or null then the we return null.
      * 
-     * @param localeString
-     *            a string containing locale in <code>language_country_variant</code> format.
+     * @param localeString a string containing locale in <code>language_country_variant</code> format.
      * @return Locale
      */
     public static Locale parseLocale(String localeString) {

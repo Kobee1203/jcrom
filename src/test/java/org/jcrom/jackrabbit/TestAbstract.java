@@ -56,7 +56,9 @@ public class TestAbstract {
 
     @After
     public void tearDownRepository() throws Exception {
-        session.logout();
+        if (session != null) {
+            session.logout();
+        }
         deleteDir(new File("repository"));
         new File("repository.xml").delete();
         new File("derby.log").delete();

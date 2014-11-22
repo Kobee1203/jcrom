@@ -31,7 +31,8 @@ import java.util.Map;
 import javafx.beans.property.StringProperty;
 
 import org.jcrom.entities.JavaFXEntity;
-import org.jcrom.util.JavaFXUtils;
+import org.jcrom.type.JavaFXTypeHandler;
+import org.jcrom.type.TypeHandler;
 import org.junit.Test;
 
 /**
@@ -41,6 +42,8 @@ import org.junit.Test;
  */
 public class TestsJavaFXUtils {
 
+    private final TypeHandler typeHandler = new JavaFXTypeHandler();
+
     @Test
     public void testGetObject() throws NoSuchFieldException, IllegalAccessException {
         JavaFXEntity javaFXEntity = new JavaFXEntity();
@@ -48,8 +51,8 @@ public class TestsJavaFXUtils {
         javaFXEntity.setString("test");
         Field fieldFX = JavaFXEntity.class.getField("stringFX");
         Field field = JavaFXEntity.class.getField("string");
-        assertEquals("testFX", JavaFXUtils.getObject(fieldFX, javaFXEntity));
-        assertEquals("test", JavaFXUtils.getObject(field, javaFXEntity));
+        assertEquals("testFX", typeHandler.getObject(fieldFX, javaFXEntity));
+        assertEquals("test", typeHandler.getObject(field, javaFXEntity));
     }
 
     @Test
@@ -59,8 +62,8 @@ public class TestsJavaFXUtils {
         javaFXEntity.setString("");
         Field fieldFX = JavaFXEntity.class.getField("stringFX");
         Field field = JavaFXEntity.class.getField("string");
-        JavaFXUtils.setObject(fieldFX, javaFXEntity, "testFX");
-        JavaFXUtils.setObject(field, javaFXEntity, "test");
+        typeHandler.setObject(fieldFX, javaFXEntity, "testFX");
+        typeHandler.setObject(field, javaFXEntity, "test");
         assertEquals("testFX", javaFXEntity.getStringFX());
         assertEquals("test", javaFXEntity.getString());
     }
@@ -70,7 +73,7 @@ public class TestsJavaFXUtils {
         JavaFXEntity javaFXEntity = new JavaFXEntity();
         Field fieldFX = JavaFXEntity.class.getField("listFX");
         List<String> content = Arrays.asList("a", "b", "c");
-        JavaFXUtils.setObject(fieldFX, javaFXEntity, content);
+        typeHandler.setObject(fieldFX, javaFXEntity, content);
         assertArrayEquals(new Object[] { "a", "b", "c" }, javaFXEntity.getListFX().toArray());
     }
 
@@ -82,7 +85,7 @@ public class TestsJavaFXUtils {
         content.put("a", 1.0);
         content.put("b", 2.0);
         content.put("c", 3.0);
-        JavaFXUtils.setObject(fieldFX, javaFXEntity, content);
+        typeHandler.setObject(fieldFX, javaFXEntity, content);
         assertEquals(3, javaFXEntity.getMapFX().size());
         assertTrue(javaFXEntity.getMapFX().keySet().containsAll(Arrays.asList("a", "b", "c")));
         assertTrue(javaFXEntity.getMapFX().values().containsAll(Arrays.asList(1.0, 2.0, 3.0)));
@@ -94,9 +97,9 @@ public class TestsJavaFXUtils {
         Field fieldStringFX = JavaFXEntity.class.getField("stringFX");
         Field listFX = JavaFXEntity.class.getField("listFX");
         Field list = JavaFXEntity.class.getField("list");
-        assertTrue(JavaFXUtils.isList(listFX.getType()));
-        assertTrue(JavaFXUtils.isList(list.getType()));
-        assertFalse(JavaFXUtils.isList(fieldStringFX.getType()));
+        assertTrue(typeHandler.isList(listFX.getType()));
+        assertTrue(typeHandler.isList(list.getType()));
+        assertFalse(typeHandler.isList(fieldStringFX.getType()));
     }
 
     @Test
@@ -105,9 +108,9 @@ public class TestsJavaFXUtils {
         Field fieldStringFX = JavaFXEntity.class.getField("stringFX");
         Field mapFX = JavaFXEntity.class.getField("mapFX");
         Field map = JavaFXEntity.class.getField("map");
-        assertTrue(JavaFXUtils.isMap(mapFX.getType()));
-        assertTrue(JavaFXUtils.isMap(map.getType()));
-        assertFalse(JavaFXUtils.isMap(fieldStringFX.getType()));
+        assertTrue(typeHandler.isMap(mapFX.getType()));
+        assertTrue(typeHandler.isMap(map.getType()));
+        assertFalse(typeHandler.isMap(fieldStringFX.getType()));
     }
 
     @Test
@@ -116,9 +119,9 @@ public class TestsJavaFXUtils {
         Field fieldStringFX = JavaFXEntity.class.getField("stringFX");
         Field fieldString = JavaFXEntity.class.getField("string");
         Field listFX = JavaFXEntity.class.getField("listFX");
-        assertTrue(JavaFXUtils.isNotString(listFX));
-        assertFalse(JavaFXUtils.isNotString(fieldString));
-        assertFalse(JavaFXUtils.isNotString(fieldStringFX));
+        assertFalse(typeHandler.isString(listFX.getType()));
+        assertTrue(typeHandler.isString(fieldString.getType()));
+        assertTrue(typeHandler.isString(fieldStringFX.getType()));
     }
 
     @Test
@@ -127,9 +130,9 @@ public class TestsJavaFXUtils {
         Field fieldStringFX = JavaFXEntity.class.getField("stringFX");
         Field fieldString = JavaFXEntity.class.getField("string");
         Field fieldObjectProperty = JavaFXEntity.class.getField("objectProperty");
-        assertEquals(String.class, JavaFXUtils.getType(fieldString, javaFXEntity));
-        assertEquals(StringProperty.class, JavaFXUtils.getType(fieldStringFX, javaFXEntity));
-        assertEquals(JavaFXEntity.class, JavaFXUtils.getType(fieldObjectProperty, javaFXEntity));
+        assertEquals(String.class, typeHandler.getType(fieldString.getType(), fieldString.getGenericType(), javaFXEntity));
+        assertEquals(StringProperty.class, typeHandler.getType(fieldStringFX.getType(), fieldStringFX.getGenericType(), javaFXEntity));
+        assertEquals(JavaFXEntity.class, typeHandler.getType(fieldObjectProperty.getType(), fieldObjectProperty.getGenericType(), javaFXEntity));
     }
 
 }

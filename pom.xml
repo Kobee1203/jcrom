@@ -100,7 +100,7 @@
             <version>1.1</version>
         </dependency>
         <!-- cf. http://notaboekje.blogspot.fr/2012/02/creer-un-projet-maven-pour-javafx.html  -->
-        <!-- Add javafx.rt.jar property in maven settings.xml, representing the path of the JavaFX jar -->
+        <!-- Add 'javafx.rt.jar' property in maven settings.xml, representing the path of the JavaFX jar -->
         <dependency>
             <groupId>com.oracle</groupId>
             <artifactId>javafx</artifactId>

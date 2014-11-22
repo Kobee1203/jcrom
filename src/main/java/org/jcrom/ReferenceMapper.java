@@ -17,19 +17,12 @@
  */
 package org.jcrom;
 
-import static org.jcrom.util.JavaFXUtils.getObject;
-import static org.jcrom.util.JavaFXUtils.isList;
-import static org.jcrom.util.JavaFXUtils.isMap;
-import static org.jcrom.util.JavaFXUtils.setObject;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javafx.beans.property.ObjectProperty;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
@@ -41,6 +34,7 @@ import javax.jcr.Value;
 
 import org.jcrom.annotations.JcrFileNode;
 import org.jcrom.annotations.JcrReference;
+import org.jcrom.type.TypeHandler;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.PathUtils;
 import org.jcrom.util.ReflectionUtils;
@@ -55,8 +49,11 @@ class ReferenceMapper {
 
     private final Mapper mapper;
 
+    private final TypeHandler typeHandler;
+
     public ReferenceMapper(Mapper mapper) {
         this.mapper = mapper;
+        this.typeHandler = mapper.getTypeHandler();
     }
 
     private String getPropertyName(Field field) {
@@ -99,7 +96,7 @@ class ReferenceMapper {
     private void addSingleReferenceToNode(Field field, Object obj, String propertyName, Node node) throws IllegalAccessException, RepositoryException {
         // extract the Identifier from the object, load the node, and add a reference to it
         JcrReference jcrReference = mapper.getJcrom().getAnnotationReader().getAnnotation(field, JcrReference.class);
-        Object referenceObject = getObject(field, obj);
+        Object referenceObject = typeHandler.getObject(field, obj);
         if (referenceObject != null) {
             referenceObject = mapper.clearCglib(referenceObject);
         }
@@ -180,7 +177,7 @@ class ReferenceMapper {
             Class<?> paramClass = ReflectionUtils.getParameterizedClass(field.getGenericType(), 1);
             for (Map.Entry<?, ?> entry : referenceMap.entrySet()) {
                 String key = (String) entry.getKey();
-                if (isList(paramClass)) {
+                if (typeHandler.isList(paramClass)) {
                     List<?> references = (List<?>) entry.getValue();
                     List<Value> refValues = getReferenceValues(references, referenceContainer.getSession(), jcrReference);
                     if (!refValues.isEmpty()) {
@@ -201,10 +198,10 @@ class ReferenceMapper {
 
         // make sure that the reference should be updated
         if (nodeFilter == null || nodeFilter.isNameIncluded(field.getName())) {
-            if (isList(field.getType())) {
+            if (typeHandler.isList(field.getType())) {
                 // multiple references in a List
                 addMultipleReferencesToNode(field, obj, propertyName, node);
-            } else if (isMap(field.getType())) {
+            } else if (typeHandler.isMap(field.getType())) {
                 // multiple references in a Map
                 addMapOfReferencesToNode(field, obj, propertyName, node);
             } else {
@@ -307,7 +304,7 @@ class ReferenceMapper {
             while (propertyIterator.hasNext()) {
                 Property p = propertyIterator.nextProperty();
                 if (!p.getName().startsWith("jcr:") && !p.getName().startsWith(NamespaceRegistry.NAMESPACE_JCR)) {
-                    if (isList(mapParamClass)) {
+                    if (typeHandler.isList(mapParamClass)) {
                         if (jcrReference.lazy()) {
                             references.put(p.getName(), ProxyFactory.createReferenceListProxy(Object.class, obj, containerNode.getPath(), p.getName(), node.getSession(), mapper, depth, nodeFilter, field));
                         } else {
@@ -332,7 +329,7 @@ class ReferenceMapper {
         String propertyName = getPropertyName(field);
         JcrReference jcrReference = mapper.getJcrom().getAnnotationReader().getAnnotation(field, JcrReference.class);
 
-        if (isList(field.getType())) {
+        if (typeHandler.isList(field.getType())) {
             // multiple references in a List
             Class<?> referenceObjClass = ReflectionUtils.getParameterizedClass(field.getGenericType());
             List value = null;
@@ -343,29 +340,24 @@ class ReferenceMapper {
                 // eager loading
                 value = getReferenceList(field, propertyName, referenceObjClass, node, obj, depth, nodeFilter, mapper);
             }
-            setObject(field, obj, value);
-        } else if (isMap(field.getType())) {
+            typeHandler.setObject(field, obj, value);
+        } else if (typeHandler.isMap(field.getType())) {
             // multiple references in a Map
             // lazy loading is applied to each value in the Map
             Class<?> mapParamClass = ReflectionUtils.getParameterizedClass(field.getGenericType(), 1);
             Map<String, Object> value = getReferenceMap(field, propertyName, mapParamClass, node, obj, depth, nodeFilter, mapper, jcrReference);
-            setObject(field, obj, value);
+            typeHandler.setObject(field, obj, value);
         } else {
             // single reference
             if (node.hasProperty(propertyName)) {
-                Class<?> referenceObjClass = null;
-                if (ObjectProperty.class.isAssignableFrom(field.getType())) {
-                    referenceObjClass = ReflectionUtils.getObjectPropertyGeneric(obj, field);
-                } else {
-                    referenceObjClass = field.getType();
-                }
+                Class<?> referenceObjClass = typeHandler.getType(field.getType(), field.getGenericType(), obj);
                 Object value = null;
                 if (jcrReference.lazy()) {
                     value = ProxyFactory.createReferenceProxy(referenceObjClass, obj, node.getPath(), propertyName, node.getSession(), mapper, depth, nodeFilter, field);
                 } else {
                     value = createReferencedObject(field, node.getProperty(propertyName).getValue(), obj, node.getSession(), referenceObjClass, depth, nodeFilter, mapper);
                 }
-                setObject(field, obj, value);
+                typeHandler.setObject(field, obj, value);
             }
         }
     }

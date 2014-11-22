@@ -34,7 +34,6 @@ import org.jcrom.Jcrom;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.callback.DefaultJcromCallback;
 import org.jcrom.entities.Parent;
-import org.jcrom.util.JcrUtils;
 import org.jcrom.util.PathUtils;
 import org.junit.Test;
 
@@ -120,7 +119,7 @@ public class TestJcromCallback extends TestAbstract {
                 System.out.println("complete entity in callback");
                 Parent parent = (Parent) entity;
                 parent.setFingers(5);
-                Value value = JcrUtils.createValue(int.class, 5, node.getSession().getValueFactory());
+                Value value = node.getSession().getValueFactory().createValue(5);
                 node.setProperty("fingers", value);
             }
         });

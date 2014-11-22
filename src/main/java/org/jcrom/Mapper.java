@@ -17,10 +17,6 @@
  */
 package org.jcrom;
 
-import static org.jcrom.util.JavaFXUtils.getObject;
-import static org.jcrom.util.JavaFXUtils.getType;
-import static org.jcrom.util.JavaFXUtils.setObject;
-
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -65,7 +61,7 @@ import org.jcrom.annotations.JcrVersionCreated;
 import org.jcrom.annotations.JcrVersionName;
 import org.jcrom.callback.DefaultJcromCallback;
 import org.jcrom.callback.JcromCallback;
-import org.jcrom.util.JavaFXUtils;
+import org.jcrom.type.TypeHandler;
 import org.jcrom.util.JcrUtils;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.PathUtils;
@@ -87,6 +83,8 @@ class Mapper {
     private final boolean cleanNames;
     /** Specifies whether to retrieve mapped class name from node property */
     private final boolean dynamicInstantiation;
+    /** */
+    private final TypeHandler typeHandler;
 
     private final PropertyMapper propertyMapper;
 
@@ -102,13 +100,16 @@ class Mapper {
 
     /**
      * Create a Mapper for a specific class.
-     *
-     * @param entityClass
-     *            the class that we will me mapping to/from
+     * 
+     * @param cleanNames specifies whether to clean names of new nodes, that is, replace illegal characters and spaces automatically
+     * @param dynamicInstantiation if set to true, then Jcrom will try to retrieve the name of the class to instantiate from a node property (see @JcrNode(classNameProperty)).
+     * @param typeHandler {@link TypeHandler}
+     * @param jcrom 
      */
-    Mapper(boolean cleanNames, boolean dynamicInstantiation, Jcrom jcrom) {
+    Mapper(boolean cleanNames, boolean dynamicInstantiation, TypeHandler typeHandler, Jcrom jcrom) {
         this.cleanNames = cleanNames;
         this.dynamicInstantiation = dynamicInstantiation;
+        this.typeHandler = typeHandler;
         this.jcrom = jcrom;
         this.propertyMapper = new PropertyMapper(this);
         this.referenceMapper = new ReferenceMapper(this);
@@ -138,6 +139,10 @@ class Mapper {
 
     boolean isDynamicInstantiation() {
         return dynamicInstantiation;
+    }
+
+    TypeHandler getTypeHandler() {
+        return typeHandler;
     }
 
     Class<?> getClassForName(String className) {
@@ -214,17 +219,17 @@ class Mapper {
 
     String getNodeName(Object object) throws IllegalAccessException {
         Field field = findNameField(object);
-        return (String) JavaFXUtils.getObject(field, object);
+        return (String) typeHandler.getObject(field, object);
     }
 
     String getNodePath(Object object) throws IllegalAccessException {
         Field field = findPathField(object);
-        return (String) JavaFXUtils.getObject(field, object);
+        return (String) typeHandler.getObject(field, object);
     }
 
     Object getParentObject(Object childObject) throws IllegalAccessException {
         Field parentField = findParentField(childObject);
-        return parentField != null ? getObject(parentField, childObject) : null;
+        return parentField != null ? typeHandler.getObject(parentField, childObject) : null;
     }
 
     String getChildContainerNodePath(Object childObject, Object parentObject, Node parentNode) throws IllegalAccessException, RepositoryException {
@@ -242,7 +247,7 @@ class Mapper {
 
     String getNodeId(Object object) throws IllegalAccessException {
         Field idField = findIdField(object);
-        return idField != null ? (String) getObject(idField, object) : getNodeUUID(object);
+        return idField != null ? (String) typeHandler.getObject(idField, object) : getNodeUUID(object);
     }
 
     static boolean hasMixinType(Node node, String mixinType) throws RepositoryException {
@@ -273,12 +278,12 @@ class Mapper {
 
     void setNodeName(Object object, String name) throws IllegalAccessException {
         Field field = findNameField(object);
-        setObject(field, object, name);
+        typeHandler.setObject(field, object, name);
     }
 
     void setNodePath(Object object, String path) throws IllegalAccessException {
         Field field = findPathField(object);
-        setObject(field, object, path);
+        typeHandler.setObject(field, object, path);
     }
 
     /**
@@ -289,14 +294,14 @@ class Mapper {
     void setUUID(Object object, String uuid) throws IllegalAccessException {
         Field uuidField = findUUIDField(object);
         if (uuidField != null) {
-            setObject(uuidField, object, uuid);
+            typeHandler.setObject(uuidField, object, uuid);
         }
     }
 
     void setId(Object object, String id) throws IllegalAccessException {
         Field idField = findIdField(object);
         if (idField != null) {
-            setObject(idField, object, id);
+            typeHandler.setObject(idField, object, id);
         }
     }
 
@@ -457,9 +462,7 @@ class Mapper {
     }
 
     Node addNode(Node parentNode, Object entity, String[] mixinTypes, boolean createNode, JcromCallback action) throws IllegalAccessException, RepositoryException, IOException {
-        if (javafx.beans.property.Property.class.isAssignableFrom(entity.getClass())) {
-            entity = ((javafx.beans.property.Property) entity).getValue();
-        }
+        entity = typeHandler.resolveAddEntity(entity);
         entity = clearCglib(entity);
 
         if (action == null) {
@@ -468,7 +471,7 @@ class Mapper {
 
         // create the child node
         Node node;
-        JcrNode jcrNode = ReflectionUtils.getJcrNodeAnnotation(entity.getClass());
+        JcrNode jcrNode = typeHandler.getJcrAnnotation(entity, entity.getClass(), entity.getClass().getGenericSuperclass());
         if (createNode) {
             // add node
             String nodeName = getCleanName(getNodeName(entity));
@@ -687,81 +690,66 @@ class Mapper {
 
             if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProperty.class) && nodeFilter.isDepthPropertyIncluded(depth)) {
                 propertyMapper.mapPropertyToField(obj, field, node, depth, nodeFilter);
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrSerializedProperty.class) && nodeFilter.isDepthPropertyIncluded(depth)) {
                 propertyMapper.mapSerializedPropertyToField(obj, field, node, depth, nodeFilter);
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrProtectedProperty.class)) {
                 propertyMapper.mapProtectedPropertyToField(obj, field, node);
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrUUID.class)) {
                 if (node.hasProperty(Property.JCR_UUID)) {
-                    //field.set(obj, node.getUUID());
-                    setObject(field, obj, node.getIdentifier());
+                    // field.set(obj, node.getUUID());
+                    typeHandler.setObject(field, obj, node.getIdentifier());
                 }
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrIdentifier.class)) {
-                setObject(field, obj, node.getIdentifier());
-
+                typeHandler.setObject(field, obj, node.getIdentifier());
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrBaseVersionName.class)) {
                 if (isVersionable(node)) {
-                    //Version baseVersion = node.getBaseVersion();
+                    // Version baseVersion = node.getBaseVersion();
                     Version baseVersion = getVersionManager(node).getBaseVersion(node.getPath());
-                    setObject(field, obj, baseVersion.getName());
+                    typeHandler.setObject(field, obj, baseVersion.getName());
                 }
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrBaseVersionCreated.class)) {
                 if (isVersionable(node)) {
-                    //Version baseVersion = node.getBaseVersion();
+                    // Version baseVersion = node.getBaseVersion();
                     Version baseVersion = getVersionManager(node).getBaseVersion(node.getPath());
-                    setObject(field, obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(baseVersion.getCreated())));
+                    typeHandler.setObject(field, obj, typeHandler.getValue(field.getType(), null, typeHandler.createValue(Calendar.class, baseVersion.getCreated(), node.getSession().getValueFactory()), null));
                 }
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrVersionName.class)) {
                 if (node.getParent() != null && node.getParent().isNodeType(NodeType.NT_VERSION)) {
-                    setObject(field, obj, node.getParent().getName());
+                    typeHandler.setObject(field, obj, node.getParent().getName());
                 } else if (isVersionable(node)) {
                     // if we're not browsing version history, then this must be the base version
                     //Version baseVersion = node.getBaseVersion();
                     Version baseVersion = getVersionManager(node).getBaseVersion(node.getPath());
-                    setObject(field, obj, baseVersion.getName());
+                    typeHandler.setObject(field, obj, baseVersion.getName());
                 }
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrVersionCreated.class)) {
                 if (node.getParent() != null && node.getParent().isNodeType(NodeType.NT_VERSION)) {
                     Version version = (Version) node.getParent();
-                    setObject(field, obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(version.getCreated())));
+                    typeHandler.setObject(field, obj, typeHandler.getValue(field.getType(), null, typeHandler.createValue(Calendar.class, version.getCreated(), node.getSession().getValueFactory()), null));
                 } else if (isVersionable(node)) {
                     // if we're not browsing version history, then this must be the base version
                     //Version baseVersion = node.getBaseVersion();
                     Version baseVersion = getVersionManager(node).getBaseVersion(node.getPath());
-                    setObject(field, obj, JcrUtils.getValue(field.getType(), node.getSession().getValueFactory().createValue(baseVersion.getCreated())));
+                    typeHandler.setObject(field, obj, typeHandler.getValue(field.getType(), null, typeHandler.createValue(Calendar.class, baseVersion.getCreated(), node.getSession().getValueFactory()), null));
                 }
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrCheckedout.class)) {
-                setObject(field, obj, node.isCheckedOut());
-
+                typeHandler.setObject(field, obj, node.isCheckedOut());
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrCreated.class)) {
                 if (node.hasProperty(Property.JCR_CREATED)) {
-                    setObject(field, obj, JcrUtils.getValue(field.getType(), node.getProperty(Property.JCR_CREATED).getValue()));
+                    typeHandler.setObject(field, obj, typeHandler.getValue(field.getType(), null, node.getProperty(Property.JCR_CREATED).getValue(), null));
                 }
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrParentNode.class)) {
-                if (parentObject != null && getType(field, obj).isInstance(parentObject)) {
-                    setObject(field, obj, parentObject);
+                if (parentObject != null && typeHandler.getType(field.getType(), field.getGenericType(), obj).isInstance(parentObject)) {
+                    typeHandler.setObject(field, obj, parentObject);
                 }
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrChildNode.class) && nodeFilter.isDepthIncluded(depth)) {
                 childNodeMapper.getChildrenFromNode(field, node, obj, depth, nodeFilter, this);
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrReference.class)) {
                 referenceMapper.getReferencesFromNode(field, node, obj, depth, nodeFilter, this);
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrFileNode.class) && nodeFilter.isDepthIncluded(depth)) {
                 fileNodeMapper.getFilesFromNode(field, node, obj, depth, nodeFilter, this);
-
             } else if (jcrom.getAnnotationReader().isAnnotationPresent(field, JcrPath.class)) {
-                setObject(field, obj, node.getPath());
+                typeHandler.setObject(field, obj, node.getPath());
             }
         }
         return obj;
@@ -790,8 +778,9 @@ class Mapper {
         for (Field field : ReflectionUtils.getDeclaredAndInheritedFields(obj.getClass(), true)) {
             field.setAccessible(true);
             if (field.getName().equals("CGLIB$LAZY_LOADER_0")) {
-                if (getObject(field, obj) != null) {
-                    return getObject(field, obj);
+                Object object = typeHandler.getObject(field, obj);
+                if (object != null) {
+                    return object;
                 } else {
                     // lazy loading has not been triggered yet, so
                     // we do it manually
@@ -807,7 +796,7 @@ class Mapper {
             field.setAccessible(true);
             if (field.getName().equals("CGLIB$CALLBACK_0")) {
                 try {
-                    return ((LazyLoader) getObject(field, obj)).loadObject();
+                    return ((LazyLoader) typeHandler.getObject(field, obj)).loadObject();
                 } catch (Exception e) {
                     throw new JcrMappingException("Could not trigger lazy loading", e);
                 }
