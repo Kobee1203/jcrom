@@ -145,28 +145,6 @@ public final class ReflectionUtils {
     }
 
     /**
-     * Check if the class supplied represents a valid JCR property type.
-     *
-     * @param type the class we want to check
-     * @return true if the class represents a valid JCR property type
-     */
-    //    public static boolean isPropertyType(Class<?> type) {
-    //        return isValidMapValueType(type) || type == InputStream.class || isArrayOfType(type, byte.class);
-    //    }
-
-    //    public static boolean isValidMapValueType(Class<?> type) {
-    //        return type == String.class || type == StringProperty.class || isArrayOfType(type, String.class) || type == Date.class || isArrayOfType(type, Date.class) || type == Calendar.class || isArrayOfType(type, Calendar.class) || type == Timestamp.class || isArrayOfType(type, Timestamp.class) || type == Integer.class || type == IntegerProperty.class || isArrayOfType(type, Integer.class) || type == int.class || isArrayOfType(type, int.class) || type == Long.class || type == LongProperty.class || isArrayOfType(type, Long.class) || type == long.class || isArrayOfType(type, long.class) || type == Double.class || type == DoubleProperty.class || isArrayOfType(type, Double.class) || type == double.class || isArrayOfType(type, double.class) || type == Boolean.class || type == BooleanProperty.class || isArrayOfType(type, Boolean.class) || type == boolean.class || isArrayOfType(type, boolean.class) || type == Locale.class || isArrayOfType(type, Locale.class) || type.isEnum() || (type.isArray() && type.getComponentType().isEnum()) || type == ObjectProperty.class;
-    //    }
-
-    //    private static boolean isArrayOfType(Class<?> c, Class<?> type) {
-    //        return c.isArray() && c.getComponentType() == type;
-    //    }
-
-    //    public static boolean isDateType(Class<?> type) {
-    //        return type == Date.class || type == Calendar.class || type == Timestamp.class;
-    //    }
-
-    /**
      * Get the (first) class that parameterizes the Type supplied.
      * 
      * @param type the Type
