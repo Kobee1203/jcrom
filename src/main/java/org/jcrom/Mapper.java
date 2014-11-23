@@ -471,7 +471,7 @@ class Mapper {
 
         // create the child node
         Node node;
-        JcrNode jcrNode = typeHandler.getJcrAnnotation(entity, entity.getClass(), entity.getClass().getGenericSuperclass());
+        JcrNode jcrNode = typeHandler.getJcrNodeAnnotation(entity.getClass(), entity.getClass().getGenericSuperclass(), entity);
         if (createNode) {
             // add node
             String nodeName = getCleanName(getNodeName(entity));

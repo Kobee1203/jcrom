@@ -27,7 +27,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * @author Nicolas Dos Santos
  */
 @RunWith(Suite.class)
-@SuiteClasses({ TestFilters.class, TestPathUtils.class, TestReflection.class, TestsJavaFXUtils.class, AllJackrabbitTests.class, AllModeShapeTests.class })
+@SuiteClasses({ TestFilters.class, TestPathUtils.class, TestReflection.class, TestsJavaFXTypeHandler.class, AllJackrabbitTests.class, AllModeShapeTests.class })
 public class AllJcromTests {
 
 }

@@ -72,7 +72,7 @@ public class DefaultTypeHandler implements TypeHandler {
     }
 
     @Override
-    public JcrNode getJcrAnnotation(Object entity, Class<?> type, Type genericType) {
+    public JcrNode getJcrNodeAnnotation(Class<?> type, Type genericType, Object entity) {
         return ReflectionUtils.getJcrNodeAnnotation(type);
     }
 

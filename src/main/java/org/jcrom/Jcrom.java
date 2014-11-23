@@ -33,6 +33,7 @@ import javax.jcr.Value;
 import org.jcrom.annotations.JcrNode;
 import org.jcrom.callback.JcromCallback;
 import org.jcrom.type.DefaultTypeHandler;
+import org.jcrom.type.JavaFXTypeHandler;
 import org.jcrom.type.TypeHandler;
 import org.jcrom.util.NodeFilter;
 import org.jcrom.util.ReflectionUtils;
@@ -114,9 +115,31 @@ public class Jcrom {
      * @param classesToMap a set of classes to map by this instance
      */
     public Jcrom(boolean cleanNames, boolean dynamicInstantiation, Set<Class<?>> classesToMap) {
-        TypeHandler typeHandler = new DefaultTypeHandler();
-        this.mapper = new Mapper(cleanNames, dynamicInstantiation, typeHandler, this);
-        this.validator = new Validator(typeHandler, this);
+        this(cleanNames, dynamicInstantiation, classesToMap, getTypeHandler());
+    }
+
+    private static TypeHandler getTypeHandler() {
+        Class<?> clazz = null;
+        try {
+            // Try to find a Java FX class. If found, uses the JavaFXTypeHandler class
+            clazz = Class.forName("javafx.beans.property.ObjectProperty");
+        } catch (Exception e) {
+        }
+        return clazz == null ? new DefaultTypeHandler() : new JavaFXTypeHandler();
+    }
+
+    /**
+     * Create a new Jcrom instance.
+     * 
+     * @param cleanNames specifies whether to clean names of new nodes, that is, replace illegal characters and spaces automatically
+     * @param dynamicInstantiation if set to true, then Jcrom will try to retrieve the name of the class to instantiate from a node property (see @JcrNode(classNameProperty)).
+     * @param classesToMap a set of classes to map by this instance
+     * @param typeHandler Implementation of {@link TypeHandler} to handle additional types. If <code>null</code>, Defaults {@link DefaultTypeHandler} 
+     */
+    public Jcrom(boolean cleanNames, boolean dynamicInstantiation, Set<Class<?>> classesToMap, TypeHandler typeHandler) {
+        TypeHandler th = typeHandler != null ? typeHandler : new DefaultTypeHandler();
+        this.mapper = new Mapper(cleanNames, dynamicInstantiation, th, this);
+        this.validator = new Validator(th, this);
         this.annotationReader = new ReflectionAnnotationReader();
         for (Class<?> c : classesToMap) {
             map(c);

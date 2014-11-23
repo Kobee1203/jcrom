@@ -17,7 +17,6 @@
  */
 package org.jcrom.jackrabbit;
 
-import org.jcrom.modeshape.TestModeShape;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
@@ -26,10 +25,12 @@ import org.junit.runners.Suite.SuiteClasses;
  * @author Nicolas Dos Santos
  */
 @RunWith(Suite.class)
-@SuiteClasses({ 
-    TestAdobeCQ.class, TestConverter.class, TestInstantiation.class, TestJcrFileReference.class, 
-    TestJcromCallback.class, TestJcrReference.class, TestLazyLoading.class, TestMapping.class, 
-    TestModeShape.class, TestReferenceHistory.class, TestUserManager.class
+@SuiteClasses({
+// @formatter:off
+    TestAdobeCQ.class, TestConverter.class, TestInstantiation.class, TestJavaFX.class,
+    TestJcrFileReference.class, TestJcromCallback.class, TestJcrReference.class, TestLazyLoading.class,
+    TestMapping.class, TestReferenceHistory.class, TestUserManager.class
+// @formatter:on
 })
 public class AllJackrabbitTests {
 

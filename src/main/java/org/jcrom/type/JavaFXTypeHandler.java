@@ -39,6 +39,7 @@ package org.jcrom.type;
 
 import static org.jcrom.util.ReflectionUtils.getMethod;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -52,12 +53,13 @@ import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ListProperty;
 import javafx.beans.property.LongProperty;
-import javafx.beans.property.MapProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
@@ -81,12 +83,12 @@ public class JavaFXTypeHandler extends DefaultTypeHandler {
     }
 
     @Override
-    public JcrNode getJcrAnnotation(Object entity, Class<?> type, Type genericType) {
+    public JcrNode getJcrNodeAnnotation(Class<?> type, Type genericType, Object source) {
         JcrNode fileJcrNode = null;
         if (ObjectProperty.class.isAssignableFrom(type)) {
-            fileJcrNode = ReflectionUtils.getJcrNodeAnnotation(ReflectionUtils.getObjectPropertyGeneric(entity, type, genericType));
+            fileJcrNode = ReflectionUtils.getJcrNodeAnnotation(ReflectionUtils.getObjectPropertyGeneric(source, type, genericType));
         } else {
-            fileJcrNode = super.getJcrAnnotation(entity, type, genericType);
+            fileJcrNode = super.getJcrNodeAnnotation(type, genericType, source);
         }
         return fileJcrNode;
     }
@@ -108,12 +110,12 @@ public class JavaFXTypeHandler extends DefaultTypeHandler {
 
     @Override
     public boolean isMap(Class<?> type) {
-        return MapProperty.class.isAssignableFrom(type) || super.isMap(type);
+        return ObservableMap.class.isAssignableFrom(type) || super.isMap(type);
     }
 
     @Override
     public boolean isList(Class<?> type) {
-        return ListProperty.class.isAssignableFrom(type) || super.isList(type);
+        return ObservableList.class.isAssignableFrom(type) || super.isList(type);
     }
 
     @Override
@@ -157,8 +159,8 @@ public class JavaFXTypeHandler extends DefaultTypeHandler {
     public Object getValues(Class<?> type, Type genericType, Value[] values, Object currentObj) throws RepositoryException {
         Object fieldValue;
 
-        if (ListProperty.class.isAssignableFrom(type)) {
-            ListProperty<Object> list = (ListProperty) currentObj;
+        if (ObservableList.class.isAssignableFrom(type)) {
+            ObservableList<Object> list = (ObservableList) currentObj;
             List<Object> properties = new ArrayList<Object>();
             Class<?> paramClass = ReflectionUtils.getParameterizedClass(genericType);
             for (Value v : values) {
@@ -193,9 +195,9 @@ public class JavaFXTypeHandler extends DefaultTypeHandler {
     public Value[] createValues(Class<?> c, Class<?> paramClass, Object values, ValueFactory valueFactory) throws RepositoryException {
         Value[] nodeValues;
 
-        if (ListProperty.class.isAssignableFrom(c)) {
+        if (ObservableList.class.isAssignableFrom(c)) {
             // multi-value property List
-            ListProperty<?> fieldValues = (ListProperty<?>) values;
+            ObservableList<?> fieldValues = (ObservableList<?>) values;
             if (!fieldValues.isEmpty()) {
                 Value[] valuesArray = new Value[fieldValues.size()];
                 for (int i = 0; i < fieldValues.size(); i++) {
@@ -226,24 +228,45 @@ public class JavaFXTypeHandler extends DefaultTypeHandler {
         if (value == null) {
             return;
         }
-        if (MapProperty.class.isAssignableFrom(field.getType())) {
+        if (ObservableMap.class.isAssignableFrom(field.getType())) {
             Object mapProperty = field.get(source);
             if (mapProperty != null) {
-                ((MapProperty) mapProperty).putAll((Map) value);
+                ((ObservableMap) mapProperty).putAll((Map) value);
             } else {
                 try {
-                    ((MapProperty) getPropertyByPropertyGetter(field, source)).putAll((Map) value);
+                    ((ObservableMap) getPropertyByPropertyGetter(field, source)).putAll((Map) value);
                 } catch (NoSuchMethodException e) {
                 } catch (InvocationTargetException e) {
                 }
             }
-        } else if (ListProperty.class.isAssignableFrom(field.getType())) {
-            Object listProperty = field.get(source);
-            if (listProperty != null) {
-                ((ListProperty) listProperty).setAll((Collection) value);
+        } else if (ObservableList.class.isAssignableFrom(field.getType())) {
+            Collection valueCollection = null;
+            Collection valueColl = (Collection) value;
+            try {
+                // Create a new instance typified with the class of 'value'
+                valueCollection = valueColl.getClass().getConstructor().newInstance();
+                valueCollection.addAll(valueColl);
+            } catch (Exception e) {
+                // Default constructor not found, try to find a constructor with one parameter which extends Collection
+                for (Constructor<?> constr : valueColl.getClass().getConstructors()) {
+                    Class<?>[] parameterTypes = constr.getParameterTypes();
+                    if (parameterTypes != null && parameterTypes.length == 1 && Collection.class.isAssignableFrom(parameterTypes[0])) {
+                        try {
+                            valueCollection = (Collection) constr.newInstance(FXCollections.observableArrayList(valueColl));
+                            break;
+                        } catch (Exception e1) {
+                        }
+                    }
+                }
+            }
+            valueCollection = valueCollection != null ? valueCollection : (Collection) value;
+
+            Object list = field.get(source);
+            if (list != null) {
+                ((ObservableList) list).setAll(valueCollection);
             } else {
                 try {
-                    ((ListProperty) getPropertyByPropertyGetter(field, source)).setAll((Collection) value);
+                    ((ObservableList) getPropertyByPropertyGetter(field, source)).setAll(valueCollection);
                 } catch (NoSuchMethodException e) {
                 } catch (InvocationTargetException e) {
                 }

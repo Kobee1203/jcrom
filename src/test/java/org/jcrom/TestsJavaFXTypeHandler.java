@@ -36,11 +36,11 @@ import org.jcrom.type.TypeHandler;
 import org.junit.Test;
 
 /**
- * User: Antoine Mischler <antoine@dooapp.com>
- * Date: 17/10/2014
- * Time: 16:19
+ * 
+ * @author Nicolas Dos Santos
+ * @author Antoine Mischler
  */
-public class TestsJavaFXUtils {
+public class TestsJavaFXTypeHandler {
 
     private final TypeHandler typeHandler = new JavaFXTypeHandler();
 

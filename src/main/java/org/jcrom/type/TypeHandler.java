@@ -65,7 +65,7 @@ public interface TypeHandler {
      * @param field
      * @return
      */
-    JcrNode getJcrAnnotation(Object entity, Class<?> type, Type genericType);
+    JcrNode getJcrNodeAnnotation(Class<?> type, Type genericType, Object entity);
 
     /**
      * Check if the class supplied represents a valid JCR property type.

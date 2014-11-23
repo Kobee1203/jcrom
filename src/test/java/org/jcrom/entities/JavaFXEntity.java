@@ -34,34 +34,38 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 
-import org.jcrom.annotations.JcrName;
-import org.jcrom.annotations.JcrPath;
+import org.jcrom.AbstractJcrEntity;
+import org.jcrom.annotations.JcrChildNode;
+import org.jcrom.annotations.JcrProperty;
 
 /**
- * User: Antoine Mischler <antoine@dooapp.com>
- * Date: 17/10/2014
- * Time: 16:20
+ * 
+ * @author Nicolas Dos Santos
+ * @author Antoine Mischler
  */
-public class JavaFXEntity {
+public class JavaFXEntity extends AbstractJcrEntity {
 
-    @JcrPath
-    protected String path;
+    private static final long serialVersionUID = 1L;
 
-    @JcrName
-    protected String name;
-
+    @JcrProperty
     public StringProperty stringFX = new SimpleStringProperty();
 
+    @JcrProperty
     public String string;
 
+    @JcrProperty
     public ListProperty<String> listFX = new SimpleListProperty(FXCollections.observableArrayList());
 
+    @JcrProperty
     public List<String> list = new LinkedList<String>();
 
+    @JcrProperty
     public Map<String, Double> map = new HashMap<String, Double>();
 
+    @JcrProperty
     public MapProperty<String, Double> mapFX = new SimpleMapProperty(FXCollections.observableHashMap());
 
+    @JcrChildNode
     public ObjectProperty<JavaFXEntity> objectProperty = new SimpleObjectProperty<JavaFXEntity>();
 
     public String getStringFX() {
@@ -122,5 +126,13 @@ public class JavaFXEntity {
 
     public void setMap(Map<String, Double> map) {
         this.map = map;
+    }
+
+    public ObjectProperty<JavaFXEntity> getObjectProperty() {
+        return objectProperty;
+    }
+
+    public void setObjectProperty(ObjectProperty<JavaFXEntity> objectProperty) {
+        this.objectProperty = objectProperty;
     }
 }

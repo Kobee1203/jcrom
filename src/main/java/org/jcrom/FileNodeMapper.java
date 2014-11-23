@@ -183,7 +183,7 @@ class FileNodeMapper {
 
     private void addSingleFileToNode(Field field, Object obj, String nodeName, Node node, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
-        JcrNode fileJcrNode = typeHandler.getJcrAnnotation(obj, field.getType(), field.getGenericType());
+        JcrNode fileJcrNode = typeHandler.getJcrNodeAnnotation(field.getType(), field.getGenericType(), obj);
         Node fileContainer = createFileFolderNode(fileJcrNode, nodeName, node, mapper);
 
         Object object = typeHandler.getObject(field, obj);
@@ -244,7 +244,7 @@ class FileNodeMapper {
 
     private void addMultipleFilesToNode(Field field, Object obj, String nodeName, Node node, Mapper mapper, int depth, NodeFilter nodeFilter) throws IllegalAccessException, RepositoryException, IOException {
 
-        JcrNode fileJcrNode = typeHandler.getJcrAnnotation(obj, ReflectionUtils.getParameterizedClass(field.getGenericType()), field.getGenericType());
+        JcrNode fileJcrNode = typeHandler.getJcrNodeAnnotation(ReflectionUtils.getParameterizedClass(field.getGenericType()), field.getGenericType(), obj);
         Node fileContainer = createFileFolderNode(fileJcrNode, nodeName, node, mapper);
 
         List<?> children = (List<?>) typeHandler.getObject(field, obj);
@@ -262,7 +262,7 @@ class FileNodeMapper {
             fileClass = ReflectionUtils.getParameterizedClass(genericType, 1);
         }
 
-        JcrNode fileJcrNode = typeHandler.getJcrAnnotation(obj, fileClass, genericType);
+        JcrNode fileJcrNode = typeHandler.getJcrNodeAnnotation(fileClass, genericType, obj);
         String cleanName = mapper.getCleanName(nodeName);
         Node fileContainer = node.hasNode(cleanName) ? node.getNode(cleanName) : node.addNode(cleanName); // this is just a nt:unstructured node
 
