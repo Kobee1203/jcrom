@@ -1,0 +1,314 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.jcrom</groupId>
+    <artifactId>jcrom</artifactId>
+    <packaging>jar</packaging>
+    <version>2.1.1</version>
+
+    <name>JCROM</name>
+    <description>A lightweight framework for mapping Java objects to/from a Java Content Repository (JCR).</description>
+    <url>http://code.google.com/p/jcrom/</url>
+    <inceptionYear>2008</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>oli.gauti</id>
+            <name>Olafur Gauti Gudmundsson</name>
+        </developer>
+        <developer>
+            <id>nicolas.dossantos</id>
+            <name>Nicolas Dos Santos</name>
+        </developer>
+    </developers>
+
+    <properties>
+        <java.version>1.6</java.version>
+        <encoding>UTF-8</encoding>
+    </properties>
+
+    <dependencies>
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.6.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.6.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-core</artifactId>
+            <version>2.7.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.modeshape</groupId>
+            <artifactId>modeshape-unit-test</artifactId>
+            <version>3.3.0.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <!--
+        <dependency>
+            <groupId>com.day.cq.wcm</groupId>
+            <artifactId>cq-wcm-core</artifactId>
+            <version>5.5.0</version>
+        </dependency>
+        -->
+        <!--
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-jcr2spi</artifactId>
+            <version>2.4.0</version>
+            <scope>test</scope>
+        </dependency>
+        -->
+
+        <!-- Compile dependencies -->
+        <dependency>
+            <groupId>javax.jcr</groupId>
+            <artifactId>jcr</artifactId>
+            <version>2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib</artifactId>
+            <version>2.2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>1.1</version>
+        </dependency>
+        <!-- cf. http://notaboekje.blogspot.fr/2012/02/creer-un-projet-maven-pour-javafx.html  -->
+        <!-- Add 'javafx.rt.jar' property in maven settings.xml, representing the path of the JavaFX jar -->
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>javafx</artifactId>
+            <version>2.2</version>
+            <systemPath>${javafx.rt.jar}</systemPath>
+            <scope>system</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Creating current year element -->
+            <plugin>
+                <groupId>org.codehaus.groovy.maven</groupId>
+                <artifactId>gmaven-plugin</artifactId>
+                <version>1.0</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <source>
+                                import java.util.Date
+                                import java.text.MessageFormat
+                                def vartimestamp = MessageFormat.format("{0,date,yyyy}", new Date())
+                                project.properties['currentYear'] = vartimestamp
+                                project.properties['authors'] = project.developers['name'].join(", ")
+                            </source>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Adding header to file - https://code.google.com/p/maven-license-plugin/-->
+            <plugin>
+                <groupId>com.mycila.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+                <version>1.9.0</version>
+                <configuration>
+                    <header>${basedir}/header.txt</header>
+                    <properties>
+                        <h_project>${project.name}</h_project>
+                        <h_inceptionYear>${project.inceptionYear}</h_inceptionYear>
+                        <h_currentYear>${currentYear}</h_currentYear>
+                        <h_authors>${authors}</h_authors>
+                    </properties>
+                    <encoding>${encoding}</encoding>
+                    <strictCheck>true</strictCheck>
+                    <excludes>
+                        <exclude>**/*.log</exclude>
+                        <exclude>**/*.txt</exclude>
+                        <exclude>apidocs/**</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${encoding}</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <encoding>${encoding}</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.0</version>
+                <configuration>
+                    <tagBase>https://${project.name}.googlecode.com/svn/tags</tagBase>
+                    <goals>deploy gcu:upload</goals>
+                </configuration>
+            </plugin>
+            <!-- Package source to JAR to upload to repo -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <!-- Restrict execution of source compilation to install or deploy. -->
+                        <!-- The default is package. -->
+                        <phase>install</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Package JavaDocs to JAR to upload to repo -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9</version>
+                <configuration>
+                    <encoding>${encoding}</encoding>
+                    <reportOutputDirectory>${basedir}</reportOutputDirectory>
+                    <destDir>apidocs</destDir>
+                    <!--<additionalparam>-Xdoclint:none</additionalparam>-->
+                </configuration>
+                <executions>
+                   <execution>
+                      <id>attach-javadocs</id>
+                      <!-- Restrict execution of source compilation to install -->
+                      <phase>install</phase>
+                      <goals>
+                         <goal>jar</goal>
+                      </goals>
+                   </execution>
+                </executions>
+            </plugin>
+            <!-- Uploading artifacts to Google Code - https://code.google.com/p/maven-gcu-plugin/ -->
+            <plugin>
+                <groupId>com.googlecode.maven-gcu-plugin</groupId>
+                <artifactId>maven-gcu-plugin</artifactId>
+                <version>1.1</version>
+                <configuration>
+                    <serverId>googlecode</serverId>
+                    <failsOnError>true</failsOnError> <!-- default: false -->
+                    <projectName>${project.name}</projectName> <!-- default: ${project.artifactId} -->
+                    <uploads>
+                        <upload>
+                            <file>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</file>
+                            <summary>${project.name} ${project.version} binary</summary>
+                            <labels>
+                                <label>Featured</label>
+                                <label>Type-Archive</label>
+                            </labels>
+                        </upload>
+                        <upload>
+                            <file>${project.build.directory}/${project.artifactId}-${project.version}-javadoc.${project.packaging}</file>
+                            <summary>${project.name} ${project.version} javadoc</summary>
+                            <labels>
+                                <label>Type-Docs</label>
+                            </labels>
+                        </upload>
+                        <upload>
+                            <file>${project.build.directory}/${project.artifactId}-${project.version}-sources.${project.packaging}</file>
+                            <summary>${project.name} ${project.version} source</summary>
+                            <labels>
+                                <label>Type-Source</label>
+                            </labels>
+                        </upload>
+                    </uploads>
+                </configuration>
+            </plugin>
+        </plugins>
+
+        <extensions>
+            <extension>
+                <groupId>org.jvnet.wagon-svn</groupId>
+                <artifactId>wagon-svn</artifactId>
+                <version>1.12</version>
+            </extension>
+        </extensions>
+    </build>
+
+    <scm>
+        <url>scm:svn:https://JCROM.googlecode.com/svn/tags/jcrom-2.1.1</url>
+        <connection>scm:svn:http://JCROM.googlecode.com/svn/tags/jcrom-2.1.1</connection>
+        <developerConnection>scm:svn:https://JCROM.googlecode.com/svn/tags/jcrom-2.1.1</developerConnection>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>googlecode-releases</id>
+            <name>Google Code Releases Repository</name>
+            <uniqueVersion>false</uniqueVersion>
+            <url>svn:https://${project.name}.googlecode.com/svn/repo/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>googlecode-snapshots</id>
+            <name>Google Code Snapshots Repository</name>
+            <uniqueVersion>false</uniqueVersion>
+            <url>svn:https://${project.name}.googlecode.com/svn/repo/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9</version>
+                <configuration>
+                	<encoding>${encoding}</encoding>
+                	<reportOutputDirectory>${basedir}</reportOutputDirectory>
+                	<destDir>apidocs</destDir>
+                </configuration>
+            </plugin>
+        </plugins>
+	</reporting>
+</project>
