@@ -4,7 +4,7 @@
     <groupId>org.jcrom</groupId>
     <artifactId>jcrom</artifactId>
     <packaging>jar</packaging>
-    <version>2.1.2-SNAPSHOT</version>
+    <version>2.2.0</version>
 
     <name>JCROM</name>
     <description>A lightweight framework for mapping Java objects to/from a Java Content Repository (JCR).</description>
@@ -277,9 +277,9 @@
     </build>
 
     <scm>
-        <url>http://code.google.com/p/JCROM/source/browse</url>
-        <connection>scm:svn:http://JCROM.googlecode.com/svn/trunk/</connection>
-        <developerConnection>scm:svn:https://JCROM.googlecode.com/svn/trunk/</developerConnection>
+        <url>scm:svn:https://JCROM.googlecode.com/svn/tags/jcrom-2.2.0</url>
+        <connection>scm:svn:http://JCROM.googlecode.com/svn/tags/jcrom-2.2.0</connection>
+        <developerConnection>scm:svn:https://JCROM.googlecode.com/svn/tags/jcrom-2.2.0</developerConnection>
     </scm>
 
     <distributionManagement>
