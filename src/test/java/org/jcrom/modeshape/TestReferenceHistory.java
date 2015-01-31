@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNotNull;
 
 import javax.jcr.Node;
 import javax.jcr.Session;
-import javax.jcr.SimpleCredentials;
 
 import org.jcrom.Jcrom;
 import org.jcrom.entities.Document;

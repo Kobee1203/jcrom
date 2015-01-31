@@ -29,7 +29,7 @@ import org.junit.runners.Suite.SuiteClasses;
 // @formatter:off
     TestAdobeCQ.class, TestConverter.class, TestInstantiation.class, TestJavaFX.class,
     TestJcrFileReference.class, TestJcromCallback.class, TestJcrReference.class, TestLazyLoading.class,
-    TestMapping.class, TestReferenceHistory.class, TestUserManager.class
+    TestMapping.class, TestReferenceHistory.class, TestUpdateChildNodePerformance.class, TestUserManager.class
 // @formatter:on
 })
 public class AllJackrabbitTests {

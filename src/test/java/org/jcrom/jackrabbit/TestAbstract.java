@@ -43,6 +43,10 @@ public class TestAbstract {
 
     @Before
     public void setUpRepository() throws Exception {
+        deleteDir(new File("repository"));
+        new File("repository.xml").delete();
+        new File("derby.log").delete();
+
         repo = new TransientRepository();
         session = repo.login(new SimpleCredentials(userID, password));
 

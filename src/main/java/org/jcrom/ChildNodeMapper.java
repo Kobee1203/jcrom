@@ -147,9 +147,14 @@ class ChildNodeMapper {
             if (childContainer.hasNodes()) {
                 // children exist, we must update
                 NodeIterator childNodes = childContainer.getNodes();
+                Map<String, Object> childrenMap = new HashMap<String, Object>();
+                for (Object child : children) {
+                    childrenMap.put(mapper.getNodePath(child), child);
+                }
                 while (childNodes.hasNext()) {
                     Node child = childNodes.nextNode();
-                    Object childEntity = mapper.findEntityByPath(children, child.getPath());
+                    // Object childEntity = mapper.findEntityByPath(children, child.getPath());
+                    Object childEntity = childrenMap.get(child.getPath());
                     if (childEntity == null) {
                         // this child was not found, so we remove it
                         child.remove();

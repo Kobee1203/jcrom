@@ -30,7 +30,7 @@ import org.junit.runners.Suite.SuiteClasses;
 // @formatter:off
     TestAdobeCQ.class, TestConverter.class, TestInstantiation.class, TestJavaFX.class,
     TestJcrFileReference.class, TestJcromCallback.class, TestJcrReference.class, TestLazyLoading.class,
-    TestMapping.class, TestModeShape.class, TestReferenceHistory.class
+    TestMapping.class, TestModeShape.class, TestReferenceHistory.class, TestUpdateChildNodePerformance.class
 // @formatter:on
 })
 public class AllModeShapeTests {
