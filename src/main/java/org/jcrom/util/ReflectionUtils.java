@@ -103,48 +103,6 @@ public final class ReflectionUtils {
     }
 
     /**
-     * Check if a class implements a specific interface.
-     *
-     * @param type the class we want to check
-     * @param interfaceClass the interface class we want to check against
-     * @return true if type implements interfaceClass, else false
-     */
-    public static boolean implementsInterface(Class<?> type, Class<?> interfaceClass) {
-        if (type.isInterface()) {
-            return type == interfaceClass;
-        }
-
-        for (Class<?> ifc : type.getInterfaces()) {
-            if (ifc == interfaceClass) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Check if a class extends a specific class.
-     *
-     * @param type the class we want to check
-     * @param superClass the super class we want to check against
-     * @return true if type implements superClass, else false
-     */
-    public static boolean extendsClass(Class<?> type, Class<?> superClass) {
-        if (type == superClass) {
-            return true;
-        }
-
-        Class<?> c = type.getSuperclass();
-        while (c != null && c != Object.class) {
-            if (c == superClass) {
-                return true;
-            }
-            c = c.getSuperclass();
-        }
-        return false;
-    }
-
-    /**
      * Get the (first) class that parameterizes the Type supplied.
      * 
      * @param type the Type
@@ -270,7 +228,7 @@ public final class ReflectionUtils {
                 if (type == c) {
                     return true;
                 }
-                if (c.isInterface() && implementsInterface((Class<?>) type, c)) {
+                if (c.isInterface() && c.isAssignableFrom((Class<?>) type)) {
                     return true;
                 }
             }

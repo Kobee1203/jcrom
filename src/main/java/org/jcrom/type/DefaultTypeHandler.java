@@ -79,12 +79,12 @@ public class DefaultTypeHandler implements TypeHandler {
 
     @Override
     public boolean isMap(Class<?> type) {
-        return ReflectionUtils.implementsInterface(type, Map.class);
+        return Map.class.isAssignableFrom(type);
     }
 
     @Override
     public boolean isList(Class<?> type) {
-        return ReflectionUtils.implementsInterface(type, List.class);
+        return List.class.isAssignableFrom(type);
     }
 
     @Override

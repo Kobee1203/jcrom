@@ -402,7 +402,7 @@ class Mapper {
             nodeFilter = new NodeFilter(NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
         }
 
-        if (ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class)) {
+        if (JcrFile.class.isAssignableFrom(obj.getClass())) {
             // special handling of JcrFile objects
             fileNodeMapper.mapSingleFile((JcrFile) obj, node, parentObj, 0, nodeFilter, this);
         }
@@ -429,7 +429,7 @@ class Mapper {
             nodeFilter = new NodeFilter(NodeFilter.INCLUDE_ALL, NodeFilter.DEPTH_INFINITE);
         }
 
-        if (ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class)) {
+        if (JcrFile.class.isAssignableFrom(obj.getClass())) {
             // special handling of JcrFile objects
             fileNodeMapper.mapSingleFile((JcrFile) obj, node, null, 0, nodeFilter, this);
         }
@@ -498,7 +498,7 @@ class Mapper {
         }
 
         // special handling of JcrFile objects
-        if (ReflectionUtils.extendsClass(entity.getClass(), JcrFile.class)) {
+        if (JcrFile.class.isAssignableFrom(entity.getClass())) {
             fileNodeMapper.addFileNode(node, (JcrFile) entity, this);
         }
 
@@ -587,7 +587,7 @@ class Mapper {
         }
 
         // special handling of JcrFile objects
-        if (ReflectionUtils.extendsClass(entity.getClass(), JcrFile.class) && depth == 0) {
+        if (JcrFile.class.isAssignableFrom(entity.getClass()) && depth == 0) {
             fileNodeMapper.addFileNode(node, (JcrFile) entity, this);
         }
 
@@ -659,7 +659,7 @@ class Mapper {
 
     Object mapNodeToClass(Object obj, Node node, NodeFilter nodeFilter, Object parentObject, int depth) throws ClassNotFoundException, InstantiationException, RepositoryException, IllegalAccessException, IOException {
 
-        if (!ReflectionUtils.extendsClass(obj.getClass(), JcrFile.class)) {
+        if (!JcrFile.class.isAssignableFrom(obj.getClass())) {
             // this does not apply for JcrFile extensions
             setNodeName(obj, node.getName());
         }

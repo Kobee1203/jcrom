@@ -85,6 +85,7 @@ import org.jcrom.entities.EntityChild;
 import org.jcrom.entities.EntityModifiedMapFieldAdded;
 import org.jcrom.entities.EntityParent;
 import org.jcrom.entities.EntityToBeModified;
+import org.jcrom.entities.EntityWithBigDecimalSerialization;
 import org.jcrom.entities.EntityWithMapChildren;
 import org.jcrom.entities.EntityWithSerializedProperties;
 import org.jcrom.entities.EnumEntity;
@@ -2385,5 +2386,14 @@ public class TestMapping extends TestAbstract {
         // finally make sure that the old properties have been removed,
         // this should throw an exception:
         newNode.getProperty("base");
+    }
+
+    /**
+     * Thanks to Antoine Mischler for identifying this problem and contributing this test case.
+     */
+    @Test
+    public void testBigDecimalSerialization() {
+        Jcrom jcrom = new Jcrom(false, true);
+        jcrom.map(EntityWithBigDecimalSerialization.class);
     }
 }
