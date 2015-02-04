@@ -322,7 +322,6 @@ class PropertyMapper {
 
         // make sure that the field value is not null
         if (propertyValue != null) {
-
             if (isMultiple) {
                 node.setProperty(propertyName, typeHandler.createValues(type, paramClass, propertyValue, valueFactory));
             } else {
@@ -331,73 +330,6 @@ class PropertyMapper {
                     node.setProperty(propertyName, value);
                 }
             }
-
-            /*
-            if (typeHandler.isList(type)) {
-                // multi-value property List
-                List<?> fieldValues = (List<?>) propertyValue;
-                if (!fieldValues.isEmpty()) {
-                    Value[] values = new Value[fieldValues.size()];
-                    for (int i = 0; i < fieldValues.size(); i++) {
-                        values[i] = JcrUtils.createValue(paramClass, fieldValues.get(i), valueFactory);
-                    }
-                    node.setProperty(propertyName, values);
-                } else {
-                    node.setProperty(propertyName, new Value[0]);
-                }
-
-            } else if (type.isArray() && type.getComponentType() != byte.class) {
-                // multi-value property array
-                Value[] values;
-                if (type.getComponentType() == int.class) {
-                    int[] ints = (int[]) propertyValue;
-                    values = new Value[ints.length];
-                    for (int i = 0; i < ints.length; i++) {
-                        values[i] = JcrUtils.createValue(int.class, ints[i], valueFactory);
-                    }
-                } else if (type.getComponentType() == long.class) {
-                    long[] longs = (long[]) propertyValue;
-                    values = new Value[longs.length];
-                    for (int i = 0; i < longs.length; i++) {
-                        values[i] = JcrUtils.createValue(long.class, longs[i], valueFactory);
-                    }
-                } else if (type.getComponentType() == double.class) {
-                    double[] doubles = (double[]) propertyValue;
-                    values = new Value[doubles.length];
-                    for (int i = 0; i < doubles.length; i++) {
-                        values[i] = JcrUtils.createValue(double.class, doubles[i], valueFactory);
-                    }
-                } else if (type.getComponentType() == boolean.class) {
-                    boolean[] booleans = (boolean[]) propertyValue;
-                    values = new Value[booleans.length];
-                    for (int i = 0; i < booleans.length; i++) {
-                        values[i] = JcrUtils.createValue(boolean.class, booleans[i], valueFactory);
-                    }
-                } else if (type.getComponentType() == Locale.class) {
-                    Locale[] locales = (Locale[]) propertyValue;
-                    values = new Value[locales.length];
-                    for (int i = 0; i < locales.length; i++) {
-                        values[i] = JcrUtils.createValue(Locale.class, locales[i], valueFactory);
-                    }
-                } else {
-                    // Object
-                    Object[] objects = (Object[]) propertyValue;
-                    values = new Value[objects.length];
-                    for (int i = 0; i < objects.length; i++) {
-                        values[i] = JcrUtils.createValue(type.getComponentType(), objects[i], valueFactory);
-                    }
-
-                }
-                node.setProperty(propertyName, values);
-
-            } else {
-                // single-value property
-                Value value = JcrUtils.createValue(type, propertyValue, valueFactory);
-                if (value != null) {
-                    node.setProperty(propertyName, value);
-                }
-            }
-            */
         } else {
             // remove the value
             if (isMultiple) {

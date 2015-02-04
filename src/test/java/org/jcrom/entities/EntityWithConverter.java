@@ -19,13 +19,16 @@ package org.jcrom.entities;
 
 import java.awt.Color;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.jcrom.AbstractJcrEntity;
+import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrProperty;
 import org.jcrom.converter.ColorConverter;
 import org.jcrom.converter.ColorListConverter;
+import org.jcrom.converter.StringConverter;
 import org.jcrom.converter.URLConverter;
 import org.jcrom.converter.URLMapConverter;
 
@@ -48,6 +51,12 @@ public class EntityWithConverter extends AbstractJcrEntity {
 
     @JcrProperty(converter = URLMapConverter.class)
     private Map<String, URL> urlMap;
+
+    @JcrProperty(converter = StringConverter.class)
+    private String expression;
+
+    @JcrChildNode
+    private List<EntityWithConverterChild> children = new ArrayList<EntityWithConverterChild>();
 
     public EntityWithConverter() {
     }
@@ -84,4 +93,19 @@ public class EntityWithConverter extends AbstractJcrEntity {
         this.urlMap = urlMap;
     }
 
+    public String getExpression() {
+        return expression;
+    }
+
+    public void setExpression(String expression) {
+        this.expression = expression;
+    }
+
+    public List<EntityWithConverterChild> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<EntityWithConverterChild> children) {
+        this.children = children;
+    }
 }
