@@ -19,7 +19,7 @@ You can look at the [UserGuide documentation] for more explanations.
 **JCROM 2.2.0 is released**
 
 This release includes:
-  * [Custom_converter Custom Field Converters](https://code.google.com/p/jcrom/wiki/Properties#Custom_converter), to customize the conversion from an entity attribute value to JCR property representation and conversely
+  * [Custom Field Converters](https://code.google.com/p/jcrom/wiki/Properties#Custom_converter), to customize the conversion from an entity attribute value to JCR property representation and conversely
   * [JavaFX properties support](https://code.google.com/p/jcrom/wiki/JavaFXPropertiesSupport), to map Java objects with JavaFX properties directly to/from a JCR repository
 
 You can look at the [resolved issues](http://code.google.com/p/jcrom/issues/list?can=1&q=label%3AMilestone-Release2.2.0).
