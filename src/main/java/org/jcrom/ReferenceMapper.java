@@ -180,13 +180,15 @@ class ReferenceMapper {
                 if (typeHandler.isList(paramClass)) {
                     List<?> references = (List<?>) entry.getValue();
                     List<Value> refValues = getReferenceValues(references, referenceContainer.getSession(), jcrReference);
-                    if (!refValues.isEmpty()) {
+                    if (refValues != null && !refValues.isEmpty()) {
                         referenceContainer.setProperty(key, refValues.toArray(new Value[refValues.size()]));
                     }
 
                 } else {
                     Object referenceObject = entry.getValue();
-                    mapSingleReference(jcrReference, referenceObject, referenceContainer, key);
+                    if (referenceObject != null) {
+                    	mapSingleReference(jcrReference, referenceObject, referenceContainer, key);
+                    }
                 }
             }
         }

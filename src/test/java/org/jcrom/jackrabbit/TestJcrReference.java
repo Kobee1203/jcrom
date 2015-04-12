@@ -19,6 +19,9 @@ package org.jcrom.jackrabbit;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.jcr.PropertyType;
 import javax.jcr.ReferentialIntegrityException;
 import javax.jcr.RepositoryException;
@@ -142,7 +145,20 @@ public class TestJcrReference extends TestAbstract {
         session.save();
     }
 
-    private class A1 {
+    @Test
+	public void testMapWithNullValue() throws RepositoryException {
+		Container container = new Container();
+		container.name = "c";
+		container.map.put("a", null);
+
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(Container.class);
+		jcrom.map(B.class);
+		jcrom.addNode(session.getRootNode(), container);
+	}
+    
+	private static class A1 {
+
         @JcrName
         private String name;
 
@@ -152,6 +168,9 @@ public class TestJcrReference extends TestAbstract {
         @JcrReference(weak = true)
         private B bRef;
 
+		public A1() {
+		}
+
         public String getName() {
             return name;
         }
@@ -178,7 +197,8 @@ public class TestJcrReference extends TestAbstract {
 
     }
 
-    private class A2 {
+	private static class A2 {
+
         @JcrName
         private String name;
 
@@ -188,6 +208,9 @@ public class TestJcrReference extends TestAbstract {
         @JcrReference(weak = false)
         B bRef;
 
+		public A2() {
+		}
+
         public String getName() {
             return name;
         }
@@ -214,7 +237,8 @@ public class TestJcrReference extends TestAbstract {
 
     }
 
-    private class A3 {
+	private static class A3 {
+
         @JcrName
         private String name;
 
@@ -224,6 +248,9 @@ public class TestJcrReference extends TestAbstract {
         @JcrReference
         private B bRef;
 
+		public A3() {
+		}
+
         public String getName() {
             return name;
         }
@@ -250,15 +277,19 @@ public class TestJcrReference extends TestAbstract {
 
     }
 
-    private class B {
+    private static class B {
+
         @JcrIdentifier
-        String id;
+        private String id;
 
         @JcrName
-        String name;
+        private String name;
 
         @JcrPath
-        String path;
+        private String path;
+
+        public B() {
+		}
 
         public String getId() {
             return id;
@@ -285,4 +316,56 @@ public class TestJcrReference extends TestAbstract {
         }
 
     }
+
+	public static class Container {
+
+		@JcrIdentifier
+		private String id;
+
+		@JcrName
+		private String name;
+
+		@JcrPath
+		private String path;
+
+		@JcrReference
+		protected Map<String, B> map = new HashMap<String, B>();
+
+		public Container() {
+		}
+
+		public String getId() {
+			return id;
+		}
+
+		public void setId(String id) {
+			this.id = id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public String getPath() {
+			return path;
+		}
+
+		public void setPath(String path) {
+			this.path = path;
+		}
+
+		public Map<String, B> getMap() {
+			return map;
+		}
+
+		public void setMap(Map<String, B> map) {
+			this.map = map;
+		}
+
+	}
+
 }

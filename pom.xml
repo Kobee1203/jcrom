@@ -8,7 +8,7 @@
 
     <name>JCROM</name>
     <description>A lightweight framework for mapping Java objects to/from a Java Content Repository (JCR).</description>
-    <url>http://code.google.com/p/jcrom/</url>
+    <url>https://github.com/Kobee1203/jcrom</url>
     <inceptionYear>2008</inceptionYear>
 
     <licenses>
@@ -18,6 +18,11 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+    
+    <issueManagement>
+		<url>https://github.com/Kobee1203/jcrom/issues</url>
+		<system>GitHub Issues</system>
+	</issueManagement>
 
     <developers>
         <developer>
@@ -183,14 +188,7 @@
                     <encoding>${encoding}</encoding>
                 </configuration>
             </plugin>
-            <plugin>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.0</version>
-                <configuration>
-                    <tagBase>https://${project.name}.googlecode.com/svn/tags</tagBase>
-                    <goals>deploy gcu:upload</goals>
-                </configuration>
-            </plugin>
+            
             <!-- Package source to JAR to upload to repo -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -230,72 +228,84 @@
                    </execution>
                 </executions>
             </plugin>
-            <!-- Uploading artifacts to Google Code - https://code.google.com/p/maven-gcu-plugin/ -->
+            
             <plugin>
-                <groupId>com.googlecode.maven-gcu-plugin</groupId>
-                <artifactId>maven-gcu-plugin</artifactId>
-                <version>1.1</version>
-                <configuration>
-                    <serverId>googlecode</serverId>
-                    <failsOnError>true</failsOnError> <!-- default: false -->
-                    <projectName>${project.name}</projectName> <!-- default: ${project.artifactId} -->
-                    <uploads>
-                        <upload>
-                            <file>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</file>
-                            <summary>${project.name} ${project.version} binary</summary>
-                            <labels>
-                                <label>Featured</label>
-                                <label>Type-Archive</label>
-                            </labels>
-                        </upload>
-                        <upload>
-                            <file>${project.build.directory}/${project.artifactId}-${project.version}-javadoc.${project.packaging}</file>
-                            <summary>${project.name} ${project.version} javadoc</summary>
-                            <labels>
-                                <label>Type-Docs</label>
-                            </labels>
-                        </upload>
-                        <upload>
-                            <file>${project.build.directory}/${project.artifactId}-${project.version}-sources.${project.packaging}</file>
-                            <summary>${project.name} ${project.version} source</summary>
-                            <labels>
-                                <label>Type-Source</label>
-                            </labels>
-                        </upload>
-                    </uploads>
-                </configuration>
-            </plugin>
+				<groupId>com.github.github</groupId>
+				<artifactId>downloads-maven-plugin</artifactId>
+				<version>0.6</version>
+				<configuration>
+					<description>Official ${project.name} build of the ${project.version} release</description>
+					<override>true</override>
+					<includeAttached>true</includeAttached>
+					<server>github</server>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>upload</goal>
+						</goals>
+						<phase>install</phase>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.github.github</groupId>
+				<artifactId>site-maven-plugin</artifactId>
+				<version>0.7</version>
+				<configuration>
+					<message>Building site for ${project.version}</message>
+					<server>github</server>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>site</goal>
+						</goals>
+						<phase>site</phase>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<version>3.0</version>
+				<configuration>
+					<reportPlugins>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-project-info-reports-plugin</artifactId>
+							<version>2.2</version>
+							<configuration>
+								<dependencyDetailsEnabled>true</dependencyDetailsEnabled>
+								<dependencyLocationsEnabled>true</dependencyLocationsEnabled>
+							</configuration>
+						</plugin>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-javadoc-plugin</artifactId>
+							<version>2.7</version>
+						</plugin>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-surefire-report-plugin</artifactId>
+							<version>2.6</version>
+						</plugin>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-checkstyle-plugin</artifactId>
+							<version>2.6</version>
+						</plugin>
+					</reportPlugins>
+				</configuration>
+			</plugin>
         </plugins>
-
-        <extensions>
-            <extension>
-                <groupId>org.jvnet.wagon-svn</groupId>
-                <artifactId>wagon-svn</artifactId>
-                <version>1.12</version>
-            </extension>
-        </extensions>
     </build>
 
     <scm>
-        <url>http://code.google.com/p/JCROM/source/browse</url>
-        <connection>scm:svn:http://JCROM.googlecode.com/svn/trunk/</connection>
-        <developerConnection>scm:svn:https://JCROM.googlecode.com/svn/trunk/</developerConnection>
+        <url>https://github.com/Kobee1203/jcrom</url>
+        <connection>scm:git:git://github.com/Kobee1203/jcrom.git</connection>
+        <developerConnection>scm:git:git@github.com:Kobee1203/jcrom.git</developerConnection>
     </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>googlecode-releases</id>
-            <name>Google Code Releases Repository</name>
-            <uniqueVersion>false</uniqueVersion>
-            <url>svn:https://${project.name}.googlecode.com/svn/repo/releases</url>
-        </repository>
-        <snapshotRepository>
-            <id>googlecode-snapshots</id>
-            <name>Google Code Snapshots Repository</name>
-            <uniqueVersion>false</uniqueVersion>
-            <url>svn:https://${project.name}.googlecode.com/svn/repo/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
 
     <reporting>
         <plugins>

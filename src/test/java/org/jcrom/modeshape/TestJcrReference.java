@@ -19,6 +19,9 @@ package org.jcrom.modeshape;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.jcr.PropertyType;
 import javax.jcr.ReferentialIntegrityException;
 import javax.jcr.RepositoryException;
@@ -41,252 +44,332 @@ import org.modeshape.test.ModeShapeSingleUseTest;
  */
 public class TestJcrReference extends ModeShapeSingleUseTest {
 
-    @Test
-    public void testCreateWeakReference() throws JcrMappingException, RepositoryException {
-        System.out.println("assert creation of weak reference");
+	@Test
+	public void testCreateWeakReference() throws JcrMappingException, RepositoryException {
+		System.out.println("assert creation of weak reference");
 
-        // initialise jcrom
-        Jcrom jcrom = new Jcrom();
-        jcrom.map(A1.class);
-        jcrom.map(A2.class);
-        jcrom.map(A3.class);
-        jcrom.map(B.class);
+		// initialise jcrom
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(A1.class);
+		jcrom.map(A2.class);
+		jcrom.map(A3.class);
+		jcrom.map(B.class);
 
-        // initialise mappable objects
-        B instanceB = new B();
-        instanceB.setId("12345");
-        instanceB.setName("instanceB");
+		// initialise mappable objects
+		B instanceB = new B();
+		instanceB.setId("12345");
+		instanceB.setName("instanceB");
 
-        A1 instanceA1 = new A1();
-        instanceA1.setName("instanceA1");
-        instanceA1.setbRef(instanceB);
+		A1 instanceA1 = new A1();
+		instanceA1.setName("instanceA1");
+		instanceA1.setbRef(instanceB);
 
-        A2 instanceA2 = new A2();
-        instanceA2.setName("instanceA2");
-        instanceA2.setbRef(instanceB);
+		A2 instanceA2 = new A2();
+		instanceA2.setName("instanceA2");
+		instanceA2.setbRef(instanceB);
 
-        A3 instanceA3 = new A3();
-        instanceA3.setName("instanceA3");
-        instanceA3.setbRef(instanceB);
+		A3 instanceA3 = new A3();
+		instanceA3.setName("instanceA3");
+		instanceA3.setbRef(instanceB);
 
-        jcrom.addNode(((Session) session).getRootNode(), instanceB, new String[] { "mix:referenceable" });
-        jcrom.addNode(((Session) session).getRootNode(), instanceA1);
-        jcrom.addNode(((Session) session).getRootNode(), instanceA2);
-        jcrom.addNode(((Session) session).getRootNode(), instanceA3);
+		jcrom.addNode(((Session) session).getRootNode(), instanceB, new String[] { "mix:referenceable" });
+		jcrom.addNode(((Session) session).getRootNode(), instanceA1);
+		jcrom.addNode(((Session) session).getRootNode(), instanceA2);
+		jcrom.addNode(((Session) session).getRootNode(), instanceA3);
 
-        String instanceBID = ((Session) session).getRootNode().getNode("instanceB").getIdentifier();
-        ((Session) session).getRootNode().getNode("instanceB").remove();
+		String instanceBID = ((Session) session).getRootNode().getNode("instanceB").getIdentifier();
+		((Session) session).getRootNode().getNode("instanceB").remove();
 
-        // A1 holds a weak reference
-        System.out.println(((Session) session).getRootNode().getNode("instanceA1").getProperty("bRef").getString());
-        assertEquals(((Session) session).getRootNode().getNode("instanceA1").getProperty("bRef").getType(), PropertyType.WEAKREFERENCE);
-        assertEquals(((Session) session).getRootNode().getNode("instanceA1").getProperty("bRef").getString(), instanceBID);
+		// A1 holds a weak reference
+		System.out.println(((Session) session).getRootNode().getNode("instanceA1").getProperty("bRef").getString());
+		assertEquals(((Session) session).getRootNode().getNode("instanceA1").getProperty("bRef").getType(), PropertyType.WEAKREFERENCE);
+		assertEquals(((Session) session).getRootNode().getNode("instanceA1").getProperty("bRef").getString(), instanceBID);
 
-        // A2 holds a reference
-        System.out.println(((Session) session).getRootNode().getNode("instanceA2").getProperty("bRef").getString());
-        assertEquals(((Session) session).getRootNode().getNode("instanceA2").getProperty("bRef").getType(), PropertyType.REFERENCE);
-        assertEquals(((Session) session).getRootNode().getNode("instanceA2").getProperty("bRef").getString(), instanceBID);
+		// A2 holds a reference
+		System.out.println(((Session) session).getRootNode().getNode("instanceA2").getProperty("bRef").getString());
+		assertEquals(((Session) session).getRootNode().getNode("instanceA2").getProperty("bRef").getType(), PropertyType.REFERENCE);
+		assertEquals(((Session) session).getRootNode().getNode("instanceA2").getProperty("bRef").getString(), instanceBID);
 
-        // A3 holds a reference
-        System.out.println(((Session) session).getRootNode().getNode("instanceA3").getProperty("bRef").getString());
-        assertEquals(((Session) session).getRootNode().getNode("instanceA3").getProperty("bRef").getType(), PropertyType.REFERENCE);
-        assertEquals(((Session) session).getRootNode().getNode("instanceA3").getProperty("bRef").getString(), instanceBID);
-    }
+		// A3 holds a reference
+		System.out.println(((Session) session).getRootNode().getNode("instanceA3").getProperty("bRef").getString());
+		assertEquals(((Session) session).getRootNode().getNode("instanceA3").getProperty("bRef").getType(), PropertyType.REFERENCE);
+		assertEquals(((Session) session).getRootNode().getNode("instanceA3").getProperty("bRef").getString(), instanceBID);
+	}
 
-    @Test
-    public void testReferentialIntegrity() throws JcrMappingException, RepositoryException {
-        System.out.println("assert referential integrity using weak reference");
+	@Test
+	public void testReferentialIntegrity() throws JcrMappingException, RepositoryException {
+		System.out.println("assert referential integrity using weak reference");
 
-        // initialise jcrom
-        Jcrom jcrom = new Jcrom();
-        jcrom.map(A1.class);
-        jcrom.map(B.class);
+		// initialise jcrom
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(A1.class);
+		jcrom.map(B.class);
 
-        // initialise mappable objects
-        B instanceB = new B();
-        instanceB.setId("12345");
-        instanceB.setName("instanceB");
+		// initialise mappable objects
+		B instanceB = new B();
+		instanceB.setId("12345");
+		instanceB.setName("instanceB");
 
-        A1 instanceA1 = new A1();
-        instanceA1.setName("instanceA1");
-        instanceA1.setbRef(instanceB);
+		A1 instanceA1 = new A1();
+		instanceA1.setName("instanceA1");
+		instanceA1.setbRef(instanceB);
 
-        jcrom.addNode(((Session) session).getRootNode(), instanceB, new String[] { "mix:referenceable" });
-        String instanceBID = ((Session) session).getRootNode().getNode("instanceB").getIdentifier();
-        jcrom.addNode(((Session) session).getRootNode(), instanceA1);
-        ((Session) session).getRootNode().getNode("instanceB").remove();
-        session.save();
+		jcrom.addNode(((Session) session).getRootNode(), instanceB, new String[] { "mix:referenceable" });
+		String instanceBID = ((Session) session).getRootNode().getNode("instanceB").getIdentifier();
+		jcrom.addNode(((Session) session).getRootNode(), instanceA1);
+		((Session) session).getRootNode().getNode("instanceB").remove();
+		session.save();
 
-        assertEquals(((Session) session).getRootNode().getNode("instanceA1").getProperty("bRef").getType(), PropertyType.WEAKREFERENCE);
-        assertEquals(((Session) session).getRootNode().getNode("instanceA1").getProperty("bRef").getString(), instanceBID);
-    }
+		assertEquals(((Session) session).getRootNode().getNode("instanceA1").getProperty("bRef").getType(), PropertyType.WEAKREFERENCE);
+		assertEquals(((Session) session).getRootNode().getNode("instanceA1").getProperty("bRef").getString(), instanceBID);
+	}
 
-    @Ignore
-    @Test(expected = ReferentialIntegrityException.class)
-    public void testNoReferentialIntegrity() throws JcrMappingException, RepositoryException {
-        System.out.println("no referential integrity using default reference");
+	@Ignore
+	@Test(expected = ReferentialIntegrityException.class)
+	public void testNoReferentialIntegrity() throws JcrMappingException, RepositoryException {
+		System.out.println("no referential integrity using default reference");
 
-        // initialise jcrom
-        Jcrom jcrom = new Jcrom();
-        jcrom.map(A3.class);
-        jcrom.map(B.class);
+		// initialise jcrom
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(A3.class);
+		jcrom.map(B.class);
 
-        // initialise mappable objects
-        B instanceB = new B();
-        instanceB.setId("12345");
-        instanceB.setName("instanceB");
+		// initialise mappable objects
+		B instanceB = new B();
+		instanceB.setId("12345");
+		instanceB.setName("instanceB");
 
-        A3 instanceA3 = new A3();
-        instanceA3.setName("instanceA3");
-        instanceA3.setbRef(instanceB);
+		A3 instanceA3 = new A3();
+		instanceA3.setName("instanceA3");
+		instanceA3.setbRef(instanceB);
 
-        jcrom.addNode(((Session) session).getRootNode(), instanceB, new String[] { "mix:referenceable" });
-        jcrom.addNode(((Session) session).getRootNode(), instanceA3);
-        ((Session) session).getRootNode().getNode("instanceB").remove();
-        session.save();
-    }
+		jcrom.addNode(((Session) session).getRootNode(), instanceB, new String[] { "mix:referenceable" });
+		jcrom.addNode(((Session) session).getRootNode(), instanceA3);
+		((Session) session).getRootNode().getNode("instanceB").remove();
+		session.save();
+	}
 
-    private class A1 {
-        @JcrName
-        private String name;
+	@Test
+	public void testMapWithNullValue() throws RepositoryException {
+		Container container = new Container();
+		container.name = "c";
+		container.map.put("a", null);
 
-        @JcrPath
-        private String path;
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(Container.class);
+		jcrom.map(B.class);
+		jcrom.addNode(session.getRootNode(), container);
+	}
 
-        @JcrReference(weak = true)
-        private B bRef;
+	private static class A1 {
 
-        public String getName() {
-            return name;
-        }
+		@JcrName
+		private String name;
 
-        public void setName(String name) {
-            this.name = name;
-        }
+		@JcrPath
+		private String path;
 
-        public String getPath() {
-            return path;
-        }
+		@JcrReference(weak = true)
+		private B bRef;
 
-        public void setPath(String path) {
-            this.path = path;
-        }
+		public A1() {
+		}
 
-        public B getbRef() {
-            return bRef;
-        }
+		public String getName() {
+			return name;
+		}
 
-        public void setbRef(B bRef) {
-            this.bRef = bRef;
-        }
+		public void setName(String name) {
+			this.name = name;
+		}
 
-    }
+		public String getPath() {
+			return path;
+		}
 
-    private class A2 {
-        @JcrName
-        private String name;
+		public void setPath(String path) {
+			this.path = path;
+		}
 
-        @JcrPath
-        private String path;
+		public B getbRef() {
+			return bRef;
+		}
 
-        @JcrReference(weak = false)
-        B bRef;
+		public void setbRef(B bRef) {
+			this.bRef = bRef;
+		}
 
-        public String getName() {
-            return name;
-        }
+	}
 
-        public void setName(String name) {
-            this.name = name;
-        }
+	private static class A2 {
 
-        public String getPath() {
-            return path;
-        }
+		@JcrName
+		private String name;
 
-        public void setPath(String path) {
-            this.path = path;
-        }
+		@JcrPath
+		private String path;
 
-        public B getbRef() {
-            return bRef;
-        }
+		@JcrReference(weak = false)
+		B bRef;
 
-        public void setbRef(B bRef) {
-            this.bRef = bRef;
-        }
+		public A2() {
+		}
 
-    }
+		public String getName() {
+			return name;
+		}
 
-    private class A3 {
-        @JcrName
-        private String name;
+		public void setName(String name) {
+			this.name = name;
+		}
 
-        @JcrPath
-        private String path;
+		public String getPath() {
+			return path;
+		}
 
-        @JcrReference
-        private B bRef;
+		public void setPath(String path) {
+			this.path = path;
+		}
 
-        public String getName() {
-            return name;
-        }
+		public B getbRef() {
+			return bRef;
+		}
 
-        public void setName(String name) {
-            this.name = name;
-        }
+		public void setbRef(B bRef) {
+			this.bRef = bRef;
+		}
 
-        public String getPath() {
-            return path;
-        }
+	}
 
-        public void setPath(String path) {
-            this.path = path;
-        }
+	private static class A3 {
 
-        public B getbRef() {
-            return bRef;
-        }
+		@JcrName
+		private String name;
 
-        public void setbRef(B bRef) {
-            this.bRef = bRef;
-        }
+		@JcrPath
+		private String path;
 
-    }
+		@JcrReference
+		private B bRef;
 
-    private class B {
-        @JcrIdentifier
-        String id;
+		public A3() {
+		}
 
-        @JcrName
-        String name;
+		public String getName() {
+			return name;
+		}
 
-        @JcrPath
-        String path;
+		public void setName(String name) {
+			this.name = name;
+		}
 
-        public String getId() {
-            return id;
-        }
+		public String getPath() {
+			return path;
+		}
 
-        public void setId(String id) {
-            this.id = id;
-        }
+		public void setPath(String path) {
+			this.path = path;
+		}
 
-        public String getName() {
-            return name;
-        }
+		public B getbRef() {
+			return bRef;
+		}
 
-        public void setName(String name) {
-            this.name = name;
-        }
+		public void setbRef(B bRef) {
+			this.bRef = bRef;
+		}
 
-        public String getPath() {
-            return path;
-        }
+	}
 
-        public void setPath(String path) {
-            this.path = path;
-        }
+	private static class B {
 
-    }
+		@JcrIdentifier
+		private String id;
+
+		@JcrName
+		private String name;
+
+		@JcrPath
+		private String path;
+
+		public B() {
+		}
+
+		public String getId() {
+			return id;
+		}
+
+		public void setId(String id) {
+			this.id = id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public String getPath() {
+			return path;
+		}
+
+		public void setPath(String path) {
+			this.path = path;
+		}
+
+	}
+
+	public static class Container {
+
+		@JcrIdentifier
+		private String id;
+
+		@JcrName
+		private String name;
+
+		@JcrPath
+		private String path;
+
+		@JcrReference
+		protected Map<String, B> map = new HashMap<String, B>();
+
+		public Container() {
+		}
+
+		public String getId() {
+			return id;
+		}
+
+		public void setId(String id) {
+			this.id = id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public String getPath() {
+			return path;
+		}
+
+		public void setPath(String path) {
+			this.path = path;
+		}
+
+		public Map<String, B> getMap() {
+			return map;
+		}
+
+		public void setMap(Map<String, B> map) {
+			this.map = map;
+		}
+
+	}
+
 }

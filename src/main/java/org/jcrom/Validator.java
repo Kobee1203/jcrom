@@ -267,10 +267,17 @@ class Validator {
                     // the value class must be Object, or List of Objects
                     Class<?> valueParamClass = ReflectionUtils.getParameterizedClass(genericType, 1);
                     Class<?> valueParamParamClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(genericType, 1, 0);
-                    if (valueParamClass == null || (valueParamClass != Object.class && !(List.class.isAssignableFrom(valueParamClass) && (valueParamParamClass != null && valueParamParamClass == Object.class)))) {
+                    if (valueParamClass == null || (!Object.class.isAssignableFrom(valueParamClass) && !(List.class.isAssignableFrom(valueParamClass) && (valueParamParamClass != null && Object.class.isAssignableFrom(valueParamParamClass))))) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is a java.util.Map that is not parameterised with a valid value type (Object or List<Object>).");
                     }
-                    fieldType = null;
+
+                    if(List.class.isAssignableFrom(valueParamClass) && valueParamParamClass != Object.class) {
+                    	fieldType = valueParamParamClass;	
+                    } else if(valueParamClass != Object.class) {
+                    	fieldType = valueParamClass;
+                    } else {
+                    	fieldType = null;	
+                    }                    
                 } else {
                     fieldType = type;
                 }
