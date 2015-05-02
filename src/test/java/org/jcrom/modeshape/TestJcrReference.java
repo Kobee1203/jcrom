@@ -18,10 +18,12 @@
 package org.jcrom.modeshape;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.ReferentialIntegrityException;
 import javax.jcr.RepositoryException;
@@ -29,6 +31,7 @@ import javax.jcr.Session;
 
 import org.jcrom.JcrMappingException;
 import org.jcrom.Jcrom;
+import org.jcrom.annotations.JcrChildNode;
 import org.jcrom.annotations.JcrIdentifier;
 import org.jcrom.annotations.JcrName;
 import org.jcrom.annotations.JcrPath;
@@ -161,7 +164,40 @@ public class TestJcrReference extends ModeShapeSingleUseTest {
 		jcrom.addNode(session.getRootNode(), container);
 	}
 
-	private static class A1 {
+	@Test
+	public void testChildNodeMapFromNode() throws RepositoryException {
+		Container2 container = new Container2();
+		container.name = "c1";
+		B b = new B("b1");
+		container.map.put("a", b);
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(Container2.class);
+		jcrom.map(B.class);
+		jcrom.addNode(session.getRootNode(), b);
+		Node node = jcrom.addNode(session.getRootNode(), container);
+		Container2 container1 = jcrom.fromNode(Container2.class, node);
+		assertTrue(container1.map.containsKey("a"));
+		// JCROM modifies the name of the child node to match the map key, not sure that this is excepted?
+		assertEquals("a", container1.map.get("a").name);
+	}
+
+	@Test
+	public void testReferenceMapFromNode() throws RepositoryException {
+		Container container = new Container();
+		container.name = "c2";
+		B b = new B("b2");
+		container.map.put("a", b);
+		Jcrom jcrom = new Jcrom();
+		jcrom.map(Container.class);
+		jcrom.map(B.class);
+		jcrom.addNode(session.getRootNode(), b);
+		Node node = jcrom.addNode(session.getRootNode(), container);
+		Container container1 = jcrom.fromNode(Container.class, node);
+		assertTrue(container1.map.containsKey("a"));
+		assertEquals("b2", container1.map.get("a").name);
+	}
+
+	public static class A1 {
 
 		@JcrName
 		private String name;
@@ -201,7 +237,7 @@ public class TestJcrReference extends ModeShapeSingleUseTest {
 
 	}
 
-	private static class A2 {
+	public static class A2 {
 
 		@JcrName
 		private String name;
@@ -241,7 +277,7 @@ public class TestJcrReference extends ModeShapeSingleUseTest {
 
 	}
 
-	private static class A3 {
+	public static class A3 {
 
 		@JcrName
 		private String name;
@@ -281,7 +317,7 @@ public class TestJcrReference extends ModeShapeSingleUseTest {
 
 	}
 
-	private static class B {
+	public static class B {
 
 		@JcrIdentifier
 		private String id;
@@ -293,6 +329,10 @@ public class TestJcrReference extends ModeShapeSingleUseTest {
 		private String path;
 
 		public B() {
+		}
+
+		public B(String name) {
+			this.name = name;
 		}
 
 		public String getId() {
@@ -332,7 +372,7 @@ public class TestJcrReference extends ModeShapeSingleUseTest {
 		@JcrPath
 		private String path;
 
-		@JcrReference
+		@JcrReference(byPath = true)
 		protected Map<String, B> map = new HashMap<String, B>();
 
 		public Container() {
@@ -368,6 +408,22 @@ public class TestJcrReference extends ModeShapeSingleUseTest {
 
 		public void setMap(Map<String, B> map) {
 			this.map = map;
+		}
+
+	}
+
+	public static class Container2 {
+
+		@JcrName
+		private String name;
+
+		@JcrPath
+		private String path;
+
+		@JcrChildNode
+		protected Map<String, B> map = new HashMap<String, B>();
+
+		public Container2() {
 		}
 
 	}

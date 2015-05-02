@@ -308,16 +308,20 @@ class ReferenceMapper {
                 if (!p.getName().startsWith("jcr:") && !p.getName().startsWith(NamespaceRegistry.NAMESPACE_JCR)) {
                     if (typeHandler.isList(mapParamClass)) {
                         if (jcrReference.lazy()) {
-                            references.put(p.getName(), ProxyFactory.createReferenceListProxy(Object.class, obj, containerNode.getPath(), p.getName(), node.getSession(), mapper, depth, nodeFilter, field));
+                        	// lazy loading
+                        	references.put(p.getName(), ProxyFactory.createReferenceListProxy(mapParamClass, obj, containerNode.getPath(), p.getName(), node.getSession(), mapper, depth, nodeFilter, field));
                         } else {
-                            references.put(p.getName(), getReferenceList(field, p.getName(), Object.class, containerNode, obj, depth, nodeFilter, mapper));
+                        	// eager loading
+                            references.put(p.getName(), getReferenceList(field, p.getName(), mapParamClass, containerNode, obj, depth, nodeFilter, mapper));
                         }
                     } else {
                         if (jcrReference.lazy()) {
+                        	// lazy loading
                             Node referencedNode = getSingleReferencedNode(jcrReference, p.getValue(), node.getSession());
-                            references.put(p.getName(), ProxyFactory.createReferenceProxy(mapper.findClassFromNode(Object.class, referencedNode), obj, containerNode.getPath(), p.getName(), node.getSession(), mapper, depth, nodeFilter, field));
+                            references.put(p.getName(), ProxyFactory.createReferenceProxy(mapper.findClassFromNode(mapParamClass, referencedNode), obj, containerNode.getPath(), p.getName(), node.getSession(), mapper, depth, nodeFilter, field));
                         } else {
-                            references.put(p.getName(), createReferencedObject(field, p.getValue(), obj, containerNode.getSession(), Object.class, depth, nodeFilter, mapper));
+                        	// eager loading
+                        	references.put(p.getName(), createReferencedObject(field, p.getValue(), obj, containerNode.getSession(), mapParamClass, depth, nodeFilter, mapper));
                         }
                     }
                 }

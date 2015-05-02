@@ -204,13 +204,12 @@ class Validator {
                 // make sure that the parent node type is a valid JCR class
                 validateInternal(type, validClasses, dynamicInstantiation);
             } else if (field.isAnnotationPresent(JcrChildNode.class)) {
+            	Class<?> fieldType;
                 // make sure that the child node type are valid JCR classes
                 if (typeHandler.isList(type)) {
                     // map a List of child nodes, here we must make sure that the List is parameterized
-                    Class<?> paramClass = ReflectionUtils.getParameterizedClass(genericType);
-                    if (paramClass != null) {
-                        validateInternal(paramClass, validClasses, dynamicInstantiation);
-                    } else {
+                	fieldType = ReflectionUtils.getParameterizedClass(genericType);
+                    if (fieldType == null) {
                         throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.List that is not parameterised with a valid class type.");
                     }
                 } else if (typeHandler.isMap(type)) {
@@ -223,11 +222,24 @@ class Validator {
                     // the value class must be Object, or List of Objects
                     Class<?> valueParamClass = ReflectionUtils.getParameterizedClass(genericType, 1);
                     Class<?> valueParamParamClass = ReflectionUtils.getTypeArgumentOfParameterizedClass(genericType, 1, 0);
-                    if (valueParamClass == null || (valueParamClass != Object.class && !(List.class.isAssignableFrom(valueParamClass) && (valueParamParamClass != null && valueParamParamClass == Object.class)))) {
-                        throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrChildNode is a java.util.Map that is not parameterised with a valid value type (Object or List<Object>).");
+                    if (valueParamClass == null || (!Object.class.isAssignableFrom(valueParamClass) && !(List.class.isAssignableFrom(valueParamClass) && (valueParamParamClass != null && Object.class.isAssignableFrom(valueParamParamClass))))) {
+                        throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is a java.util.Map that is not parameterised with a valid value type (Object or List<Object>).");
+                    }
+
+                    if(List.class.isAssignableFrom(valueParamClass) && valueParamParamClass != Object.class) {
+                    	fieldType = valueParamParamClass;	
+                    } else if(valueParamClass != Object.class) {
+                    	fieldType = valueParamClass;
+                    } else {
+                    	fieldType = null;
                     }
                 } else {
-                    validateInternal(type, validClasses, dynamicInstantiation);
+                	fieldType = type;
+                }
+                
+                if (fieldType != null) {
+                    // validate the class
+                    validateInternal(fieldType, validClasses, dynamicInstantiation);
                 }
 
             } else if (field.isAnnotationPresent(JcrFileNode.class)) {
@@ -256,6 +268,9 @@ class Validator {
                 Class<?> fieldType;
                 if (typeHandler.isList(type)) {
                     fieldType = ReflectionUtils.getParameterizedClass(genericType);
+                    if (fieldType == null) {
+                        throw new JcrMappingException("In [" + c.getName() + "]: Field [" + field.getName() + "] which is annotated as @JcrReference is a java.util.List that is not parameterised with a valid class type.");
+                    }
 
                 } else if (typeHandler.isMap(type)) {
                     // special case, mapping a Map of references, so we must make sure that it is properly parameterized:
@@ -276,8 +291,8 @@ class Validator {
                     } else if(valueParamClass != Object.class) {
                     	fieldType = valueParamClass;
                     } else {
-                    	fieldType = null;	
-                    }                    
+                    	fieldType = null;
+                    }
                 } else {
                     fieldType = type;
                 }

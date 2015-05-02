@@ -308,19 +308,19 @@ class ChildNodeMapper {
                 // each value in the map is a list of child nodes
                 if (jcrChildNode.lazy()) {
                     // lazy loading
-                    children.put(childNode.getName(), ProxyFactory.createChildNodeListProxy(Object.class, parentObj, childNode.getPath(), childNode.getSession(), mapper, depth, nodeFilter, jcrChildNode));
+                    children.put(childNode.getName(), ProxyFactory.createChildNodeListProxy(mapParamClass, parentObj, childNode.getPath(), childNode.getSession(), mapper, depth, nodeFilter, jcrChildNode));
                 } else {
                     // eager loading
-                    children.put(childNode.getName(), getChildrenList(Object.class, childNode, parentObj, mapper, depth, nodeFilter, jcrChildNode));
+                    children.put(childNode.getName(), getChildrenList(mapParamClass, childNode, parentObj, mapper, depth, nodeFilter, jcrChildNode));
                 }
             } else {
                 // each value in the map is a child node
                 if (jcrChildNode.lazy()) {
                     // lazy loading
-                    children.put(childNode.getName(), ProxyFactory.createChildNodeProxy(mapper.findClassFromNode(Object.class, childNode), parentObj, childNode.getPath(), childNode.getSession(), mapper, depth, nodeFilter, false));
+                	children.put(childNode.getName(), ProxyFactory.createChildNodeProxy(mapper.findClassFromNode(mapParamClass, childNode), parentObj, childNode.getPath(), childNode.getSession(), mapper, depth, nodeFilter, false));
                 } else {
                     // eager loading
-                    children.put(childNode.getName(), getSingleChild(Object.class, childNode, parentObj, mapper, depth, nodeFilter));
+                    children.put(childNode.getName(), getSingleChild(mapParamClass, childNode, parentObj, mapper, depth, nodeFilter));
                 }
             }
         }
