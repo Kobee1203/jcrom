@@ -323,7 +323,11 @@ class PropertyMapper {
         // make sure that the field value is not null
         if (propertyValue != null) {
             if (isMultiple) {
-                node.setProperty(propertyName, typeHandler.createValues(type, paramClass, propertyValue, valueFactory));
+                // only if there is something to remove... otherwise exception is thrown because nothing to remove
+                Value[] value = typeHandler.createValues(type, paramClass, propertyValue, valueFactory);
+                if(value != null || (value == null && node.hasProperty(propertyName))) {
+                    node.setProperty(propertyName, value);
+                }
             } else {
                 Value value = typeHandler.createValue(type, propertyValue, valueFactory);
                 if (value != null) {
@@ -333,7 +337,10 @@ class PropertyMapper {
         } else {
             // remove the value
             if (isMultiple) {
-                node.setProperty(propertyName, (Value[]) null);
+                // only if there is something to remove... otherwise exception is thrown because nothing to remove
+                if(node.hasProperty(propertyName)) {
+                    node.setProperty(propertyName, (Value[]) null);
+                }
             } else {
                 node.setProperty(propertyName, (Value) null);
             }
