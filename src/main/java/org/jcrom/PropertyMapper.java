@@ -26,6 +26,7 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.jcr.Binary;
@@ -209,8 +210,16 @@ class PropertyMapper {
             Object currentValue = typeHandler.getObject(field, obj);
 
             Object fieldValue;
-            if (p.isMultiple()) {
-                fieldValue = typeHandler.getValues(type, genericType, p.getValues(), currentValue);
+	    if (isListOrArray(type)) {
+		Value[] values = null;
+
+		if (p.isMultiple()) {
+		    values = p.getValues();
+		} else if (p.getValue() != null) {
+		    values = new Value[] { p.getValue() };
+		}
+
+		fieldValue = typeHandler.getValues(type, genericType, values, currentValue);
             } else {
                 fieldValue = typeHandler.getValue(type, genericType, p.getValue(), currentValue);
             }
@@ -384,6 +393,17 @@ class PropertyMapper {
         } finally {
             in.close();
         }
+    }
+    
+    /**
+     * Determine if the type is List or an array
+     * 
+     * @param type
+     * @return true if type is List or an array, false otherwise
+     */
+    private boolean isListOrArray(Class<?> type) {
+	return typeHandler.isList(type)
+		|| (type.isArray() && type.getComponentType() != byte.class);
     }
 
 }
